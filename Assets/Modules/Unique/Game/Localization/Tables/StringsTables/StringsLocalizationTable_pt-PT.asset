@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: StringsLocalizationTable_pt-PT
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: pt-PT
+  m_SharedData: {fileID: 11400000, guid: cfeab4266c93b254aa9d5b90f0abec77, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 355724703518720
+    m_Localized: Jogar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 355803820675072
+    m_Localized: "Op\xE7\xF5es"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 355907369652224
+    m_Localized: "Adicionar \xE0 lista de desejos!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438005906460672
+    m_Localized: "Pol\xEDtica de Privacidade"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438365886795776
+    m_Localized: "Ol\xE1!\n<b>Obrigado por experimentares Game Title!</b>\n\nPara
+      nos ajudar a melhorar o jogo, recolhemos dados de jogabilidade <b>an\xF3nimos</b>
+      \u2014 como progresso nos n\xEDveis, pontua\xE7\xF5es e quais as mec\xE2nicas
+      que usas.\n\nUsamos esses dados apenas para melhorar o equil\xEDbrio, a estabilidade
+      e a qualidade geral do jogo. <b>N\xE3o recolhemos dados pessoais como o teu
+      nome ou e-mail.</b>\n\nPodes desativar a an\xE1lise a qualquer momento nas
+      Defini\xE7\xF5es e podes solicitar a elimina\xE7\xE3o dos teus dados de an\xE1lise
+      a qualquer momento.\nPara mais detalhes, l\xEA a nossa Pol\xEDtica de Privacidade."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438677955596288
+    m_Localized: "N\xE3o, obrigado(a)"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5437282128973824
+    m_Localized: 
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5437776046018560
+    m_Localized: OK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19099382151860224
+    m_Localized: "Obrigado por jogares a vers\xE3o antecipada de\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19099473642213376
+    m_Localized: "Mais conte\xFAdo chegar\xE1 na vers\xE3o completa."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19108764277231616
+    m_Localized: Reportar erro
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19108828471054336
+    m_Localized: Enviar feedback
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19114354789535744
+    m_Localized: Recusar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19115665924771840
+    m_Localized: Tens a certeza?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19139831847669760
+    m_Localized: Sucesso!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 23814866608803840
+    m_Localized: Junta-te ao nosso Discord!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 24173682420568064
+    m_Localized: Retomar
+    m_Metadata:
+      m_Items: []
+  - m_Id: 24173859776712704
+    m_Localized: Em pausa
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

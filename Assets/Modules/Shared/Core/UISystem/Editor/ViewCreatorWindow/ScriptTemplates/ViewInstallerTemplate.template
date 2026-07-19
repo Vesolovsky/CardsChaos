@@ -1,0 +1,15 @@
+using Vesolovsky.Core.UISystem.Animations;
+using Zenject;
+
+namespace #Namespace#
+{ 
+    public class #ViewName#ViewInstaller : MonoInstaller
+    {
+        public override void InstallBindings()
+        {
+            Container.BindInterfacesAndSelfTo<#ViewName#ViewModel>().AsSingle();
+            Container.BindInterfacesAndSelfTo<#ViewName#View>().FromComponentInHierarchy().AsSingle();
+            Container.Bind<IViewAnimation>().FromComponentInHierarchy().AsSingle();
+        }
+    }
+}

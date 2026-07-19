@@ -1,0 +1,103 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: StringsLocalizationTable_pl
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: pl
+  m_SharedData: {fileID: 11400000, guid: cfeab4266c93b254aa9d5b90f0abec77, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 355724703518720
+    m_Localized: Graj
+    m_Metadata:
+      m_Items: []
+  - m_Id: 355803820675072
+    m_Localized: Opcje
+    m_Metadata:
+      m_Items: []
+  - m_Id: 355907369652224
+    m_Localized: "Dodaj do listy \u017Cycze\u0144!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438005906460672
+    m_Localized: "Polityka prywatno\u015Bci"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438365886795776
+    m_Localized: "Cze\u015B\u0107!\n<b>Dzi\u0119kujemy, \u017Ce wypr\xF3bowa\u0142e\u015B/a\u015B
+      Game Title!</b>\n\nAby pom\xF3c nam ulepsza\u0107 gr\u0119, zbieramy <b>anonimowe</b>
+      dane z rozgrywki \u2014 np. post\u0119p w poziomach, wyniki oraz to, z jakich
+      mechanik korzystasz.\n\nU\u017Cywamy tych danych wy\u0142\u0105cznie do poprawy
+      balansu, stabilno\u015Bci i og\xF3lnej jako\u015Bci gry. <b>Nie zbieramy danych
+      osobowych, takich jak imi\u0119 czy adres e-mail.</b>\n\nMo\u017Cesz w ka\u017Cdej
+      chwili wy\u0142\u0105czy\u0107 analityk\u0119 w Ustawieniach i w dowolnym momencie
+      poprosi\u0107 o usuni\u0119cie swoich danych analitycznych.\nSzczeg\xF3\u0142y
+      znajdziesz w naszej Polityce prywatno\u015Bci."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438677955596288
+    m_Localized: "Nie, dzi\u0119kuj\u0119"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5437282128973824
+    m_Localized: "Do\u0142\u0105cz do Game Title!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5437776046018560
+    m_Localized: OK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19099382151860224
+    m_Localized: "Dzi\u0119kujemy za zagranie we wczesn\u0105 wersj\u0119\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19099473642213376
+    m_Localized: "W pe\u0142nej wersji pojawi si\u0119 wi\u0119cej zawarto\u015Bci."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19108764277231616
+    m_Localized: "Zg\u0142o\u015B b\u0142\u0105d"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19108828471054336
+    m_Localized: "Wy\u015Blij opini\u0119"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19114354789535744
+    m_Localized: "Odrzu\u0107"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19115665924771840
+    m_Localized: Czy na pewno?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19139831847669760
+    m_Localized: Sukces!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 23814866608803840
+    m_Localized: "Do\u0142\u0105cz do naszego Discorda!"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 24173682420568064
+    m_Localized: "Wzn\xF3w"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 24173859776712704
+    m_Localized: Pauza
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

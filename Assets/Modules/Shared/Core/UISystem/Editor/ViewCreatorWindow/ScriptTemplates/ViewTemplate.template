@@ -1,0 +1,9 @@
+using Vesolovsky.Core.UISystem;
+
+namespace #Namespace#
+{ 
+    public class #ViewName#View : View<I#ViewName#ViewModel>
+    {
+
+    }
+}

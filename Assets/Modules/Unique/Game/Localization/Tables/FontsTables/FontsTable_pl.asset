@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97269afb30aa84742ae3f3342603618a, type: 3}
+  m_Name: FontsTable_pl
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: pl
+  m_SharedData: {fileID: 11400000, guid: fdb33a8b99fe6a740b7b3fa888bb324c, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 21063590694912
+    m_Localized: 770220736d876fa458faac47f87158bc
+    m_Metadata:
+      m_Items: []
+  - m_Id: 33731206664192
+    m_Localized: 87aafedf9ef64864c84d32e558816759
+    m_Metadata:
+      m_Items: []
+  - m_Id: 49076948652032
+    m_Localized: 31ce784fdcdeb40459a20defa5bc3dc8
+    m_Metadata:
+      m_Items: []
+  - m_Id: 49968041119744
+    m_Localized: f3e040f5c5968234faa5a289c261eea6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50657349816320
+    m_Localized: f0cd8a5d511f2dc418ba662d0642f2d1
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

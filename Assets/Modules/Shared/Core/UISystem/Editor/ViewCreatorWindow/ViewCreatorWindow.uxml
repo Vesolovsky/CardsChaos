@@ -1,0 +1,11 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
+    <Style src="project://database/Assets/Modules/Shared/Core/UISystem/Editor/ViewCreatorWindow/ViewCreatorWindow.uss?fileID=7433441132597879392&amp;guid=8fc24fe341ff7414780244978b22adcd&amp;type=3#ViewCreatorWindow" />
+    <ui:VisualElement name="Content" style="flex-grow: 1;">
+        <ui:Label tabindex="-1" text="View creator" parse-escape-sequences="true" display-tooltip-when-elided="true" name="TitleLabel" style="-unity-font-style: bold; font-size: 20px; -unity-text-align: upper-center;" />
+        <ui:TextField picking-mode="Ignore" label="Namespace" value="Vesolovsky.Game.Views" name="NamespaceNameTextField" style="-unity-text-align: middle-left;" />
+        <ui:TextField picking-mode="Ignore" label="View name" name="ViewNameTextField" style="-unity-text-align: middle-left;" />
+        <ui:Toggle label="Is shared view?" name="IsSharedViewToggle" />
+        <ui:Button text="Create view" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CreateButton" />
+        <ui:Button text="Create view prefab" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CreateViewPrefabButton" />
+    </ui:VisualElement>
+</ui:UXML>

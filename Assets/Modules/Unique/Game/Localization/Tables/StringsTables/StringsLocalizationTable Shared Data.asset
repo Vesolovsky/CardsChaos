@@ -1,0 +1,101 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: StringsLocalizationTable Shared Data
+  m_EditorClassIdentifier: 
+  m_TableCollectionName: StringsLocalizationTable
+  m_TableCollectionNameGuidString: cfeab4266c93b254aa9d5b90f0abec77
+  m_Entries:
+  - m_Id: 355724703518720
+    m_Key: ID_MainMenu_Play
+    m_Metadata:
+      m_Items: []
+  - m_Id: 355803820675072
+    m_Key: ID_MainMenu_Options
+    m_Metadata:
+      m_Items: []
+  - m_Id: 355907369652224
+    m_Key: ID_MainMenu_WishlistNow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5437282128973824
+    m_Key: ID_AnalyticsConsent_Header
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5437776046018560
+    m_Key: ID_OK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438005906460672
+    m_Key: ID_PrivacyPolicy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438365886795776
+    m_Key: ID_AnalyticsConsent_Info
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438677955596288
+    m_Key: ID_AnalyticsConsent_NoThanks
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19099382151860224
+    m_Key: ID_EndOfContentView_ThankYou
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19099473642213376
+    m_Key: ID_EndOfContentView_MoreContent
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19108764277231616
+    m_Key: ID_Button_ReportBug
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19108828471054336
+    m_Key: ID_Button_SendFeedback
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19114354789535744
+    m_Key: ID_Popup_Decline
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19115665924771840
+    m_Key: ID_Popup_AreYouSureTitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19139831847669760
+    m_Key: ID_Success
+    m_Metadata:
+      m_Items: []
+  - m_Id: 23814866608803840
+    m_Key: ID_JoinDiscordServer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 24173682420568064
+    m_Key: ID_PauseView_Resume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 24173859776712704
+    m_Key: ID_PauseView_Paused
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 1051022233561464860
+  references:
+    version: 2
+    RefIds:
+    - rid: 1051022233561464860
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables,
+        asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1770462035560

@@ -1,0 +1,172 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Localization-Assets-Shared
+  m_EditorClassIdentifier: 
+  m_GroupName: Localization-Assets-Shared
+  m_Data:
+    m_SerializedData: []
+  m_GUID: 11fdbf7e84a55c24fb0dcef01d76f1fc
+  m_SerializeEntries:
+  - m_GUID: 10b33e8d43623494ea9d886ca23a79f0
+    m_Address: ChineseJapanese_YellowOutline
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ja
+    - Locale-zh
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1cf0facbc42c8a54e84ae7f3b37a98fc
+    m_Address: Cyrillic_BlueOutline
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    - Locale-uk
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2f99f63712beb9f42aa6cd4a5066c578
+    m_Address: ChineseJapanese_RuleOutline
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ja
+    - Locale-zh
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 31ce784fdcdeb40459a20defa5bc3dc8
+    m_Address: Roman_BlueOutline
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-de
+    - Locale-en
+    - Locale-es
+    - Locale-fr
+    - Locale-it
+    - Locale-pl
+    - Locale-pt-PT
+    - Locale-tr
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5e09a1e90137fa6488802d7621070781
+    m_Address: Cyrillic_Outlined
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    - Locale-uk
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 60e1ae3ae41893f4f89ac33129bbd034
+    m_Address: KNMaiyuan-Regular
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ja
+    - Locale-zh
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 612e2c7cbf16c7841877efbf8bfd9b86
+    m_Address: Cyrillic_YellowOutline
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    - Locale-uk
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 6fc6368b7a71b0c4da41af6e7e7bad99
+    m_Address: ChineseJapanese_BlueOutline
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ja
+    - Locale-zh
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 770220736d876fa458faac47f87158bc
+    m_Address: LTMakeup-Regular-Atlas
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-de
+    - Locale-en
+    - Locale-es
+    - Locale-fr
+    - Locale-it
+    - Locale-pl
+    - Locale-pt-PT
+    - Locale-tr
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 824663b91f846684cb1192c5eec7ec37
+    m_Address: Cyrillic_RuleOutline
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    - Locale-uk
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 87aafedf9ef64864c84d32e558816759
+    m_Address: Roman_Outlined
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-de
+    - Locale-en
+    - Locale-es
+    - Locale-fr
+    - Locale-it
+    - Locale-pl
+    - Locale-pt-PT
+    - Locale-tr
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 919090c9b233f3d40a0005b591f407c9
+    m_Address: ChineseJapanese_Outlined
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ja
+    - Locale-zh
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cfeab4266c93b254aa9d5b90f0abec77
+    m_Address: Assets/Modules/Unique/Game/Localization/StringsLocalizationTable Shared
+      Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dda83e8016571f04ea35687ed3263a38
+    m_Address: LemonTuesday-Regular
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    - Locale-uk
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f0cd8a5d511f2dc418ba662d0642f2d1
+    m_Address: Roman_RuleOutline
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-de
+    - Locale-en
+    - Locale-es
+    - Locale-fr
+    - Locale-it
+    - Locale-pl
+    - Locale-pt-PT
+    - Locale-tr
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3e040f5c5968234faa5a289c261eea6
+    m_Address: Roman_YellowOutline
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-de
+    - Locale-en
+    - Locale-es
+    - Locale-fr
+    - Locale-it
+    - Locale-pl
+    - Locale-pt-PT
+    - Locale-tr
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fdb33a8b99fe6a740b7b3fa888bb324c
+    m_Address: Assets/Modules/Unique/Game/Localization/Tables/FontsTables/FontsTable
+      Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 1
+  m_Settings: {fileID: 11400000, guid: 2d61bd0d62eb649488d0c9a1e4721ae2, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: ed901cbece0e17b47932b0f787643b24, type: 2}
+    - {fileID: 11400000, guid: 1c85b1014dc2de74ab161a80906a9c58, type: 2}

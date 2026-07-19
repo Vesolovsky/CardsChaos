@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: StringsLocalizationTable_it
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: it
+  m_SharedData: {fileID: 11400000, guid: cfeab4266c93b254aa9d5b90f0abec77, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 355724703518720
+    m_Localized: Gioca
+    m_Metadata:
+      m_Items: []
+  - m_Id: 355803820675072
+    m_Localized: Opzioni
+    m_Metadata:
+      m_Items: []
+  - m_Id: 355907369652224
+    m_Localized: Aggiungi alla lista dei desideri!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438005906460672
+    m_Localized: Informativa sulla privacy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438365886795776
+    m_Localized: "Ciao!\n<b>Grazie per aver provato Game Title!</b>\n\nPer aiutarci
+      a migliorare il gioco, raccogliamo dati di gioco <b>anonimi</b> \u2014 ad esempio
+      progressi nei livelli, punteggi e quali meccaniche utilizzi.\n\nUsiamo questi
+      dati solo per migliorare bilanciamento, stabilit\xE0 e qualit\xE0 complessiva
+      del gioco. <b>Non raccogliamo dati personali come il tuo nome o la tua email.</b>\n\nPuoi
+      disattivare l\u2019analisi in qualsiasi momento nelle Impostazioni e puoi richiedere
+      la cancellazione dei tuoi dati di analisi in qualsiasi momento.\nPer i dettagli,
+      leggi la nostra Informativa sulla privacy."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5438677955596288
+    m_Localized: No, grazie
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5437282128973824
+    m_Localized: 
+    m_Metadata:
+      m_Items: []
+  - m_Id: 5437776046018560
+    m_Localized: OK
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19099382151860224
+    m_Localized: "Grazie per aver giocato alla versione anticipata di\u2026"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19099473642213376
+    m_Localized: Nella versione completa arriveranno altri contenuti.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19108764277231616
+    m_Localized: Segnala un bug
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19108828471054336
+    m_Localized: Invia feedback
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19114354789535744
+    m_Localized: Rifiuta
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19115665924771840
+    m_Localized: Sei sicuro/a?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 19139831847669760
+    m_Localized: Successo!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 23814866608803840
+    m_Localized: Unisciti al nostro Discord!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 24173682420568064
+    m_Localized: Riprendi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 24173859776712704
+    m_Localized: In pausa
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []
