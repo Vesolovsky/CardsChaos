@@ -15,7 +15,7 @@ namespace Vesolovsky.Game
                 .AsSingle();
 
             SignalBusInstaller.Install(Container);
-            Container.BindInterfacesAndSelfTo<UnityAnalyticsService>().AsSingle();
+            //Container.BindInterfacesAndSelfTo<UnityAnalyticsService>().AsSingle();
         }
     }
 }

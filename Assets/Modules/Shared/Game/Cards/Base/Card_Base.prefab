@@ -12,8 +12,9 @@ GameObject:
   - component: {fileID: 2698586913028539358}
   - component: {fileID: 4135077710452305735}
   - component: {fileID: 6744850495029343956}
-  - component: {fileID: 3991159474994228441}
   - component: {fileID: 3038216716329123610}
+  - component: {fileID: 3991159474994228441}
+  - component: {fileID: 2889948983044918408}
   m_Layer: 0
   m_Name: Card_Base
   m_TagString: Untagged
@@ -107,21 +108,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.063, y: 0.094500005, z: 0.0006}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &3991159474994228441
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5788517682138487023}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4d83c2a51a49b8d429c3b3544e5253cf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  setId: 
-  number: 0
-  displayName: 
 --- !u!54 &3038216716329123610
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -130,7 +116,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5788517682138487023}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 0.005
   m_Drag: 0
   m_AngularDrag: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -146,6 +132,37 @@ Rigidbody:
   m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 0
-  m_Interpolate: 0
+  m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 3
+--- !u!114 &3991159474994228441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5788517682138487023}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d83c2a51a49b8d429c3b3544e5253cf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  setId: 
+  number: 0
+  displayName: 
+--- !u!114 &2889948983044918408
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5788517682138487023}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3081e03496cad5b49bdd0fcb9e5e6921, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverColor: {r: 1, g: 0.85, b: 0.45, a: 1}
+  selectedColor: {r: 1, g: 0.99, b: 0.88, a: 1}
+  hoverWidth: 0.0018
+  selectedWidth: 0.0026

@@ -13,9 +13,11 @@ CBUFFER_START(UnityPerMaterial)
     float4 _BaseMap_ST;
     half4  _BaseColor;
     half4  _EdgeTint;
+    half4  _OutlineColor;
     half   _Smoothness;
     half   _Metallic;
     half   _EdgeDarken;
+    half   _OutlineWidth;
     half   _Cutoff;
 CBUFFER_END
 

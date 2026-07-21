@@ -15,6 +15,10 @@ Shader "CardsChaos/Card Lit"
         _Metallic ("Metallic", Range(0,1)) = 0.0
         _EdgeTint ("Rim Tint", Color) = (1,1,1,1)
         _EdgeDarken ("Rim Darken", Range(0,1)) = 0.18
+
+        [Header(Outline)]
+        _OutlineColor ("Outline Colour", Color) = (1,1,1,1)
+        _OutlineWidth ("Outline Width", Range(0,0.01)) = 0
     }
 
     SubShader
@@ -166,6 +170,68 @@ Shader "CardsChaos/Card Lit"
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
                 color.a = 1.0h;
                 return color;
+            }
+            ENDHLSL
+        }
+
+        // Inverted hull. URP picks SRPDefaultUnlit up in the opaque loop, so the outline
+        // costs nothing to enable per card: at width 0 the hull collapses onto the card
+        // and every one of its triangles is culled.
+        Pass
+        {
+            Name "Outline"
+            Tags { "LightMode" = "SRPDefaultUnlit" }
+
+            Cull Front
+            ZWrite On
+            ZTest LEqual
+
+            HLSLPROGRAM
+            #pragma target 3.0
+            #pragma vertex OutlineVertex
+            #pragma fragment OutlineFragment
+            #pragma multi_compile_instancing
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "CardLitInput.hlsl"
+
+            struct OutlineAttributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct OutlineVaryings
+            {
+                float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            OutlineVaryings OutlineVertex(OutlineAttributes input)
+            {
+                OutlineVaryings output = (OutlineVaryings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.positionCS = TransformWorldToHClip(positionWS + normalWS * _OutlineWidth);
+
+                return output;
+            }
+
+            half4 OutlineFragment(OutlineVaryings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+
+                // At width 0 the hull coincides with the card surface; discard instead
+                // of z-fighting with it.
+                clip(_OutlineWidth - 0.00001);
+
+                return _OutlineColor;
             }
             ENDHLSL
         }

@@ -22,6 +22,13 @@ namespace CardsChaos.Cards.CardEditor
         private const string MeshPath = BaseArtFolder + "/CardMesh.asset";
         private const string BaseMaterialPath = BaseArtFolder + "/M_Card_Base.mat";
         private const string BasePrefabPath = BaseFolder + "/Card_Base.prefab";
+        private const string CatalogPath = CardsRoot + "/CardCatalog.asset";
+
+        /// <summary>
+        /// PhysX generates contacts within this distance of a surface. The 4 cm project
+        /// default dwarfs a 0.6 mm card and would leave it hovering above the table.
+        /// </summary>
+        private const float CardContactOffset = 0.0002f;
 
         // Layout expected inside each Sets/<SetId> folder.
         private const string SetTexturesSubfolder = "Art/Sprites";
@@ -39,15 +46,20 @@ namespace CardsChaos.Cards.CardEditor
             Material baseMaterial = BuildBaseMaterial();
             GameObject basePrefab = BuildBasePrefab(mesh, baseMaterial);
 
+            var setDefinitions = new List<CardSetDefinition>();
             string[] setFolders = Directory.GetDirectories(SetsRoot);
             foreach (string setFolder in setFolders)
             {
-                BuildSet(basePrefab, setFolder.Replace('\\', '/'));
+                CardSetDefinition definition = BuildSet(basePrefab, setFolder.Replace('\\', '/'));
+                if (definition != null)
+                    setDefinitions.Add(definition);
             }
+
+            BuildCatalog(setDefinitions);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"[CardSetBuilder] Done. Built {setFolders.Length} set(s).");
+            Debug.Log($"[CardSetBuilder] Done. Built {setDefinitions.Count} set(s).");
         }
 
         private static Mesh BuildAndSaveMesh()
@@ -127,8 +139,16 @@ namespace CardsChaos.Cards.CardEditor
             var collider = root.AddComponent<BoxCollider>();
             collider.size = new Vector3(settings.Width, settings.Height, settings.Thickness);
             collider.center = Vector3.zero;
+            collider.contactOffset = CardContactOffset;
+
+            var body = root.AddComponent<Rigidbody>();
+            body.mass = 0.005f;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            // A 0.6 mm plate is easy to tunnel through a table at speed.
+            body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
             root.AddComponent<CardIdentity>();
+            root.AddComponent<Card>();
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, BasePrefabPath);
             Object.DestroyImmediate(root);
@@ -136,7 +156,7 @@ namespace CardsChaos.Cards.CardEditor
             return prefab;
         }
 
-        private static void BuildSet(GameObject basePrefab, string setFolder)
+        private static CardSetDefinition BuildSet(GameObject basePrefab, string setFolder)
         {
             string setId = Path.GetFileName(setFolder);
             string texturesFolder = $"{setFolder}/{SetTexturesSubfolder}";
@@ -147,7 +167,7 @@ namespace CardsChaos.Cards.CardEditor
             {
                 Debug.LogWarning(
                     $"[CardSetBuilder] Set '{setId}' has no '{SetTexturesSubfolder}' folder. Skipped.");
-                return;
+                return null;
             }
 
             EnsureFolder(materialFolder);
@@ -164,7 +184,7 @@ namespace CardsChaos.Cards.CardEditor
             if (backPath == null)
             {
                 Debug.LogWarning($"[CardSetBuilder] Set '{setId}' has no {BackTexturePrefix}* texture. Skipped.");
-                return;
+                return null;
             }
 
             foreach (string path in pngPaths)
@@ -172,6 +192,7 @@ namespace CardsChaos.Cards.CardEditor
 
             var backTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(backPath);
             var fronts = pngPaths.Where(p => p != backPath).ToArray();
+            var cards = new List<GameObject>(fronts.Length);
 
             foreach (string frontPath in fronts)
             {
@@ -184,16 +205,56 @@ namespace CardsChaos.Cards.CardEditor
                 Material material = CreateCardMaterial(
                     $"{materialFolder}/M_Card_{safeName}.mat", frontTexture, backTexture);
 
-                CreateCardVariant(
+                cards.Add(CreateCardVariant(
                     basePrefab,
                     $"{prefabFolder}/Card_{safeName}.prefab",
                     material,
                     setId,
                     number,
-                    displayName);
+                    displayName));
             }
 
-            Debug.Log($"[CardSetBuilder] Set '{setId}': {fronts.Length} card variants generated.");
+            Debug.Log($"[CardSetBuilder] Set '{setId}': {cards.Count} card variants generated.");
+            return CreateSetDefinition($"{setFolder}/{setId}.asset", setId, cards);
+        }
+
+        private static CardSetDefinition CreateSetDefinition(string path, string setId, List<GameObject> cards)
+        {
+            var definition = AssetDatabase.LoadAssetAtPath<CardSetDefinition>(path);
+            if (definition == null)
+            {
+                definition = ScriptableObject.CreateInstance<CardSetDefinition>();
+                AssetDatabase.CreateAsset(definition, path);
+            }
+
+            var serialized = new SerializedObject(definition);
+            serialized.FindProperty("setId").stringValue = setId;
+
+            SerializedProperty cardsProperty = serialized.FindProperty("cards");
+            cardsProperty.arraySize = cards.Count;
+            for (int i = 0; i < cards.Count; i++)
+                cardsProperty.GetArrayElementAtIndex(i).objectReferenceValue = cards[i];
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            return definition;
+        }
+
+        private static void BuildCatalog(List<CardSetDefinition> setDefinitions)
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<CardCatalog>(CatalogPath);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<CardCatalog>();
+                AssetDatabase.CreateAsset(catalog, CatalogPath);
+            }
+
+            var serialized = new SerializedObject(catalog);
+            SerializedProperty setsProperty = serialized.FindProperty("sets");
+            setsProperty.arraySize = setDefinitions.Count;
+            for (int i = 0; i < setDefinitions.Count; i++)
+                setsProperty.GetArrayElementAtIndex(i).objectReferenceValue = setDefinitions[i];
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static Material CreateCardMaterial(string path, Texture2D front, Texture2D back)
@@ -213,7 +274,7 @@ namespace CardsChaos.Cards.CardEditor
             return material;
         }
 
-        private static void CreateCardVariant(
+        private static GameObject CreateCardVariant(
             GameObject basePrefab,
             string path,
             Material material,
@@ -235,6 +296,12 @@ namespace CardsChaos.Cards.CardEditor
             // Saving a prefab instance under a new path produces a variant of the base.
             PrefabUtility.SaveAsPrefabAsset(instance, path);
             Object.DestroyImmediate(instance);
+
+            // Reload through the asset database so the stored reference points at the
+            // imported artifact. Referencing the prefab root rather than a component is
+            // deliberate: component references into prefab variants do not survive
+            // deserialization at runtime.
+            return AssetDatabase.LoadAssetAtPath<GameObject>(path);
         }
 
         private static void ConfigureTextureImporter(string path)

@@ -35,8 +35,10 @@ Material:
     m_Floats:
     - _EdgeDarken: 0.18
     - _Metallic: 0
+    - _OutlineWidth: 0
     - _Smoothness: 0.55
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _EdgeTint: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []

@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: BirdsOfTheSun
+  m_EditorClassIdentifier: 
+  setId: BirdsOfTheSun
+  cards:
+  - {fileID: 3648086734044102930, guid: 078103128fae49c44be1e70e9389e777, type: 3}
+  - {fileID: 17120209101118020, guid: 5c92c9cd0336880408b86976ab3a1e4e, type: 3}
+  - {fileID: 2475933965976449006, guid: ca0f6820998b2304e9b32e84ed54f66c, type: 3}
+  - {fileID: 5962926484350621288, guid: 951f9da11ca5a2a4386d5892be95626b, type: 3}
+  - {fileID: 2087804203027872771, guid: c319ea49f9ede18459ff2decfc1136c7, type: 3}
+  - {fileID: 1854759072999550254, guid: 0976d4f6244715541a9117fc729cf5d4, type: 3}
+  - {fileID: 2747662606532242712, guid: 8c14ac954a3c95542b4938986b8097be, type: 3}
+  - {fileID: 6113838690863562845, guid: 4721624276e490d4ca98858b7e9d149a, type: 3}
+  - {fileID: 5038499845430073490, guid: 310876abf56124a4bad0eaa929f39f78, type: 3}
+  - {fileID: 1327304200976596255, guid: fe11783dd83f9804ebed5607503ae117, type: 3}
+  - {fileID: 2474878565998183667, guid: 7df6acbc166bea8499303326f49c5fe3, type: 3}
+  - {fileID: 4509214411525998612, guid: a3bb39f9fb7940b46944901764e55031, type: 3}
+  - {fileID: 3619443741864321616, guid: a5872788355f035489ac99387927e286, type: 3}
+  - {fileID: 7524549872488247224, guid: d3f32db8b176c2449b20e6f2b356ebcf, type: 3}
+  - {fileID: 7687813150758778963, guid: 2167f57160bc65b4886c86d9e09ca57f, type: 3}
+  - {fileID: 8826672327294251821, guid: e2e72f46ca72b9b40907dcfdee97f55c, type: 3}
+  - {fileID: 5377170768678069139, guid: 0b087686dfd99844396305eec1e01ab1, type: 3}
+  - {fileID: 1272695927766071404, guid: dd96026e2780fb744819bf58201d86a0, type: 3}
+  - {fileID: 2947161914561137762, guid: 53041de84701ecf48b0f1de7890cdcbf, type: 3}
+  - {fileID: 2425369879388649916, guid: f621937f68776a84ea9290bbdb0d06af, type: 3}
+  - {fileID: 2682422807145145769, guid: 04040e1d5ee755d46a0c6f75e1a92374, type: 3}
+  - {fileID: 8450591014840602410, guid: 4ebd1b6bee410de409cf60f0d82224ff, type: 3}
+  - {fileID: 2606302909216775821, guid: d6b3bf2c21dd8b948ad525348651099c, type: 3}
+  - {fileID: 8718526860126961071, guid: 2f37b89254bd3dd4b9d3412e316f250d, type: 3}
+  - {fileID: 2787585167020326083, guid: 401e64aaf08c744428486773c57a0080, type: 3}
+  - {fileID: 641326021401999029, guid: 16541d9f8ce8f1f49928a6350305edf6, type: 3}
+  - {fileID: 3622670723978352377, guid: 67e68966ccf8d6544bd0e44763876cf5, type: 3}
+  - {fileID: 4793035530036244813, guid: 4355fc04a68623345b534fa1d399fc41, type: 3}
+  - {fileID: 7536294450578182788, guid: e3505446b1abf554cab2023d3c1d7b1d, type: 3}
+  - {fileID: 1083892041156312210, guid: e9809e78479c0f644b36b6273d7eae8c, type: 3}
