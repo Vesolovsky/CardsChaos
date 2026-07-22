@@ -27,8 +27,10 @@ namespace CardsChaos.Cards
         [SerializeField] private float heldSmoothness = 0f;
 
         [Header("Inspect")]
-        [Tooltip("Material look while this card is held up for inspection. Pale artwork blows " +
-                 "out at the defaults - drop both on those cards.")]
+        [Tooltip("Material look while this card is held up for inspection. CardSetBuilder " +
+                 "writes these per variant from the measured brightness of the face, so " +
+                 "edits here are overwritten by the next Build All Card Sets - retune the " +
+                 "luminance constants in the builder instead.")]
         [SerializeField] private float inspectSmoothness = 0.5f;
         [SerializeField] private float inspectMetallic = 0.845f;
 

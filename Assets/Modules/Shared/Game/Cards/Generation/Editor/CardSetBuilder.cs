@@ -41,6 +41,20 @@ namespace CardsChaos.Cards.CardEditor
         /// </summary>
         private const float CardColliderClearance = 0.001f;
 
+        // Inspect-time material response, written per card variant at build time.
+        //
+        // A dark face carries a strong metallic sheen well, but the same numbers on pale
+        // artwork blow the specular out to white as the card turns in the inspector. So the
+        // values are dialled back as the measured face gets brighter, between the two
+        // luminance bounds below - outside them the response is flat.
+        private const float DarkFaceMetallic = 0.845f;
+        private const float BrightFaceMetallic = 0.12f;
+        private const float DarkFaceSmoothness = 0.5f;
+        private const float BrightFaceSmoothness = 0.3f;
+
+        private const float LuminanceKnee = 0.35f;
+        private const float LuminanceCeiling = 0.8f;
+
         // Layout expected inside each Sets/<SetId> folder.
         private const string SetTexturesSubfolder = "Art/Sprites";
         private const string SetMaterialsSubfolder = "Art/Materials";
@@ -274,6 +288,9 @@ namespace CardsChaos.Cards.CardEditor
             var backTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(backPath);
             var fronts = pngPaths.Where(p => p != backPath).ToArray();
             var cards = new List<GameObject>(fronts.Length);
+            float minLuminance = 1f;
+            float maxLuminance = 0f;
+            float totalLuminance = 0f;
 
             foreach (string frontPath in fronts)
             {
@@ -286,16 +303,29 @@ namespace CardsChaos.Cards.CardEditor
                 Material material = CreateCardMaterial(
                     $"{materialFolder}/M_Card_{safeName}.mat", frontTexture, backTexture);
 
+                float luminance = MeasureFaceLuminance(frontPath);
+                minLuminance = Mathf.Min(minLuminance, luminance);
+                maxLuminance = Mathf.Max(maxLuminance, luminance);
+                totalLuminance += luminance;
+
                 cards.Add(CreateCardVariant(
                     basePrefab,
                     $"{prefabFolder}/Card_{safeName}.prefab",
                     material,
                     setId,
                     number,
-                    displayName));
+                    displayName,
+                    luminance));
             }
 
-            Debug.Log($"[CardSetBuilder] Set '{setId}': {cards.Count} card variants generated.");
+            // The spread is worth reading back: it is what the luminance bounds are tuned
+            // against, and a set that lands entirely on one side of the knee gets no
+            // variation at all.
+            string luminanceReport = cards.Count > 0
+                ? $" Face luminance {minLuminance:F2}-{maxLuminance:F2}, mean {totalLuminance / cards.Count:F2}."
+                : string.Empty;
+
+            Debug.Log($"[CardSetBuilder] Set '{setId}': {cards.Count} card variants generated.{luminanceReport}");
             return CreateSetDefinition($"{setFolder}/{setId}.asset", setId, cards);
         }
 
@@ -361,11 +391,14 @@ namespace CardsChaos.Cards.CardEditor
             Material material,
             string setId,
             int number,
-            string displayName)
+            string displayName,
+            float faceLuminance)
         {
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(basePrefab);
             instance.name = Path.GetFileNameWithoutExtension(path);
             instance.GetComponent<MeshRenderer>().sharedMaterial = material;
+
+            ApplyInspectLook(instance, faceLuminance);
 
             var identity = instance.GetComponent<CardIdentity>();
             var serialized = new SerializedObject(identity);
@@ -433,6 +466,69 @@ namespace CardsChaos.Cards.CardEditor
             importer.alphaIsTransparency = false;
 
             importer.SaveAndReimport();
+        }
+
+        /// <summary>
+        /// Mean perceived brightness of a card face, 0..1.
+        ///
+        /// The PNG is decoded straight off disk rather than through the imported texture:
+        /// the importer deliberately leaves Read/Write off, and flipping it on per card
+        /// would cost two extra reimports each. Luma is taken on the stored sRGB values,
+        /// because "this card looks bright" is a perceptual statement, not a linear one.
+        /// </summary>
+        private static float MeasureFaceLuminance(string assetPath)
+        {
+            const float fallback = 0.5f;
+
+            var texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipChain: false, linear: false);
+            try
+            {
+                if (!texture.LoadImage(File.ReadAllBytes(assetPath)))
+                {
+                    Debug.LogWarning($"[CardSetBuilder] Could not decode '{assetPath}'. Treating it as mid grey.");
+                    return fallback;
+                }
+
+                Color32[] pixels = texture.GetPixels32();
+                if (pixels.Length == 0)
+                    return fallback;
+
+                // Every 16th pixel is far more than enough to average a 1024x1536 face.
+                const int stride = 16;
+
+                double sum = 0.0;
+                int count = 0;
+
+                for (int i = 0; i < pixels.Length; i += stride)
+                {
+                    Color32 pixel = pixels[i];
+                    sum += (0.2126 * pixel.r + 0.7152 * pixel.g + 0.0722 * pixel.b) / 255.0;
+                    count++;
+                }
+
+                return count > 0 ? (float)(sum / count) : fallback;
+            }
+            finally
+            {
+                Object.DestroyImmediate(texture);
+            }
+        }
+
+        /// <summary>Writes the brightness compensated inspect look onto a card variant.</summary>
+        private static void ApplyInspectLook(GameObject instance, float luminance)
+        {
+            var card = instance.GetComponent<Card>();
+            if (card == null)
+                return;
+
+            float t = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(LuminanceKnee, LuminanceCeiling, luminance));
+
+            var serialized = new SerializedObject(card);
+            serialized.FindProperty("inspectMetallic").floatValue =
+                Mathf.Lerp(DarkFaceMetallic, BrightFaceMetallic, t);
+            serialized.FindProperty("inspectSmoothness").floatValue =
+                Mathf.Lerp(DarkFaceSmoothness, BrightFaceSmoothness, t);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 
         /// <summary>Turns "03_FlareHeron" into number 3 and display name "Flare Heron".</summary>
