@@ -181,7 +181,7 @@ Transform:
   m_GameObject: {fileID: 227715890}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.116, y: 0, z: -0.27}
+  m_LocalPosition: {x: 0.116, y: 0, z: 0.057}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -199,10 +199,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 624acb8e6e0f7de41b8f2659b4a26a70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnCount: 300
   spawnOnStart: 1
   areaCenter: {x: 0, y: 0.4, z: 0}
-  areaSize: {x: 1.02, y: 0.64, z: 0.98}
+  areaSize: {x: 1.68, y: 0.64, z: 1.36}
   lieFlat: 0
   maxTilt: 12
   gizmoColor: {r: 0.35, g: 0.8, b: 1, a: 1}
@@ -1746,7 +1745,7 @@ Camera:
     width: 1
     height: 1
   near clip plane: 0.08
-  far clip plane: 1000
+  far clip plane: 50
   field of view: 60
   orthographic: 0
   orthographic size: 5

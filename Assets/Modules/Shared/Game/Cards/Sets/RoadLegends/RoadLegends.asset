@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: RoadLegends
+  m_EditorClassIdentifier: 
+  setId: RoadLegends
+  cards:
+  - {fileID: 3021086263726934785, guid: 65361a094f66b7c418534d1782a71bce, type: 3}
+  - {fileID: 3670654630100316234, guid: aa748e7628375d447baa5a1ebb0daaf6, type: 3}
+  - {fileID: 82448963718790673, guid: 1c5ccc8ff82c0ed4a9d96cca37014599, type: 3}
+  - {fileID: 8733818994131428564, guid: 5327470ef0399ac459685c4077e50740, type: 3}
+  - {fileID: 114072749281512985, guid: e367630a88d980442989b5610e5d5674, type: 3}
+  - {fileID: 6191646856802163449, guid: 4c78ce3652f9aae44af2f0f4e17a3010, type: 3}
+  - {fileID: 8312377331704318755, guid: 79347cb8b9a3ec74bb16620e62b2f0d3, type: 3}
+  - {fileID: 3683261818196104296, guid: 5e50a0c5963ea7c4a955a53abd320529, type: 3}
+  - {fileID: 4001314484990356856, guid: 814b81e93e45ffe458c1fd9a00aade0a, type: 3}
+  - {fileID: 6953443003753381850, guid: ec590b6e259ddef4eba05fe728c71686, type: 3}
+  - {fileID: 2668250746490249605, guid: a82472ae7a006024fb5fe580b9f6832e, type: 3}
+  - {fileID: 1035070036937510736, guid: 3d2769c071df90948a9065b04ad01772, type: 3}
+  - {fileID: 1573287614448643354, guid: 1893e898fbf27ca4aaa01665968bdfb0, type: 3}
+  - {fileID: 3564475346703994909, guid: 62b7bd9f3a479734d90929a1a080ea5e, type: 3}
+  - {fileID: 2584383195552657160, guid: bed330e1605415948969303496feedfb, type: 3}
+  - {fileID: 8263744626715656078, guid: 63ed6004349f0c149a6503c025eef947, type: 3}
+  - {fileID: 1206830883193324711, guid: 2d2c275c1ff440041a7f940c50a35945, type: 3}
+  - {fileID: 5347115864432835317, guid: f2d6b16e1fba76047a275424c051cae4, type: 3}
+  - {fileID: 2572417089974015935, guid: 097caaf81dd4c704391008bc45ef0aca, type: 3}
+  - {fileID: 4842255432604818113, guid: 99eaa848d07ddd74ca91d33a7307e403, type: 3}
+  - {fileID: 1103340367559948034, guid: 7b5042d5fa03efc498d68c167a84706c, type: 3}
+  - {fileID: 3168072650146368382, guid: 0c9ddcf9f676bca48810eb875f5208b2, type: 3}
+  - {fileID: 3021913617568888374, guid: bedccc8c43897364e82d457620c58831, type: 3}
+  - {fileID: 219632022475318461, guid: bf461b0ac3714e8498d7ac7b77365347, type: 3}
+  - {fileID: 7550558527793940306, guid: 8c1eef0d8049825419bd5ade2db8a83b, type: 3}
+  - {fileID: 679519141767321292, guid: 8b1dbe81fcbcdec419ce7f2115d82b07, type: 3}
+  - {fileID: 6546985401274845657, guid: 13a2218f28ce04e4880697bf8c31a42f, type: 3}
+  - {fileID: 8173817386707292406, guid: d9f9a4235e6d36d4ba04325308b78489, type: 3}
+  - {fileID: 4087573551555642616, guid: 5d79a4dc356d5dd4eb63fe2359dea507, type: 3}
+  - {fileID: 2164335873116483593, guid: f12a08fe3b7b2e446a88e46b68d83979, type: 3}

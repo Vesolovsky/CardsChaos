@@ -13,9 +13,21 @@ MonoBehaviour:
   m_Name: CardCatalog
   m_EditorClassIdentifier: 
   sets:
+  - {fileID: 11400000, guid: aacced754a3cef84fb114ac3c7e57f56, type: 2}
+  - {fileID: 11400000, guid: 90cfb6bf399a21e48ad771202b814f75, type: 2}
   - {fileID: 11400000, guid: aa3574e374ba26f4a92eb0fb9af08092, type: 2}
+  - {fileID: 11400000, guid: e334e72e462dde047ba292d96864753e, type: 2}
   - {fileID: 11400000, guid: b77953f15a3a04b4eb6408d5b6c7f509, type: 2}
   - {fileID: 11400000, guid: 298c39993749a1b449488d17d976788b, type: 2}
+  - {fileID: 11400000, guid: f7b12268d0d5c964eaf33b93e80190ad, type: 2}
+  - {fileID: 11400000, guid: b51377f501fb8c446bdd0b4ad9186dd3, type: 2}
+  - {fileID: 11400000, guid: f68892c9ef0e37c4a81f0b05fde71205, type: 2}
   - {fileID: 11400000, guid: 3f7af47c6fe59de4a8b0c13d3952c5d7, type: 2}
+  - {fileID: 11400000, guid: 3846e58763f9e6d4ca61eb57bddbac54, type: 2}
+  - {fileID: 11400000, guid: 06ab8ad4571afc14b833c75e04644278, type: 2}
   - {fileID: 11400000, guid: df523978fe0fa0246bbff0912806f4ed, type: 2}
+  - {fileID: 11400000, guid: d19ae30ec8437dc4c9c7ff5bb6b1f18e, type: 2}
   - {fileID: 11400000, guid: c005a3f2d64c2a74784345de7289f6ec, type: 2}
+  - {fileID: 11400000, guid: 30c0ed405f48b5e4bbbcaf17158d97e5, type: 2}
+  - {fileID: 11400000, guid: c6f02a054131320438b2062feac4f8a5, type: 2}
+  - {fileID: 11400000, guid: 3ee64e2394e47c04f9149eb6f3d11302, type: 2}

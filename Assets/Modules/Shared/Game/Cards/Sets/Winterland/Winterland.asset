@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: Winterland
+  m_EditorClassIdentifier: 
+  setId: Winterland
+  cards:
+  - {fileID: 6164913689101988652, guid: d1bb9b3cf36b59e42b151bf8b6892b51, type: 3}
+  - {fileID: 4998781861662088820, guid: 4d1c104422c8a2b4e8297564a287e9c5, type: 3}
+  - {fileID: 6921859065438662999, guid: bbe4f5225993eb949a6f648ad80cc1ca, type: 3}
+  - {fileID: 1685682468559297936, guid: 7990f1a9f6763d94fb32eaa19039b8c5, type: 3}
+  - {fileID: 6122497376505320834, guid: db0227e5f39c08940941534a82674370, type: 3}
+  - {fileID: 6413887500552856819, guid: 4e2681a19dc223646a053f2f19a33f65, type: 3}
+  - {fileID: 5491240488550424880, guid: f427553f4c08be547864fff2f42359dc, type: 3}
+  - {fileID: 8739938900883820730, guid: 93d556a49c5c2e64fb20584efbf3852a, type: 3}
+  - {fileID: 2962234782163183782, guid: c8c9401e8f9ac104b9ffb40356e0a5a5, type: 3}
+  - {fileID: 6667121071895578308, guid: 87c90f6a541ae584984b5f57e9c2fa1b, type: 3}
+  - {fileID: 3281442337445827774, guid: 1631a43350686d042b8b56e48e9c97d7, type: 3}
+  - {fileID: 5279433831279020962, guid: fe1aaa40bfae9334aaff9de89f305f9d, type: 3}
+  - {fileID: 3459250187902188770, guid: cd94350aa94cf2a47a84a8789575b546, type: 3}
+  - {fileID: 1672610185638902465, guid: aafbb09dd1c5ab64db75cbaed09d21e3, type: 3}
+  - {fileID: 723954856464113643, guid: 597c93004c5f35148895d5ef1e22fb2b, type: 3}
+  - {fileID: 8712673770375538755, guid: d2c2b9d5ec2b6b04da6850bf26fd83b9, type: 3}
+  - {fileID: 7390704928249910897, guid: 8546e1e2ddff82647aabb9d1e48ec7d4, type: 3}
+  - {fileID: 7421239422771895653, guid: 115d60a6a34817540a58592318b2d799, type: 3}
+  - {fileID: 2052387125944950057, guid: 9ca5dc526061f154687f9f6fe0028c30, type: 3}
+  - {fileID: 3200677197348943856, guid: 3dca10299ff259d4b96c855a4466f864, type: 3}
+  - {fileID: 8351278627379226587, guid: dcd293ed0798e0f4c9e2ea7685edfdb7, type: 3}
+  - {fileID: 4421016873959642313, guid: 66e90cf5a30e82d4c91927c1c590e505, type: 3}
+  - {fileID: 6390016086203152375, guid: c32825f98317ad948b90c5b566b275e2, type: 3}
+  - {fileID: 2250874930326460871, guid: 2183d5ab3c4c116448f0a2124702409f, type: 3}
+  - {fileID: 5452936726364710914, guid: ad626f2e888df464d8a0a9167845db9c, type: 3}
+  - {fileID: 2529372555450178244, guid: f9df296d04b3df1419644bc3d6087a9c, type: 3}
+  - {fileID: 427098445715618169, guid: 1dd5d21419b6d3445a326f8283efc1d2, type: 3}
+  - {fileID: 1651737297186143937, guid: ce2fee6aeb798214d91b4fd01750d2b6, type: 3}
+  - {fileID: 5118157249358555910, guid: 3ea79e557ceda3546a445e50afd88ec1, type: 3}
+  - {fileID: 7101672191918272199, guid: fa2c67b9050d63c4cb4cd72af7f91d38, type: 3}

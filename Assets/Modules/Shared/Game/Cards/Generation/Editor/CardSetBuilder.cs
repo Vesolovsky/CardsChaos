@@ -26,9 +26,17 @@ namespace CardsChaos.Cards.CardEditor
 
         /// <summary>
         /// PhysX generates contacts within this distance of a surface. The 4 cm project
-        /// default dwarfs a 0.6 mm card and would leave it hovering above the table.
+        /// default dwarfs a 1.5 mm card and would leave it hovering above the table.
         /// </summary>
         private const float CardContactOffset = 0.0002f;
+
+        /// <summary>
+        /// The collider is a touch thicker than the plate so a resting card floats a few
+        /// tenths of a millimetre above the table instead of sitting coplanar with it. That
+        /// keeps the flat face from z-fighting the floor, and gives stacked or overlapping
+        /// cards a guaranteed gap between their faces (min separation = this value).
+        /// </summary>
+        private const float CardColliderClearance = 0.001f;
 
         // Layout expected inside each Sets/<SetId> folder.
         private const string SetTexturesSubfolder = "Art/Sprites";
@@ -38,28 +46,84 @@ namespace CardsChaos.Cards.CardEditor
         private const string BackTexturePrefix = "Revers_";
 
         [MenuItem("Tools/Cards/Build All Card Sets")]
-        public static void BuildAll()
+        public static void BuildAll() => Build(rebuildExisting: true);
+
+        /// <summary>
+        /// Only touches sets that have no generated definition yet. Everything already built
+        /// (mesh, base prefab, existing sets) is reused as is, which is why this is the fast path.
+        /// </summary>
+        [MenuItem("Tools/Cards/Build New Card Sets Only")]
+        public static void BuildNewOnly() => Build(rebuildExisting: false);
+
+        private static void Build(bool rebuildExisting)
         {
             EnsureFolder(BaseArtFolder);
 
-            Mesh mesh = BuildAndSaveMesh();
-            Material baseMaterial = BuildBaseMaterial();
-            GameObject basePrefab = BuildBasePrefab(mesh, baseMaterial);
+            GameObject basePrefab = rebuildExisting
+                ? BuildBasePrefab(BuildAndSaveMesh(), BuildBaseMaterial())
+                : LoadOrBuildBasePrefab();
 
             var setDefinitions = new List<CardSetDefinition>();
+            int built = 0;
+            int reused = 0;
+
             string[] setFolders = Directory.GetDirectories(SetsRoot);
-            foreach (string setFolder in setFolders)
+            foreach (string folder in setFolders)
             {
-                CardSetDefinition definition = BuildSet(basePrefab, setFolder.Replace('\\', '/'));
+                string setFolder = folder.Replace('\\', '/');
+
+                if (!rebuildExisting)
+                {
+                    CardSetDefinition existing = LoadGeneratedSet(setFolder);
+                    if (existing != null)
+                    {
+                        setDefinitions.Add(existing);
+                        reused++;
+                        continue;
+                    }
+                }
+
+                CardSetDefinition definition = BuildSet(basePrefab, setFolder);
                 if (definition != null)
+                {
                     setDefinitions.Add(definition);
+                    built++;
+                }
             }
 
             BuildCatalog(setDefinitions);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"[CardSetBuilder] Done. Built {setDefinitions.Count} set(s).");
+
+            Debug.Log(rebuildExisting
+                ? $"[CardSetBuilder] Done. Built {built} set(s)."
+                : $"[CardSetBuilder] Done. Built {built} new set(s), reused {reused} existing.");
+        }
+
+        /// <summary>
+        /// The generated definition for a set, or null when the set still needs building.
+        /// An empty definition counts as not built - it is the leftover of a failed run.
+        /// </summary>
+        private static CardSetDefinition LoadGeneratedSet(string setFolder)
+        {
+            string setId = Path.GetFileName(setFolder);
+            var definition = AssetDatabase.LoadAssetAtPath<CardSetDefinition>($"{setFolder}/{setId}.asset");
+
+            if (definition == null)
+                return null;
+
+            return definition.Cards.Count > 0 ? definition : null;
+        }
+
+        private static GameObject LoadOrBuildBasePrefab()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(BasePrefabPath);
+            if (prefab != null)
+                return prefab;
+
+            Debug.Log("[CardSetBuilder] No base prefab yet - building it before the new sets.");
+            return BuildBasePrefab(BuildAndSaveMesh(), BuildBaseMaterial());
         }
 
         private static Mesh BuildAndSaveMesh()
@@ -137,14 +201,14 @@ namespace CardsChaos.Cards.CardEditor
             renderer.receiveShadows = true;
 
             var collider = root.AddComponent<BoxCollider>();
-            collider.size = new Vector3(settings.Width, settings.Height, settings.Thickness);
+            collider.size = new Vector3(settings.Width, settings.Height, settings.Thickness + CardColliderClearance);
             collider.center = Vector3.zero;
             collider.contactOffset = CardContactOffset;
 
             var body = root.AddComponent<Rigidbody>();
             body.mass = 0.005f;
             body.interpolation = RigidbodyInterpolation.Interpolate;
-            // A 0.6 mm plate is easy to tunnel through a table at speed.
+            // A 1.5 mm plate is easy to tunnel through a table at speed.
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
 
             root.AddComponent<CardIdentity>();

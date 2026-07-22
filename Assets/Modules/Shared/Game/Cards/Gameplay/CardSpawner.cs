@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using VInspector;
 using Zenject;
@@ -5,13 +6,12 @@ using Zenject;
 namespace CardsChaos.Cards
 {
     /// <summary>
-    /// Scatters random cards from the catalog inside a box volume,
+    /// Scatters every card from the catalog (once each, shuffled) inside a box volume,
     /// drawn as a gizmo for easy placement in the scene view.
     /// </summary>
     [AddComponentMenu("CardsChaos/Card Spawner")]
     public class CardSpawner : MonoBehaviour
     {
-        [SerializeField] private int spawnCount = 40;
         [SerializeField] private bool spawnOnStart = true;
 
         [Header("Area (local space)")]
@@ -51,18 +51,23 @@ namespace CardsChaos.Cards
         [Button]
         public void Spawn()
         {
+            // Every card in the catalog, each exactly once, in a random order.
+            var order = new List<Card>(_catalog.Cards);
+            Shuffle(order);
+
             int spawned = 0;
-            for (int i = 0; i < spawnCount; i++)
+            foreach (var card in order)
             {
-                if (_factory.Create(_catalog.GetRandom(), RandomPosition(), RandomRotation()) != null)
+                if (_factory.Create(card, RandomPosition(), RandomRotation()) != null)
                     spawned++;
             }
 
-            if (spawned < spawnCount)
+            Debug.Log($"[CardSpawner] Spawned {spawned} cards.", this);
+
+            if (spawned < order.Count)
             {
                 Debug.LogError(
-                    $"[CardSpawner] Spawned only {spawned}/{spawnCount} cards " +
-                    $"(catalog contains {_catalog.Cards.Count}).", this);
+                    $"[CardSpawner] Spawned only {spawned}/{order.Count} cards.", this);
 
 #if UNITY_EDITOR
                 if (_catalog is CardCatalog concrete)
@@ -70,6 +75,15 @@ namespace CardsChaos.Cards
                 else
                     Debug.LogError($"[CardSpawner] Catalog is not a CardCatalog: {_catalog.GetType().FullName}");
 #endif
+            }
+        }
+
+        private static void Shuffle(List<Card> cards)
+        {
+            for (int i = cards.Count - 1; i > 0; i--)
+            {
+                int j = Random.Range(0, i + 1);
+                (cards[i], cards[j]) = (cards[j], cards[i]);
             }
         }
 
