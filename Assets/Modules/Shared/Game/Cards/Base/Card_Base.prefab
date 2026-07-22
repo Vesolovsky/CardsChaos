@@ -162,10 +162,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3081e03496cad5b49bdd0fcb9e5e6921, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hoverColor: {r: 1, g: 0.85, b: 0.45, a: 1}
-  selectedColor: {r: 1, g: 0.99, b: 0.88, a: 1}
-  hoverWidth: 0.004
-  selectedWidth: 0.006
+  hoverColor: {r: 1, g: 1, b: 1, a: 1}
+  selectedColor: {r: 1, g: 0.8509804, b: 0.4509804, a: 1}
+  hoverWidth: 0.002
+  selectedWidth: 0
   heldSmoothness: 0
   inspectSmoothness: 0.5
   inspectMetallic: 0.845

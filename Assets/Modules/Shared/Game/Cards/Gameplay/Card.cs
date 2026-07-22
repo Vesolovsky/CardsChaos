@@ -7,7 +7,6 @@ namespace CardsChaos.Cards
     {
         None,
         Hovered,
-        Selected,
     }
 
     [RequireComponent(typeof(Rigidbody))]
@@ -16,12 +15,11 @@ namespace CardsChaos.Cards
     [AddComponentMenu("CardsChaos/Card")]
     public class Card : MonoBehaviour
     {
-        [SerializeField] private Color hoverColor = new Color(1f, 0.85f, 0.45f, 1f);
-        [SerializeField] private Color selectedColor = new Color(1f, 0.99f, 0.88f, 1f);
+        [SerializeField] private Color hoverColor = Color.white;
+
         // Only the rim sweeps the silhouette outwards, and its widest lateral component is
-        // cos(18 degrees), so the ring on screen is a touch narrower than these numbers.
-        [SerializeField] private float hoverWidth = 0.004f;
-        [SerializeField] private float selectedWidth = 0.006f;
+        // cos(18 degrees), so the ring on screen is a touch narrower than this number.
+        [SerializeField] private float hoverWidth = 0.002f;
 
         [Tooltip("Smoothness while the card is in hand. The material value is restored on release.")]
         [SerializeField] private float heldSmoothness = 0f;
@@ -80,6 +78,9 @@ namespace CardsChaos.Cards
         public void AttachTo(Transform parent)
         {
             IsHeld = true;
+            // Only cards on the table can be hovered, so one entering the hand must not
+            // carry the ring in with it.
+            _highlight = CardHighlight.None;
             ApplyMaterialOverrides();
 
             _body.isKinematic = true;
@@ -139,7 +140,7 @@ namespace CardsChaos.Cards
 
         private void ApplyMaterialOverrides()
         {
-            bool outlined = _highlight != CardHighlight.None;
+            bool outlined = _highlight == CardHighlight.Hovered;
 
             // Clearing the block rather than zeroing the values matters: a renderer carrying
             // any property block drops out of SRP batching for good.
@@ -156,9 +157,8 @@ namespace CardsChaos.Cards
 
             if (outlined)
             {
-                bool selected = _highlight == CardHighlight.Selected;
-                _propertyBlock.SetColor(OutlineColorId, selected ? selectedColor : hoverColor);
-                _propertyBlock.SetFloat(OutlineWidthId, selected ? selectedWidth : hoverWidth);
+                _propertyBlock.SetColor(OutlineColorId, hoverColor);
+                _propertyBlock.SetFloat(OutlineWidthId, hoverWidth);
             }
 
             if (IsInspected)

@@ -182,6 +182,9 @@ Shader "CardsChaos/Card Lit"
             Name "Outline"
             Tags { "LightMode" = "SRPDefaultUnlit" }
 
+            // Note: an expanded hull cannot survive URP's depth priming, which redraws
+            // opaques with ZTest Equal against a prepass built from unexpanded geometry.
+            // The renderers this project ships with have priming turned off for that reason.
             Cull Front
             ZWrite On
             ZTest LEqual

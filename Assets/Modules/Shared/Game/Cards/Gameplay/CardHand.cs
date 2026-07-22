@@ -127,7 +127,6 @@ namespace CardsChaos.Cards
             {
                 bool selected = i == _selectedIndex;
 
-                _cards[i].SetHighlight(selected ? CardHighlight.Selected : CardHighlight.None);
                 _cards[i].MoveTo(SlotPosition(i, selected), SlotRotation(i), moveDuration, moveEase);
             }
         }
