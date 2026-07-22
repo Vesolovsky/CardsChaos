@@ -46,10 +46,10 @@ namespace CardsChaos.Cards.CardEditor
                 {
                     Width = width,
                     Height = width * 1.5f,
-                    // Chunkier than a real card (~0.3 mm): thin plates z-fight badly where
-                    // they stack or overlap on the table, and the extra depth also lets the
-                    // rounded rim read as 3D.
-                    Thickness = 0.0015f,
+                    // Far chunkier than a real card (~0.3 mm): thin plates z-fight badly
+                    // where they stack or overlap on the table, and the extra depth also
+                    // lets the rounded rim read as 3D.
+                    Thickness = 0.0025f,
                     CornerRadius = MeasuredCornerRadiusPixels / 1024f * width,
                     Squareness = MeasuredSquareness,
                     CornerSegments = 14,

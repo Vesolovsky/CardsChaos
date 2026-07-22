@@ -25,10 +25,13 @@ namespace CardsChaos.Cards.CardEditor
         private const string CatalogPath = CardsRoot + "/CardCatalog.asset";
 
         /// <summary>
-        /// PhysX generates contacts within this distance of a surface. The 4 cm project
-        /// default dwarfs a 1.5 mm card and would leave it hovering above the table.
+        /// PhysX only starts generating contacts once surfaces are this close, so the value
+        /// doubles as the gap resting cards keep from each other. The previous 0.2 mm was
+        /// tighter than the 0.5 mm project default and left the solver almost no band to
+        /// work in, which is how cards ended up sinking through one another. At 0.8 mm the
+        /// separation is still invisible on a 63 mm card.
         /// </summary>
-        private const float CardContactOffset = 0.0002f;
+        private const float CardContactOffset = 0.0008f;
 
         /// <summary>
         /// The collider is a touch thicker than the plate so a resting card floats a few
@@ -184,6 +187,12 @@ namespace CardsChaos.Cards.CardEditor
             material.SetFloat("_Metallic", 0f);
             material.SetColor("_EdgeTint", Color.white);
             material.SetFloat("_EdgeDarken", 0.18f);
+            // The hover/selected outline is driven per card from a property block, so the
+            // material has to keep it switched off. Left unset the value is whatever the
+            // asset happened to be saved with - M_Card_Base was stuck at the 0.01 maximum,
+            // which put a permanent white shell on anything using it.
+            material.SetFloat("_OutlineWidth", 0f);
+            material.SetColor("_OutlineColor", Color.white);
             material.enableInstancing = true;
         }
 
@@ -208,8 +217,16 @@ namespace CardsChaos.Cards.CardEditor
             var body = root.AddComponent<Rigidbody>();
             body.mass = 0.005f;
             body.interpolation = RigidbodyInterpolation.Interpolate;
-            // A 1.5 mm plate is easy to tunnel through a table at speed.
-            body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            // Speculative contacts were letting cards pass through each other; sweeping
+            // against the other dynamic cards is what actually stops it, at the cost of a
+            // more expensive broadphase.
+            body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            // A pile of thin plates is the worst case for a stacking solver - the 6/1
+            // project defaults let it settle through itself.
+            body.solverIterations = 16;
+            body.solverVelocityIterations = 4;
+            // Push overlaps apart gently rather than firing the card out of the pile.
+            body.maxDepenetrationVelocity = 1f;
 
             root.AddComponent<CardIdentity>();
             root.AddComponent<Card>();

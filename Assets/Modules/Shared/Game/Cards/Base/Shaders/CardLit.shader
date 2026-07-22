@@ -18,7 +18,7 @@ Shader "CardsChaos/Card Lit"
 
         [Header(Outline)]
         _OutlineColor ("Outline Colour", Color) = (1,1,1,1)
-        _OutlineWidth ("Outline Width", Range(0,0.01)) = 0
+        _OutlineWidth ("Outline Width", Range(0,0.02)) = 0
     }
 
     SubShader
@@ -218,7 +218,22 @@ Shader "CardsChaos/Card Lit"
 
                 float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
-                output.positionCS = TransformWorldToHClip(positionWS + normalWS * _OutlineWidth);
+
+                // Pushing straight along the normal buries the ring. A card is a flat slab,
+                // so the half of the hull that Cull Front keeps is the half aimed away from
+                // the camera - and on a card lying face up that half gets pushed down into
+                // the table, where nothing can see it (widening it only digs deeper).
+                // Growing the hull across the view plane instead keeps the ring beside the
+                // card at the card's own depth, so it reads from any angle.
+                float3 viewDirWS = normalize(GetWorldSpaceViewDir(positionWS));
+                float3 lateralWS = normalWS - viewDirWS * dot(normalWS, viewDirWS);
+
+                // Faces aimed straight at or away from the camera have no lateral component
+                // left over. They sit inside the silhouette anyway, so leave them put.
+                float lateral = length(lateralWS);
+                lateralWS = lateral > 1e-5 ? lateralWS / lateral : float3(0, 0, 0);
+
+                output.positionCS = TransformWorldToHClip(positionWS + lateralWS * _OutlineWidth);
 
                 return output;
             }

@@ -17,6 +17,10 @@ namespace CardsChaos.Cards
         [Tooltip("Cards are parented here. Its +Z must point away from the viewer.")]
         [SerializeField] private Transform anchor;
 
+        [Tooltip("Where a card sits while being inspected. Same +Z rule as the anchor; " +
+                 "the closer it is to the camera the larger the card reads.")]
+        [SerializeField] private Transform inspectAnchor;
+
         [Header("Layout")]
         [SerializeField] private int slotCount = 5;
         [SerializeField] private float arcRadius = 0.25f;
@@ -41,6 +45,35 @@ namespace CardsChaos.Cards
         private int _selectedIndex = -1;
 
         public bool IsFull => _cards.Count >= slotCount;
+
+        public Card SelectedCard =>
+            _selectedIndex >= 0 && _selectedIndex < _cards.Count ? _cards[_selectedIndex] : null;
+
+        /// <summary>
+        /// Lifts the selected card out of the fan and onto the inspect anchor. The caller
+        /// drives its transform from there, so any running slot tween is cancelled.
+        /// </summary>
+        public Card PresentForInspect()
+        {
+            Card card = SelectedCard;
+            if (card == null || inspectAnchor == null)
+                return null;
+
+            card.StopAnimation();
+            card.transform.SetParent(inspectAnchor, worldPositionStays: true);
+
+            return card;
+        }
+
+        /// <summary>Drops the inspected card back into the fan.</summary>
+        public void ReturnFromInspect(Card card)
+        {
+            if (card == null)
+                return;
+
+            card.transform.SetParent(anchor, worldPositionStays: true);
+            Relayout();
+        }
 
         public void PickUp(Card card)
         {

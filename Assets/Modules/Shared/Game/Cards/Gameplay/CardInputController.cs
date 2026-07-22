@@ -16,14 +16,16 @@ namespace CardsChaos.Cards
 
         private readonly ICameraService _cameraService;
         private readonly CardHand _hand;
+        private readonly ICardInspector _inspector;
 
         private Card _hovered;
 
         [Inject]
-        public CardInputController(ICameraService cameraService, CardHand hand)
+        public CardInputController(ICameraService cameraService, CardHand hand, ICardInspector inspector)
         {
             _cameraService = cameraService;
             _hand = hand;
+            _inspector = inspector;
         }
 
         public void Tick()
@@ -31,6 +33,15 @@ namespace CardsChaos.Cards
             Mouse mouse = Mouse.current;
             if (mouse == null)
                 return;
+
+            // The inspector owns the mouse while it is open. This runs before it (see the
+            // execution order in CardsInstaller), so the click that closes the inspector is
+            // swallowed here instead of also picking up whatever sits under the cursor.
+            if (_inspector.IsInspecting)
+            {
+                SetHovered(null);
+                return;
+            }
 
             SetHovered(FindCardUnderCursor(mouse));
 
