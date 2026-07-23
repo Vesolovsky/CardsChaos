@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 3038216716329123610}
   - component: {fileID: 3991159474994228441}
   - component: {fileID: 2889948983044918408}
-  - component: {fileID: 7602696918854144165}
   m_Layer: 0
   m_Name: Card_Base
   m_TagString: Untagged
@@ -169,22 +168,3 @@ MonoBehaviour:
   inspectSmoothness: 0.5
   inspectMetallic: 0.845
   faceLuminance: 0.5
---- !u!114 &7602696918854144165
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5788517682138487023}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 06c78af948052824d93c22c84c08dd65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SamplePoints:
-  - {fileID: 2652318146924460980}
-  PermanentlyReveal: 0
-  MaxDistBetweenSamplePoints: 0
-  NumObservers: 0
-  Observers: []
-  CachedTransform: {fileID: 0}
