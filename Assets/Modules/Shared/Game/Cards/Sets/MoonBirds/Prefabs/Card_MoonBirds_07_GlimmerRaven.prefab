@@ -60,6 +60,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2889948983044918408, guid: f8b75973dac7c5643815f055987c5279,
         type: 3}
+      propertyPath: faceLuminance
+      value: 0.8169055
+      objectReference: {fileID: 0}
+    - target: {fileID: 2889948983044918408, guid: f8b75973dac7c5643815f055987c5279,
+        type: 3}
       propertyPath: inspectMetallic
       value: 0.12
       objectReference: {fileID: 0}

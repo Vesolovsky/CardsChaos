@@ -528,6 +528,12 @@ namespace CardsChaos.Cards.CardEditor
                 Mathf.Lerp(DarkFaceMetallic, BrightFaceMetallic, t);
             serialized.FindProperty("inspectSmoothness").floatValue =
                 Mathf.Lerp(DarkFaceSmoothness, BrightFaceSmoothness, t);
+
+            // Kept raw as well as baked into the two values above: the close-up lamps have to
+            // make the same call about how bright this face is, and re-deriving it from a
+            // smoothness that has already been clamped at both ends would not get it back.
+            serialized.FindProperty("faceLuminance").floatValue = luminance;
+
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

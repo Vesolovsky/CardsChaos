@@ -58,6 +58,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2889948983044918408, guid: f8b75973dac7c5643815f055987c5279,
+        type: 3}
+      propertyPath: faceLuminance
+      value: 0.118881926
+      objectReference: {fileID: 0}
     - target: {fileID: 3991159474994228441, guid: f8b75973dac7c5643815f055987c5279,
         type: 3}
       propertyPath: setId

@@ -32,6 +32,11 @@ namespace CardsChaos.Cards
         [SerializeField] private float inspectSmoothness = 0.5f;
         [SerializeField] private float inspectMetallic = 0.845f;
 
+        [Tooltip("Perceived brightness of the face, 0 to 1, measured from the artwork at build " +
+                 "time. Written by the same pass as the two values above; the close-up lighting " +
+                 "reads it so a pale card is not lit as hard as a dark one.")]
+        [SerializeField, Range(0f, 1f)] private float faceLuminance = 0.5f;
+
         private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
         private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
@@ -49,6 +54,8 @@ namespace CardsChaos.Cards
         public bool IsHeld { get; private set; }
 
         public bool IsInspected { get; private set; }
+
+        public float FaceLuminance => faceLuminance;
 
         private void Awake()
         {
@@ -84,8 +91,11 @@ namespace CardsChaos.Cards
             ApplyMaterialOverrides();
 
             _body.isKinematic = true;
-            _body.detectCollisions = false;
-            _collider.enabled = false;
+            // Stays in the physics scene, but as a trigger. The mouse has to be able to find a
+            // card in hand in order to select it, while a solid collider riding along in front
+            // of the camera would shove the cards on the floor aside as the player walks.
+            _body.detectCollisions = true;
+            _collider.isTrigger = true;
             // The hand drives the transform directly from Update. Leaving interpolation on
             // would have the body keep writing its own one-step-old pose over the tween,
             // which shows up as a card twitching in place.
@@ -117,6 +127,43 @@ namespace CardsChaos.Cards
                 _rotationTween = Tween.LocalRotation(transform, localRotation, duration, ease);
         }
 
+        /// <summary>
+        /// Same as <see cref="MoveTo"/>, but bulged out along the way by <paramref name="arc"/>.
+        ///
+        /// Used by the card cycling from one end of the pile to the other: taken in a straight
+        /// line it would slide through every card it is meant to be passing, and the whole point
+        /// of the move is watching where the card went.
+        /// </summary>
+        public void ArcTo(Vector3 localPosition, Quaternion localRotation, Vector3 arc,
+            float duration, Ease ease)
+        {
+            StopTweens();
+
+            if (duration <= 0f)
+            {
+                transform.SetLocalPositionAndRotation(localPosition, localRotation);
+                return;
+            }
+
+            Vector3 start = transform.localPosition;
+            Vector3 control = (start + localPosition) * 0.5f + arc;
+            Transform cardTransform = transform;
+
+            // Quadratic bezier. The control point is only ever approached, never reached, so the
+            // swing reads as softer than the offset suggests.
+            _positionTween = Tween.Custom(0f, 1f, duration, t =>
+            {
+                float inverse = 1f - t;
+
+                cardTransform.localPosition = inverse * inverse * start
+                                              + 2f * inverse * t * control
+                                              + t * t * localPosition;
+            }, ease);
+
+            if (transform.localRotation != localRotation)
+                _rotationTween = Tween.LocalRotation(transform, localRotation, duration, ease);
+        }
+
         public void Release(Vector3 velocity, Vector3 angularVelocity)
         {
             StopTweens();
@@ -130,7 +177,7 @@ namespace CardsChaos.Cards
             transform.SetParent(null, worldPositionStays: true);
 
             _renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-            _collider.enabled = true;
+            _collider.isTrigger = false;
             _body.detectCollisions = true;
             _body.interpolation = RigidbodyInterpolation.Interpolate;
             _body.isKinematic = false;

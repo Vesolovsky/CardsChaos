@@ -12,37 +12,49 @@ namespace Vesolovsky.Core.Services
 
         [Tooltip("How sharply the pan eases in and out. Higher is snappier; 0 disables smoothing.")]
         public float Smoothing = 12f;
+
+        [Header("Collision")]
+        [Tooltip("Radius of the sphere the camera sweeps with. Keep it comfortably above the " +
+                 "near clip plane, otherwise a wall the sphere is resting against still pokes " +
+                 "through the lens. 0 turns collision off.")]
+        public float CollisionRadius = 0.12f;
+
+        [Tooltip("What the camera cannot pass through. Cards in hand are triggers and are never " +
+                 "in the way; cards on the floor sit well below the sphere.")]
+        public LayerMask CollisionMask = ~0;
+
+        [Tooltip("Gap kept between the sphere and whatever it lands on, so the next sweep never " +
+                 "starts flush against the surface.")]
+        public float SkinWidth = 0.005f;
     }
 
     /// <summary>
-    /// Lets gameplay suspend the camera while something else owns the input, without
-    /// having to reach for the controller itself.
-    /// </summary>
-    public interface ICameraPanControl
-    {
-        bool Enabled { get; set; }
-    }
-
-    /// <summary>
-    /// Slides the main camera across the table on WASD / arrow keys.
+    /// Walks the main camera around the room on WASD / arrow keys.
     ///
     /// Movement is flattened onto the horizontal plane and follows the camera's own yaw,
     /// so "forward" is whichever way the camera faces rather than a fixed world axis -
     /// otherwise a tilted camera would drive itself into the floor.
+    ///
+    /// The step is swept as a sphere rather than applied outright, so the camera stops at the
+    /// furniture instead of ending up inside a mesh with the room turned inside out.
     /// </summary>
-    public class CameraPanController : ITickable, ICameraPanControl
+    public class CameraPanController : ITickable
     {
+        // Enough to round an inside corner; past that the leftover step is small enough to drop.
+        private const int MaxSlides = 3;
+
         private readonly ICameraService _cameraService;
+        private readonly ICameraControl _control;
         private readonly CameraPanSettings _settings;
 
         private Vector3 _velocity;
 
-        public bool Enabled { get; set; } = true;
-
         [Inject]
-        public CameraPanController(ICameraService cameraService, CameraPanSettings settings)
+        public CameraPanController(
+            ICameraService cameraService, ICameraControl control, CameraPanSettings settings)
         {
             _cameraService = cameraService;
+            _control = control;
             _settings = settings;
         }
 
@@ -50,7 +62,7 @@ namespace Vesolovsky.Core.Services
         {
             // Dropping the carried velocity matters: without it the camera would resume
             // drifting the moment control came back.
-            if (!Enabled)
+            if (!_control.Enabled)
             {
                 _velocity = Vector3.zero;
                 return;
@@ -72,7 +84,62 @@ namespace Vesolovsky.Core.Services
                 : target;
 
             if (_velocity.sqrMagnitude > 0f)
-                pivot.position += _velocity * Time.deltaTime;
+                pivot.position = Sweep(pivot.position, _velocity * Time.deltaTime);
+        }
+
+        /// <summary>
+        /// Walks the step with a sphere instead of teleporting the camera, and whenever it lands
+        /// on something the leftover distance is carried along the surface rather than dropped -
+        /// without that the camera would stick the instant it brushed a wall at an angle.
+        /// </summary>
+        private Vector3 Sweep(Vector3 position, Vector3 delta)
+        {
+            float radius = _settings.CollisionRadius;
+            if (radius <= 0f)
+                return position + delta;
+
+            for (int slide = 0; slide < MaxSlides; slide++)
+            {
+                float distance = delta.magnitude;
+                if (distance <= 0f)
+                    break;
+
+                Vector3 direction = delta / distance;
+
+                bool blocked = Physics.SphereCast(position, radius, direction, out RaycastHit hit,
+                    distance + _settings.SkinWidth, _settings.CollisionMask,
+                    QueryTriggerInteraction.Ignore);
+
+                // A zero distance means the sphere already overlaps the surface, and PhysX leaves
+                // no usable normal to slide along there. Letting the step through is the lesser
+                // evil - the alternative is a camera sealed inside whatever it clipped into.
+                if (!blocked || hit.distance <= 0f)
+                {
+                    position += delta;
+                    break;
+                }
+
+                float travelled = Mathf.Max(hit.distance - _settings.SkinWidth, 0f);
+                position += direction * travelled;
+
+                // Only the part of the remaining step that runs along the surface survives, and
+                // it is flattened again afterwards: sliding along anything that is not perfectly
+                // upright would otherwise ramp the eye height, and the player has no way back
+                // down.
+                delta = Flatten(Vector3.ProjectOnPlane(direction * (distance - travelled), hit.normal));
+
+                // The carried velocity has to lose the blocked component too, or the camera keeps
+                // pressing into the wall and judders as every frame re-collides with it.
+                _velocity = Flatten(Vector3.ProjectOnPlane(_velocity, hit.normal));
+            }
+
+            return position;
+        }
+
+        private static Vector3 Flatten(Vector3 vector)
+        {
+            vector.y = 0f;
+            return vector;
         }
 
         private static Vector3 ReadDirection(Keyboard keyboard, Transform pivot)
