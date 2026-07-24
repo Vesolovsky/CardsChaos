@@ -5,5 +5,6 @@ namespace Vesolovsky.Game.UISystem
         None = 0,
         AnalyticsConsent = 155686,
         ConfirmationPopup = 825724,
+        CardAlbum = 696473,
     }
 }

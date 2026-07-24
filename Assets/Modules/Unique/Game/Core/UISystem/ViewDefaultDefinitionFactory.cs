@@ -16,6 +16,9 @@ namespace Vesolovsky.Game.UISystem
                 case ConfirmationPopupView:
                     return new ConfirmationPopupViewDefinition();
 
+                case CardAlbumView:
+                    return new CardAlbumViewDefinition();
+
                 default:
                     Debug.Log($"Can't create default View Definition. View of type: '{view.GetType()}' not handled.");
                     return null;
@@ -34,6 +37,9 @@ namespace Vesolovsky.Game.UISystem
 
                 case ViewName.ConfirmationPopup:
                     return new ConfirmationPopupViewDefinition();
+
+                case ViewName.CardAlbum:
+                    return new CardAlbumViewDefinition();
 
                 default:
                     Debug.Log($"Can't create default View Definition. ViewName: '{viewName}' not handled.");
