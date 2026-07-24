@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2eaf3dc8dafcdee4d879c36a29fd1b39, type: 3}
+  m_Name: CardDigitSprites
+  m_EditorClassIdentifier: 
+  digits:
+  - Glyph: {fileID: 21300000, guid: 551f4bd812e76174ebc6155fa3402323, type: 3}
+    InnerShadow: {fileID: 21300000, guid: b42cf665740434d4e85aa0df3e519f3e, type: 3}
+  - Glyph: {fileID: 21300000, guid: 8c10bff23e543d14dae01ec33a6e9bf2, type: 3}
+    InnerShadow: {fileID: 21300000, guid: f9d6e568f28a838439efc15a3766d0af, type: 3}
+  - Glyph: {fileID: 21300000, guid: 0893e67faaec9244f93698968edb2007, type: 3}
+    InnerShadow: {fileID: 21300000, guid: abede046e74d56442baa2c86e4a49cd1, type: 3}
+  - Glyph: {fileID: 21300000, guid: ea08fa73e0d67ea448093044091eba8b, type: 3}
+    InnerShadow: {fileID: 21300000, guid: f4e985e28bb8b7d4a8b07a1a792843e7, type: 3}
+  - Glyph: {fileID: 21300000, guid: 143449c5efb4db14f9f4b0997f5c1c04, type: 3}
+    InnerShadow: {fileID: 21300000, guid: 5951d216042c70246baa829406145f3c, type: 3}
+  - Glyph: {fileID: 21300000, guid: 2c5853f5c27aefd4ab4223c76be58059, type: 3}
+    InnerShadow: {fileID: 21300000, guid: 609608514d757c342a59d12aaef8b7d3, type: 3}
+  - Glyph: {fileID: 21300000, guid: 476500c10231e4a419f4bb445aa16256, type: 3}
+    InnerShadow: {fileID: 21300000, guid: c1cf5c5d849d0f347bd32436817d31ac, type: 3}
+  - Glyph: {fileID: 21300000, guid: 822d442f53e6007418f72bec25232c33, type: 3}
+    InnerShadow: {fileID: 21300000, guid: d83319ca874845c4ebf74c40d4ff5ba4, type: 3}
+  - Glyph: {fileID: 21300000, guid: 5ddf141e5d5fe634daca3d773215777e, type: 3}
+    InnerShadow: {fileID: 21300000, guid: ac1fa3d0ee5de864c88e68cb830b3eac, type: 3}
+  - Glyph: {fileID: 21300000, guid: bdd7df3c19c9db94190241f986ca849e, type: 3}
+    InnerShadow: {fileID: 21300000, guid: 974da8d859c1d974083a7fd3f04256f1, type: 3}
+  sourceFolder: Assets/Modules/Unique/Game/Views/CardAlbum/Art/Numbers

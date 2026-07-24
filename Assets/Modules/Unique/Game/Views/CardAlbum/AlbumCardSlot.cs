@@ -32,6 +32,11 @@ namespace Vesolovsky.Game.Views.Album
                  "child, so switching this object covers the whole filled state.")]
         [SerializeField] private Image cardImage;
 
+        [Tooltip("The number of the card that belongs in this slot. Part of the empty state: it " +
+                 "says which card is still missing, and a filed card carries its own number " +
+                 "printed on it.")]
+        [SerializeField] private AlbumCardNumber cardNumber;
+
         [Tooltip("Where the effect for a correctly filed card is spawned. Usually this slot's " +
                  "own transform; give it a separate child to place the effect somewhere else.")]
         [FormerlySerializedAs("impactTarget")]
@@ -80,6 +85,9 @@ namespace Vesolovsky.Game.Views.Album
             setIcon.enabled = set.Icon != null;
             setIconInnerShadow.enabled = set.IconInnerShadow != null;
 
+            // Slots run in number order from zero, so this square is waiting for card index + 1.
+            cardNumber.SetNumber(slotIndex + 1);
+
             Clear();
         }
 
@@ -125,7 +133,10 @@ namespace Vesolovsky.Game.Views.Album
 
             // Padding slots have no empty state to fall back to - they are meant to be nothing at
             // all, and only exist to hold their cell in the grid.
-            setIcon.gameObject.SetActive(!visible && IsUsable);
+            bool empty = !visible && IsUsable;
+
+            setIcon.gameObject.SetActive(empty);
+            cardNumber.SetVisible(empty);
         }
 
         #region Taking a card back out
