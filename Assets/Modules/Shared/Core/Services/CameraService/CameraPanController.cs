@@ -44,17 +44,17 @@ namespace Vesolovsky.Core.Services
         private const int MaxSlides = 3;
 
         private readonly ICameraService _cameraService;
-        private readonly ICameraControl _control;
+        private readonly IWorldInteractionLock _worldLock;
         private readonly CameraPanSettings _settings;
 
         private Vector3 _velocity;
 
         [Inject]
         public CameraPanController(
-            ICameraService cameraService, ICameraControl control, CameraPanSettings settings)
+            ICameraService cameraService, IWorldInteractionLock worldLock, CameraPanSettings settings)
         {
             _cameraService = cameraService;
-            _control = control;
+            _worldLock = worldLock;
             _settings = settings;
         }
 
@@ -62,7 +62,7 @@ namespace Vesolovsky.Core.Services
         {
             // Dropping the carried velocity matters: without it the camera would resume
             // drifting the moment control came back.
-            if (!_control.Enabled)
+            if (_worldLock.IsLocked)
             {
                 _velocity = Vector3.zero;
                 return;

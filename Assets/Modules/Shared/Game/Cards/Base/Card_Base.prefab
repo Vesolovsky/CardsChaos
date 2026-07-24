@@ -150,6 +150,7 @@ MonoBehaviour:
   setId: 
   number: 0
   displayName: 
+  artwork: {fileID: 0}
 --- !u!114 &2889948983044918408
 MonoBehaviour:
   m_ObjectHideFlags: 0

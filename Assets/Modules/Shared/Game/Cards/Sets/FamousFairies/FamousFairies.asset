@@ -13,8 +13,19 @@ MonoBehaviour:
   m_Name: FamousFairies
   m_EditorClassIdentifier: 
   setId: FamousFairies
+  setName: Famous fairies
+  icon: {fileID: 21300000, guid: 52b103f8d6d26ab409f81e11bf1abdfa, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: cce2397786c44ab40a803cdbeee0b3db, type: 3}
   cards:
   - {fileID: 2431530501196503179, guid: 381d35326f8429846abfd107fb8cb4e0, type: 3}
+  - {fileID: 4406191439380715277, guid: 58e5dd317f8e41c40a14071fab80d31e, type: 3}
+  - {fileID: 5766999247890141891, guid: e18a3f7ebc9cfe3498bdb1181543f595, type: 3}
+  - {fileID: 8699808513493859299, guid: 9761ce55ffa5fd244b412085ad788c4c, type: 3}
+  - {fileID: 1080132240492037004, guid: 1564c1c7066fe1f43bbf6da50db2d9dd, type: 3}
+  - {fileID: 5144612787875056321, guid: 6a9000f275b7d954eafc9dca8886b434, type: 3}
+  - {fileID: 2967566469516788410, guid: 19a987a68b02b264f9fdd3280bd5995f, type: 3}
+  - {fileID: 3160487808517279575, guid: 6136de197561b4c499809beff52b9cf4, type: 3}
+  - {fileID: 419133956950946915, guid: 7700f209f49a36f4b900ce5be87ac552, type: 3}
   - {fileID: 6130401026364790315, guid: bf01ff2aa0e3874438d6453361da781e, type: 3}
   - {fileID: 7090365724012033637, guid: 7f5bab773e5076a42b323b9f79998dd7, type: 3}
   - {fileID: 9033364022458898900, guid: 2cd78ae7ebf8ab347a5639404cea72c1, type: 3}
@@ -25,7 +36,6 @@ MonoBehaviour:
   - {fileID: 6593627505204281433, guid: 91c938302d9861347ac8be2e17cc9938, type: 3}
   - {fileID: 7501544355488160648, guid: 169fe194146ac3e4f93ee215b105d8bd, type: 3}
   - {fileID: 4909369426250771620, guid: 7c2017e772286b24993fcae0d8a9ffb3, type: 3}
-  - {fileID: 4406191439380715277, guid: 58e5dd317f8e41c40a14071fab80d31e, type: 3}
   - {fileID: 2751311298634388675, guid: 660ef33d6e8532d43a13807ff2ef5210, type: 3}
   - {fileID: 1128604068936738549, guid: c5e2de6b50fcb0b4aa43df96e041f8f4, type: 3}
   - {fileID: 288562633440972983, guid: ab4d828243b711a4bbb9db44c9fc2a40, type: 3}
@@ -36,11 +46,4 @@ MonoBehaviour:
   - {fileID: 7015286199102291855, guid: a71de57ab48f0dc46b62e8df3c62f6bf, type: 3}
   - {fileID: 5355934258691258440, guid: bd58ebfab9a5f10479c7a32b709fe862, type: 3}
   - {fileID: 9187746080698117619, guid: ee7ddaf1c2821b841b0f079dde3ce90b, type: 3}
-  - {fileID: 5766999247890141891, guid: e18a3f7ebc9cfe3498bdb1181543f595, type: 3}
   - {fileID: 342478649208972951, guid: b35081f904a7a2b479732fb6af93f307, type: 3}
-  - {fileID: 8699808513493859299, guid: 9761ce55ffa5fd244b412085ad788c4c, type: 3}
-  - {fileID: 1080132240492037004, guid: 1564c1c7066fe1f43bbf6da50db2d9dd, type: 3}
-  - {fileID: 5144612787875056321, guid: 6a9000f275b7d954eafc9dca8886b434, type: 3}
-  - {fileID: 2967566469516788410, guid: 19a987a68b02b264f9fdd3280bd5995f, type: 3}
-  - {fileID: 3160487808517279575, guid: 6136de197561b4c499809beff52b9cf4, type: 3}
-  - {fileID: 419133956950946915, guid: 7700f209f49a36f4b900ce5be87ac552, type: 3}

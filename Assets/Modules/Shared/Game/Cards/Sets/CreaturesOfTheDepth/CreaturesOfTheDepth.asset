@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: CreaturesOfTheDepth
   m_EditorClassIdentifier: 
   setId: CreaturesOfTheDepth
+  setName: Creatures of the depth
+  icon: {fileID: 21300000, guid: 08295e6f365cbb442877d31ce80b4f95, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 4c6384ee7521b534a88525071e70c30d, type: 3}
   cards:
   - {fileID: 2992229336826228081, guid: 9be0b9fb23f729240a1a5971831ed898, type: 3}
   - {fileID: 8029032509931058657, guid: a4ec9cfe8c5853d4da1de2333e6985d4, type: 3}

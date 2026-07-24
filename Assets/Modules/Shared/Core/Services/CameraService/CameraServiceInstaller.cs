@@ -16,7 +16,11 @@ namespace Vesolovsky.Core.Services
             Container.BindInstance(lookSettings).AsSingle();
 
             Container.BindInterfacesAndSelfTo<CameraService>().AsSingle();
-            Container.BindInterfacesTo<CameraControl>().AsSingle();
+
+            // Lives here because the camera rig is the thing that most obviously stands down when
+            // something takes the room, but it is not the rig's alone - the card table and the
+            // album read the same lock, which is the entire point of there being one.
+            Container.BindInterfacesTo<WorldInteractionLock>().AsSingle();
             Container.BindInterfacesTo<CameraPanController>().AsSingle();
             Container.BindInterfacesTo<CameraLookController>().AsSingle();
 

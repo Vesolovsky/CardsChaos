@@ -85,6 +85,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3991159474994228441, guid: f8b75973dac7c5643815f055987c5279,
         type: 3}
+      propertyPath: artwork
+      value: 
+      objectReference: {fileID: 21300000, guid: 887bd1bafe6f138419eba93737a1ac6b,
+        type: 3}
+    - target: {fileID: 3991159474994228441, guid: f8b75973dac7c5643815f055987c5279,
+        type: 3}
       propertyPath: displayName
       value: Bramblekiss Glow
       objectReference: {fileID: 0}

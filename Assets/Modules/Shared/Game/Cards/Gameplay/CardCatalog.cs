@@ -6,7 +6,16 @@ namespace CardsChaos.Cards
     public interface ICardCatalog
     {
         IReadOnlyList<Card> Cards { get; }
+
+        /// <summary>
+        /// Every set, in the order the album lists them down its left-hand side.
+        /// </summary>
+        IReadOnlyList<CardSetDefinition> Sets { get; }
+
         Card GetRandom();
+
+        /// <summary>The set a card belongs to, or null when its id matches nothing.</summary>
+        CardSetDefinition FindSet(string setId);
     }
 
     [CreateAssetMenu(menuName = "CardsChaos/Card Catalog", fileName = "CardCatalog")]
@@ -21,10 +30,23 @@ namespace CardsChaos.Cards
 
         public IReadOnlyList<Card> Cards => _cards ??= Flatten();
 
+        public IReadOnlyList<CardSetDefinition> Sets => sets;
+
         public Card GetRandom()
         {
             IReadOnlyList<Card> cards = Cards;
             return cards.Count == 0 ? null : cards[Random.Range(0, cards.Count)];
+        }
+
+        public CardSetDefinition FindSet(string setId)
+        {
+            foreach (CardSetDefinition set in sets)
+            {
+                if (set != null && set.SetId == setId)
+                    return set;
+            }
+
+            return null;
         }
 
         private void OnDisable() => _cards = null;

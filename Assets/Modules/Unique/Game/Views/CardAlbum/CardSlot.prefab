@@ -134,7 +134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2100000, guid: 7c6c7200ac9a0b849912c9cc49e969fd, type: 2}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -163,6 +163,7 @@ GameObject:
   - component: {fileID: 4006495542814607797}
   - component: {fileID: 7650548185308373718}
   - component: {fileID: 3621579965907776278}
+  - component: {fileID: 2721810486747293030}
   m_Layer: 5
   m_Name: CardSlot
   m_TagString: Untagged
@@ -229,6 +230,23 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2721810486747293030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4015904170818809551}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66c82ce7fd08f8b479a6259a7f2e2853, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  frame: {fileID: 3621579965907776278}
+  setIcon: {fileID: 5837037529403893635}
+  setIconInnerShadow: {fileID: 5985070467023006611}
+  cardImage: {fileID: 6484754655248762697}
+  impactTarget: {fileID: 7242083463452885263}
 --- !u!1 &5034837240099410973
 GameObject:
   m_ObjectHideFlags: 0

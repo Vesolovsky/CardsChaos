@@ -3,6 +3,7 @@ using UnityEngine;
 using Vesolovsky.Core;
 using Vesolovsky.Core.Services.Save;
 using Vesolovsky.Core.Services.Wallet;
+using Vesolovsky.Game.Services.Album;
 
 namespace Vesolovsky.Game.Services.Save
 {
@@ -12,6 +13,12 @@ namespace Vesolovsky.Game.Services.Save
         public bool IsAnalyticsAllowed { get; set; }
         public bool IsFirstLaunch { get; set; }
         public string BuildVersion { get; set; }
+
+        /// <summary>
+        /// Every card the player has filed, flat. Null when read from a save written before the
+        /// album existed, which <see cref="LocalCardAlbum"/> reads as an empty album.
+        /// </summary>
+        public List<AlbumPlacement> Album { get; set; }
     }
 
     public class GameSaveService : SaveService<GameSave>
@@ -27,6 +34,7 @@ namespace Vesolovsky.Game.Services.Save
                 IsAnalyticsAllowed = false,
                 IsFirstLaunch = true,
                 BuildVersion = BuildVersion.CURRENT_VERSION,
+                Album = new List<AlbumPlacement>(),
             };
         }
 
@@ -44,6 +52,7 @@ namespace Vesolovsky.Game.Services.Save
         public override void ClearSave()
         {
             CurrentSave.Currencies[CurrencyType.Coins] = 0;
+            CurrentSave.Album?.Clear();
         }
     }
 }

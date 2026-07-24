@@ -18,9 +18,11 @@ namespace CardsChaos.Cards.CardEditor
         private const string BaseArtFolder = BaseFolder + "/Art";
         private const string SetsRoot = CardsRoot + "/Sets";
         private const string ShaderName = "CardsChaos/Card Lit";
+        private const string UIShaderName = "CardsChaos/Card UI";
 
         private const string MeshPath = BaseArtFolder + "/CardMesh.asset";
         private const string BaseMaterialPath = BaseArtFolder + "/M_Card_Base.mat";
+        private const string UIMaterialPath = BaseArtFolder + "/M_Card_UI.mat";
         private const string BasePrefabPath = BaseFolder + "/Card_Base.prefab";
         private const string CatalogPath = CardsRoot + "/CardCatalog.asset";
 
@@ -62,6 +64,10 @@ namespace CardsChaos.Cards.CardEditor
 
         private const string BackTexturePrefix = "Revers_";
 
+        // Set icons live loose in the set folder, beside the definition asset.
+        private const string IconSuffix = "_Icon.png";
+        private const string IconInnerShadowSuffix = "_IconInnerShadow.png";
+
         [MenuItem("Tools/Cards/Build All Card Sets")]
         public static void BuildAll() => Build(rebuildExisting: true);
 
@@ -79,6 +85,11 @@ namespace CardsChaos.Cards.CardEditor
             GameObject basePrefab = rebuildExisting
                 ? BuildBasePrefab(BuildAndSaveMesh(), BuildBaseMaterial())
                 : LoadOrBuildBasePrefab();
+
+            // Cheap, and it has to run on both paths: the flat card's silhouette is derived from
+            // the same measurements as the mesh, and the two drifting apart is exactly the bug
+            // this generation step exists to prevent.
+            BuildUIMaterial();
 
             var setDefinitions = new List<CardSetDefinition>();
             int built = 0;
@@ -194,6 +205,52 @@ namespace CardsChaos.Cards.CardEditor
             return material;
         }
 
+        /// <summary>
+        /// The one material every flat card is drawn with - in a slot, on the pile, and in
+        /// flight between them.
+        ///
+        /// Its corner is written from <see cref="CardMeshSettings"/>, the same numbers the mesh
+        /// is cut from, so the card has one silhouette rather than two that happen to look alike
+        /// until someone retunes the measurement. Sharing a single material also keeps every
+        /// card in one batch.
+        /// </summary>
+        private static Material BuildUIMaterial()
+        {
+            Shader shader = Shader.Find(UIShaderName);
+            if (shader == null)
+            {
+                throw new System.InvalidOperationException(
+                    $"Shader '{UIShaderName}' not found. It may have failed to compile.");
+            }
+
+            var material = AssetDatabase.LoadAssetAtPath<Material>(UIMaterialPath);
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, UIMaterialPath);
+            }
+
+            material.shader = shader;
+
+            CardMeshSettings settings = CardMeshSettings.Default;
+
+            // Radius as a fraction of the width, because that is the form it was measured in -
+            // 48.5 px across a 1024 px face.
+            material.SetFloat("_CornerRadius", settings.CornerRadius / settings.Width);
+            material.SetFloat("_Squareness", settings.Squareness);
+            material.SetFloat("_Aspect", settings.Width / settings.Height);
+            material.SetVector("_UvInset", new Vector4(
+                settings.UvInsetPixels / settings.TextureSize.x,
+                settings.UvInsetPixels / settings.TextureSize.y,
+                0f,
+                0f));
+
+            EditorUtility.SetDirty(material);
+            Debug.Log($"[CardSetBuilder] UI card material written to {UIMaterialPath}");
+
+            return material;
+        }
+
         private static void ApplyMaterialLook(Material material)
         {
             material.SetColor("_BaseColor", Color.white);
@@ -287,7 +344,7 @@ namespace CardsChaos.Cards.CardEditor
 
             var backTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(backPath);
             var fronts = pngPaths.Where(p => p != backPath).ToArray();
-            var cards = new List<GameObject>(fronts.Length);
+            var cards = new List<(int Number, GameObject Prefab)>(fronts.Length);
             float minLuminance = 1f;
             float maxLuminance = 0f;
             float totalLuminance = 0f;
@@ -298,6 +355,17 @@ namespace CardsChaos.Cards.CardEditor
                 ParseCardName(fileName, out int number, out string displayName);
 
                 var frontTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(frontPath);
+
+                // Loaded after the import pass above has run, so the sub-asset is guaranteed to
+                // exist even on the run that first flips a set over to sprites.
+                var frontSprite = AssetDatabase.LoadAssetAtPath<Sprite>(frontPath);
+                if (frontSprite == null)
+                {
+                    Debug.LogError(
+                        $"[CardSetBuilder] '{frontPath}' produced no Sprite. The album will have " +
+                        "nothing to draw for this card.", frontTexture);
+                }
+
                 string safeName = $"{setId}_{fileName}";
 
                 Material material = CreateCardMaterial(
@@ -308,15 +376,22 @@ namespace CardsChaos.Cards.CardEditor
                 maxLuminance = Mathf.Max(maxLuminance, luminance);
                 totalLuminance += luminance;
 
-                cards.Add(CreateCardVariant(
+                cards.Add((number, CreateCardVariant(
                     basePrefab,
                     $"{prefabFolder}/Card_{safeName}.prefab",
                     material,
+                    frontSprite,
                     setId,
                     number,
                     displayName,
-                    luminance));
+                    luminance)));
             }
+
+            // Sorted by number rather than by filename, which orders 10 before 2. Nothing reads
+            // the list positionally, but an asset whose inspector runs 1, 10, 11, 2 is a trap
+            // for anyone checking a set by eye.
+            cards.Sort((left, right) => left.Number.CompareTo(right.Number));
+            ValidateNumbering(setId, cards);
 
             // The spread is worth reading back: it is what the luminance bounds are tuned
             // against, and a set that lands entirely on one side of the knee gets no
@@ -326,10 +401,72 @@ namespace CardsChaos.Cards.CardEditor
                 : string.Empty;
 
             Debug.Log($"[CardSetBuilder] Set '{setId}': {cards.Count} card variants generated.{luminanceReport}");
-            return CreateSetDefinition($"{setFolder}/{setId}.asset", setId, cards);
+
+            return CreateSetDefinition(
+                $"{setFolder}/{setId}.asset",
+                setId,
+                cards.Select(card => card.Prefab).ToList(),
+                LoadSetIcon(setFolder, setId, IconSuffix),
+                LoadSetIcon(setFolder, setId, IconInnerShadowSuffix));
         }
 
-        private static CardSetDefinition CreateSetDefinition(string path, string setId, List<GameObject> cards)
+        /// <summary>
+        /// The album lays a set out as slots 1..N and puts card number K in slot K, so a gap or
+        /// an out-of-range number leaves a slot that no card can ever fill. Cheaper to catch here,
+        /// against the filenames, than to work out from a permanently empty square in the album.
+        /// </summary>
+        private static void ValidateNumbering(string setId, List<(int Number, GameObject Prefab)> cards)
+        {
+            for (int i = 0; i < cards.Count; i++)
+            {
+                int expected = i + 1;
+                if (cards[i].Number == expected)
+                    continue;
+
+                Debug.LogError(
+                    $"[CardSetBuilder] Set '{setId}' is not numbered 1..{cards.Count}: expected " +
+                    $"{expected} but found {cards[i].Number} ('{cards[i].Prefab.name}'). Rename the " +
+                    "source PNGs so the numbers run without gaps or duplicates.", cards[i].Prefab);
+
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Found by suffix rather than by building "{setId}_Icon.png", because the two do not
+        /// always agree - the MagicalButerrflies folder carries MagicalButterflies icons, and a
+        /// name-built path would silently come back empty.
+        /// </summary>
+        private static Sprite LoadSetIcon(string setFolder, string setId, string suffix)
+        {
+            string[] matches = Directory.GetFiles(setFolder, "*.png")
+                .Select(p => p.Replace('\\', '/'))
+                .Where(p => p.EndsWith(suffix, System.StringComparison.Ordinal))
+                .OrderBy(p => p)
+                .ToArray();
+
+            if (matches.Length == 0)
+            {
+                Debug.LogWarning(
+                    $"[CardSetBuilder] Set '{setId}' has no '*{suffix}' next to its definition. " +
+                    "Its album button and empty card slots will show no icon.");
+
+                return null;
+            }
+
+            if (matches.Length > 1)
+            {
+                Debug.LogWarning(
+                    $"[CardSetBuilder] Set '{setId}' has {matches.Length} files ending in " +
+                    $"'{suffix}'. Using '{Path.GetFileName(matches[0])}'.");
+            }
+
+            ConfigureIconImporter(matches[0]);
+            return AssetDatabase.LoadAssetAtPath<Sprite>(matches[0]);
+        }
+
+        private static CardSetDefinition CreateSetDefinition(
+            string path, string setId, List<GameObject> cards, Sprite icon, Sprite iconInnerShadow)
         {
             var definition = AssetDatabase.LoadAssetAtPath<CardSetDefinition>(path);
             if (definition == null)
@@ -340,7 +477,13 @@ namespace CardsChaos.Cards.CardEditor
 
             var serialized = new SerializedObject(definition);
             serialized.FindProperty("setId").stringValue = setId;
+            serialized.FindProperty("icon").objectReferenceValue = icon;
+            serialized.FindProperty("iconInnerShadow").objectReferenceValue = iconInnerShadow;
 
+            // setName is deliberately untouched. It is the one field a human is expected to
+            // correct - the generated name cannot know that Ballon'dOrs wants to read
+            // "Ballon d'Or" - so it is owned by Tools/Cards/Build Set Names, which only ever
+            // writes it on request. See CardSetNameBuilder.
             SerializedProperty cardsProperty = serialized.FindProperty("cards");
             cardsProperty.arraySize = cards.Count;
             for (int i = 0; i < cards.Count; i++)
@@ -389,6 +532,7 @@ namespace CardsChaos.Cards.CardEditor
             GameObject basePrefab,
             string path,
             Material material,
+            Sprite artwork,
             string setId,
             int number,
             string displayName,
@@ -405,6 +549,7 @@ namespace CardsChaos.Cards.CardEditor
             serialized.FindProperty("setId").stringValue = setId;
             serialized.FindProperty("number").intValue = number;
             serialized.FindProperty("displayName").stringValue = displayName;
+            serialized.FindProperty("artwork").objectReferenceValue = artwork;
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             // Saving a prefab instance under a new path produces a variant of the base.
@@ -418,6 +563,15 @@ namespace CardsChaos.Cards.CardEditor
             return AssetDatabase.LoadAssetAtPath<GameObject>(path);
         }
 
+        /// <summary>
+        /// Card faces are imported as sprites, and that is the whole trick behind the album not
+        /// needing a second copy of the art: a Sprite-type import still produces the Texture2D
+        /// the card material samples in the world, with the Sprite hanging off it as a sub-asset
+        /// for the UI. One file, one texture in memory, both uses served.
+        ///
+        /// Everything the 3D side needs is kept alongside it - mips for the thousands of cards on
+        /// the floor, clamped wrapping, anisotropy - none of which a sprite import forbids.
+        /// </summary>
         private static void ConfigureTextureImporter(string path)
         {
             var importer = AssetImporter.GetAtPath(path) as TextureImporter;
@@ -436,35 +590,78 @@ namespace CardsChaos.Cards.CardEditor
             }
 
             var textureType = importer.textureType;
+            var spriteMode = importer.spriteImportMode;
             var mipmap = importer.mipmapEnabled;
             var wrap = importer.wrapMode;
             var filter = importer.filterMode;
             var aniso = importer.anisoLevel;
             var srgb = importer.sRGBTexture;
             var alphaSource = importer.alphaSource;
+            var npot = importer.npotScale;
 
-            // The art is opaque RGB used on 3D geometry, so: default type, mips for
-            // minification (thousands of cards on screen), clamp to stop edge bleeding.
-            Set(ref textureType, TextureImporterType.Default);
+            Set(ref textureType, TextureImporterType.Sprite);
+            Set(ref spriteMode, SpriteImportMode.Single);
             Set(ref mipmap, true);
             Set(ref wrap, TextureWrapMode.Clamp);
             Set(ref filter, FilterMode.Trilinear);
             Set(ref aniso, 8);
             Set(ref srgb, true);
+            // The faces are opaque, so there is no alpha worth storing - and dropping it keeps
+            // the tight-mesh question below moot as well.
             Set(ref alphaSource, TextureImporterAlphaSource.None);
+            // A sprite import would otherwise be free to rescale a non-power-of-two face, which
+            // on a 1024x1536 card means resampling the artwork for nothing.
+            Set(ref npot, TextureImporterNPOTScale.None);
+
+            // Tight is the sprite default and would hand the UI a mesh cut to the alpha shape.
+            // On an opaque card that is the full rect anyway, so all it buys is a slower import
+            // and a silhouette that changes if the art ever gains a transparent corner.
+            var spriteSettings = new TextureImporterSettings();
+            importer.ReadTextureSettings(spriteSettings);
+
+            if (spriteSettings.spriteMeshType != SpriteMeshType.FullRect)
+            {
+                spriteSettings.spriteMeshType = SpriteMeshType.FullRect;
+                importer.SetTextureSettings(spriteSettings);
+                changed = true;
+            }
 
             if (!changed)
                 return;
 
             importer.textureType = textureType;
+            importer.spriteImportMode = spriteMode;
             importer.mipmapEnabled = mipmap;
             importer.wrapMode = wrap;
             importer.filterMode = filter;
             importer.anisoLevel = aniso;
             importer.sRGBTexture = srgb;
             importer.alphaSource = alphaSource;
+            importer.npotScale = npot;
             importer.alphaIsTransparency = false;
 
+            importer.SaveAndReimport();
+        }
+
+        /// <summary>
+        /// Set icons are already authored as sprites with a transparent surround, so this only
+        /// insists on the parts the album depends on and leaves the alpha exactly as drawn -
+        /// running them through <see cref="ConfigureTextureImporter"/> would flatten it away.
+        /// </summary>
+        private static void ConfigureIconImporter(string path)
+        {
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null)
+                return;
+
+            if (importer.textureType == TextureImporterType.Sprite &&
+                importer.spriteImportMode == SpriteImportMode.Single)
+            {
+                return;
+            }
+
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
             importer.SaveAndReimport();
         }
 

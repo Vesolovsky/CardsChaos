@@ -41,25 +41,26 @@ namespace CardsChaos.Cards
         private static readonly Quaternion FaceBack = Quaternion.identity;
 
         private readonly CardHand _hand;
-        private readonly ICameraControl _cameraControl;
+        private readonly IWorldInteractionLock _worldLock;
         private readonly ICardInspectLight _light;
         private readonly CardInspectSettings _settings;
 
         private Card _card;
         private bool _showingBack;
         private int _openedFrame = -1;
+        private System.IDisposable _worldHandle;
 
         public bool IsInspecting => _card != null;
 
         [Inject]
         public CardInspector(
             CardHand hand,
-            ICameraControl cameraControl,
+            IWorldInteractionLock worldLock,
             CardInspectSettings settings,
             [InjectOptional] ICardInspectLight light)
         {
             _hand = hand;
-            _cameraControl = cameraControl;
+            _worldLock = worldLock;
             _settings = settings;
             _light = light;
         }
@@ -77,7 +78,7 @@ namespace CardsChaos.Cards
             _card.SetInspected(true);
             _showingBack = false;
             _openedFrame = Time.frameCount;
-            _cameraControl.Enabled = false;
+            _worldHandle = _worldLock.Acquire(this);
             _light?.Show(_card.FaceLuminance);
 
             return true;
@@ -134,7 +135,9 @@ namespace CardsChaos.Cards
 
             _card = null;
             _showingBack = false;
-            _cameraControl.Enabled = true;
+
+            _worldHandle?.Dispose();
+            _worldHandle = null;
 
             // Switch() routes through here only when the hand ran out, so stepping from one card
             // to the next never flickers the lamps off and back on.

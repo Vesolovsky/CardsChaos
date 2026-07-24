@@ -84,7 +84,18 @@ namespace CardsChaos.Cards
         private Card _selected;
         private CardHandLayout _layout = CardHandLayout.Pile;
 
+        /// <summary>
+        /// Raised whenever the hand gains, loses or reorders a card. The album mirrors the pile
+        /// as UI while it is open and has no other way to notice a card leaving.
+        /// </summary>
+        public event System.Action Changed;
+
         public bool IsFull => _cards.Count >= slotCount;
+
+        public bool HasRoom => _cards.Count < slotCount;
+
+        /// <summary>Index 0 is the top of the pile, same order the pile is drawn in.</summary>
+        public IReadOnlyList<Card> Cards => _cards;
 
         public CardHandLayout Layout => _layout;
 
@@ -125,6 +136,35 @@ namespace CardsChaos.Cards
             // No selection here on purpose: pointing at a card is what selects it, so claiming
             // the new card would light it up until the cursor happened to move.
             Relayout();
+            Changed?.Invoke();
+            return true;
+        }
+
+        /// <summary>
+        /// Lifts a card out of the hand without throwing it, for something else to take
+        /// ownership of - the album filing it away, and giving it back later.
+        ///
+        /// The card is left parentless, still kinematic and still where it was: the caller is
+        /// expected to destroy it or drive it somewhere, and until it does nothing else will.
+        /// </summary>
+        public bool TryRemove(Card card)
+        {
+            int index = _cards.IndexOf(card);
+            if (index < 0)
+                return false;
+
+            _cards.RemoveAt(index);
+
+            // Same rule as throwing: the card that slid into the gap is what the player is
+            // looking at now, and an empty hand has nothing to look at.
+            if (_selected == card)
+                Claim(_cards.Count > 0 ? _cards[Mathf.Min(index, _cards.Count - 1)] : null);
+
+            card.StopAnimation();
+            card.transform.SetParent(null, worldPositionStays: true);
+
+            Relayout();
+            Changed?.Invoke();
             return true;
         }
 
@@ -169,6 +209,7 @@ namespace CardsChaos.Cards
                 Claim(_cards[Mathf.Min(index, _cards.Count - 1)]);
 
             Relayout();
+            Changed?.Invoke();
         }
 
         /// <summary>
@@ -200,6 +241,27 @@ namespace CardsChaos.Cards
             // straight move and the card would cut through the stack instead of swinging past it.
             Claim(_cards[0]);
             Relayout(traveller);
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// Walks the whole hand round by one card, without touching the selection.
+        ///
+        /// <see cref="Step"/> is the wheel as the room understands it, and there its meaning
+        /// depends on the layout - the fan has no stack to turn, so it moves the selection
+        /// instead. The album has no such choice to make: it draws the hand one way, the wheel
+        /// there always means "bring a different card round", and it would be a poor joke if
+        /// that stopped working because the player happened to press TAB before opening it.
+        /// </summary>
+        public void Cycle(int direction)
+        {
+            if (direction == 0 || _cards.Count < 2)
+                return;
+
+            Card traveller = Rotate(direction);
+
+            Relayout(traveller);
+            Changed?.Invoke();
         }
 
         /// <summary>Swaps between the corner pile and the spread out fan.</summary>

@@ -85,6 +85,12 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3991159474994228441, guid: f8b75973dac7c5643815f055987c5279,
         type: 3}
+      propertyPath: artwork
+      value: 
+      objectReference: {fileID: 21300000, guid: ee5523b616b59f440b7a459b82c90ed6,
+        type: 3}
+    - target: {fileID: 3991159474994228441, guid: f8b75973dac7c5643815f055987c5279,
+        type: 3}
       propertyPath: displayName
       value: Blanket Bear
       objectReference: {fileID: 0}

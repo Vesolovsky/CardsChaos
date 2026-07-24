@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: 18WheelsOfFutureSteel
   m_EditorClassIdentifier: 
   setId: 18WheelsOfFutureSteel
+  setName: 18 Wheels of future steel
+  icon: {fileID: 21300000, guid: 7f4037464fbe99a47bb22cd498a46ea9, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 5ba70a260e25b134e8893783ab4aa196, type: 3}
   cards:
   - {fileID: 4826157016005184298, guid: 52c2a452ba86dbc45b44dabfe36c3219, type: 3}
   - {fileID: 8231627048501650715, guid: 9968ac7e7b0ef7243aaba9f211f36462, type: 3}

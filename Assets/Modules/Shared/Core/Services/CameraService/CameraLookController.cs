@@ -27,7 +27,7 @@ namespace Vesolovsky.Core.Services
     public class CameraLookController : IInitializable, ITickable
     {
         private readonly ICameraService _cameraService;
-        private readonly ICameraControl _control;
+        private readonly IWorldInteractionLock _worldLock;
         private readonly CameraLookSettings _settings;
 
         private float _yaw;
@@ -37,10 +37,10 @@ namespace Vesolovsky.Core.Services
 
         [Inject]
         public CameraLookController(
-            ICameraService cameraService, ICameraControl control, CameraLookSettings settings)
+            ICameraService cameraService, IWorldInteractionLock worldLock, CameraLookSettings settings)
         {
             _cameraService = cameraService;
-            _control = control;
+            _worldLock = worldLock;
             _settings = settings;
         }
 
@@ -68,7 +68,7 @@ namespace Vesolovsky.Core.Services
             if (mouse == null || camera == null)
                 return;
 
-            if (!_control.Enabled)
+            if (_worldLock.IsLocked)
             {
                 EndDrag(mouse);
                 return;

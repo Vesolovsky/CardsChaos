@@ -57,11 +57,18 @@ namespace CardsChaos.Cards
 
         public float FaceLuminance => faceLuminance;
 
+        /// <summary>
+        /// Which card this is - set, number, face. Cached because the album asks every card in
+        /// hand for it every time it redraws the pile.
+        /// </summary>
+        public CardIdentity Identity { get; private set; }
+
         private void Awake()
         {
             _body = GetComponent<Rigidbody>();
             _collider = GetComponent<BoxCollider>();
             _renderer = GetComponent<MeshRenderer>();
+            Identity = GetComponent<CardIdentity>();
         }
 
         public void SetHighlight(CardHighlight highlight)

@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: BirdsOfTheSun
   m_EditorClassIdentifier: 
   setId: BirdsOfTheSun
+  setName: Birds of the sun
+  icon: {fileID: 21300000, guid: acf8199679a4ce24ebc4db94174fb5f2, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 2e60b6c892a76194dbcf58e137b054a8, type: 3}
   cards:
   - {fileID: 3648086734044102930, guid: 078103128fae49c44be1e70e9389e777, type: 3}
   - {fileID: 17120209101118020, guid: 5c92c9cd0336880408b86976ab3a1e4e, type: 3}

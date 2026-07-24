@@ -22,16 +22,22 @@ namespace CardsChaos.Cards
         private readonly ICameraService _cameraService;
         private readonly CardHand _hand;
         private readonly ICardInspector _inspector;
+        private readonly IWorldInteractionLock _worldLock;
 
         private Card _target;
         private Card _outlined;
 
         [Inject]
-        public CardInputController(ICameraService cameraService, CardHand hand, ICardInspector inspector)
+        public CardInputController(
+            ICameraService cameraService,
+            CardHand hand,
+            ICardInspector inspector,
+            IWorldInteractionLock worldLock)
         {
             _cameraService = cameraService;
             _hand = hand;
             _inspector = inspector;
+            _worldLock = worldLock;
         }
 
         public void Tick()
@@ -42,10 +48,10 @@ namespace CardsChaos.Cards
             if (mouse == null || keyboard == null)
                 return;
 
-            // The inspector owns the mouse while it is open. This runs before it (see the
-            // execution order in CardsInstaller), so the click that closes the inspector is
-            // swallowed here instead of also grabbing whatever sits under the cursor.
-            if (_inspector.IsInspecting)
+            // Whoever holds the room owns the mouse - the close-up, the album. This runs before
+            // the close-up does (see the execution order in CardsInstaller), so the click that
+            // closes it is swallowed here instead of also grabbing whatever sits under the cursor.
+            if (_worldLock.IsLocked)
             {
                 Aim(null);
                 return;

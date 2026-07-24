@@ -33,14 +33,20 @@ namespace Vesolovsky.Core.UISystem.Animations
             _canvasGroup.blocksRaycasts = false;
         }
 
+        // The immediate paths have to move the raycast blocking as well as the alpha, or a view
+        // shown or hidden without its animation ends up disagreeing with itself. The closed case
+        // is the one that bites: a StayHidden view sits at alpha 0 over the whole screen and, if
+        // it is still blocking, quietly swallows every click meant for what is behind it.
         protected override void SetToOpenedState()
         {
             _canvasGroup.alpha = 1;
+            _canvasGroup.blocksRaycasts = true;
         }
 
         protected override void SetToClosedState()
         {
             _canvasGroup.alpha = 0;
+            _canvasGroup.blocksRaycasts = false;
         }
 
     }
