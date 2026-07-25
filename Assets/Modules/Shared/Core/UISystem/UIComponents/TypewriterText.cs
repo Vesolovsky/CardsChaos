@@ -1,0 +1,80 @@
+using PrimeTween;
+using TMPro;
+using UnityEngine;
+
+namespace Vesolovsky.Core.UISystem.UIComponents
+{
+    /// <summary>
+    /// Reveals its text one character at a time, the way a line typed onto the screen appears.
+    ///
+    /// Driven by TMP's <see cref="TMP_Text.maxVisibleCharacters"/> rather than by building the
+    /// string up character by character: the whole text is set once and laid out once, and only
+    /// how much of it is drawn changes. That keeps the line from reflowing - a name built up
+    /// letter by letter would re-wrap and jump around as it grew.
+    /// </summary>
+    [RequireComponent(typeof(TMP_Text))]
+    [AddComponentMenu("Vesolovsky/UI/Typewriter Text")]
+    public class TypewriterText : MonoBehaviour
+    {
+        [Tooltip("Characters revealed per second. The line takes its length divided by this to " +
+                 "type out in full.")]
+        [SerializeField] private float charactersPerSecond = 30f;
+
+        [Tooltip("The longest a reveal may run, however long the text - so a very long name still " +
+                 "finishes promptly instead of crawling.")]
+        [SerializeField] private float maxDuration = 1.5f;
+
+        private TMP_Text _text;
+        private Tween _tween;
+
+        private TMP_Text Text => _text != null ? _text : _text = GetComponent<TMP_Text>();
+
+        /// <summary>Sets the text and types it out from nothing.</summary>
+        public void Play(string value)
+        {
+            StopTween();
+            Text.text = value ?? string.Empty;
+
+            // Force the layout so the count is the glyphs TMP will actually draw, not the raw
+            // string length - rich-text tags and combined characters make the two differ.
+            Text.ForceMeshUpdate();
+            int count = Text.textInfo.characterCount;
+
+            if (count <= 0)
+            {
+                Text.maxVisibleCharacters = 0;
+                return;
+            }
+
+            float duration = charactersPerSecond > 0f
+                ? Mathf.Min(maxDuration, count / charactersPerSecond)
+                : 0f;
+
+            if (duration <= 0f)
+            {
+                Text.maxVisibleCharacters = count;
+                return;
+            }
+
+            Text.maxVisibleCharacters = 0;
+            _tween = Tween.Custom(0f, count, duration,
+                v => Text.maxVisibleCharacters = Mathf.CeilToInt(v));
+        }
+
+        /// <summary>Sets the text and shows all of it at once, no reveal.</summary>
+        public void SetImmediate(string value)
+        {
+            StopTween();
+            Text.text = value ?? string.Empty;
+            Text.maxVisibleCharacters = int.MaxValue;
+        }
+
+        private void StopTween()
+        {
+            if (_tween.isAlive)
+                _tween.Stop();
+        }
+
+        private void OnDestroy() => StopTween();
+    }
+}

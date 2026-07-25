@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using CardsChaos.Cards;
 using Cysharp.Threading.Tasks;
+using PrimeTween;
 using UniRx;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -45,6 +46,21 @@ namespace Vesolovsky.Game.Views
         [Header("Inspect")]
         [SerializeField] private AlbumCardInspector inspector;
 
+        [Header("Header labels")]
+        [Tooltip("Current page over total, as X / Y.")]
+        [SerializeField] private VText pageText;
+
+        [Tooltip("The open set's name. Typed out letter by letter whenever the set changes.")]
+        [SerializeField] private TypewriterText setName;
+
+        [Tooltip("The open set's collection progress, correctly filed over total, as Z / K.")]
+        [SerializeField] private VText collectionProgressText;
+
+        [Tooltip("The little kick the progress label takes when its number changes.")]
+        [SerializeField] private Vector3 progressPunch = new Vector3(0.25f, 0.25f, 0f);
+
+        [SerializeField] private float progressPunchDuration = 0.3f;
+
         [Header("Input")]
         [Tooltip("Opens and closes the album. Escape also closes it.")]
         [SerializeField] private Key toggleKey = Key.B;
@@ -53,6 +69,11 @@ namespace Vesolovsky.Game.Views
 
         private DiContainer _container;
         private AlbumSetButton _openSet;
+
+        // What the collection label currently reads, so the punch only fires when the number
+        // actually moves - filing the wrong card raises the change event without changing the
+        // count, and that should not kick the label.
+        private int _shownCollectionCount = -1;
 
         [Inject]
         private void InjectContainer(DiContainer container) => _container = container;
@@ -69,7 +90,7 @@ namespace Vesolovsky.Game.Views
             BuildSetButtons();
             BindPagingButtons();
 
-            pages.PageChanged += RefreshPagingButtons;
+            pages.PageChanged += RefreshPaging;
             ViewModel.AlbumChanged += OnAlbumChanged;
 
             ViewModel.IsOpen
@@ -170,7 +191,7 @@ namespace Vesolovsky.Game.Views
             if (previousPageButton != null)
                 previousPageButton.Bind(pages.GoToPreviousPage);
 
-            RefreshPagingButtons();
+            RefreshPaging();
         }
 
         private void OpenSet(AlbumSetButton button)
@@ -186,8 +207,16 @@ namespace Vesolovsky.Game.Views
             _openSet = button;
             _openSet.SetSelected(true);
 
+            // Show the pages first: it settles the page count that the page label then reads.
             pages.Show(button.Set);
-            RefreshPagingButtons();
+            RefreshPaging();
+
+            if (setName != null)
+                setName.Play(button.Set.SetName);
+
+            // No punch on a set switch - the number is jumping to a different set's total, not
+            // being earned.
+            SetCollectionProgress(button.Set, punch: false);
         }
 
         /// <summary>
@@ -203,18 +232,46 @@ namespace Vesolovsky.Game.Views
                 if (button.Set.SetId == setId)
                 {
                     button.SetProgress(ViewModel.CountFiled(setId));
-                    return;
+                    break;
                 }
             }
+
+            // The open set's own label tracks the same count, and here it may punch: a card was
+            // just filed, so a change in the number is something the player earned.
+            if (_openSet != null && _openSet.Set.SetId == setId)
+                SetCollectionProgress(_openSet.Set, punch: true);
         }
 
-        private void RefreshPagingButtons()
+        private void RefreshPaging()
         {
             if (nextPageButton != null)
                 nextPageButton.interactable = pages.CanGoNext;
 
             if (previousPageButton != null)
                 previousPageButton.interactable = pages.CanGoPrevious;
+
+            if (pageText != null)
+                pageText.SetText($"{pages.PageIndex + 1}/{pages.PageCount}");
+        }
+
+        /// <summary>
+        /// Writes the open set's collection count, and kicks the label when the number moves - but
+        /// only when a placement caused it, not when a set switch simply swaps in a different
+        /// total.
+        /// </summary>
+        private void SetCollectionProgress(CardSetDefinition set, bool punch)
+        {
+            if (collectionProgressText == null)
+                return;
+
+            int filed = ViewModel.CountFiled(set.SetId);
+            collectionProgressText.SetText($"{filed}/{set.CardCount}");
+
+            bool changed = filed != _shownCollectionCount;
+            _shownCollectionCount = filed;
+
+            if (punch && changed)
+                Tween.PunchScale(collectionProgressText.rectTransform, progressPunch, progressPunchDuration);
         }
 
         private void OnIsOpenChanged(bool isOpen)
@@ -237,7 +294,7 @@ namespace Vesolovsky.Game.Views
         protected override void OnDestroy()
         {
             if (pages != null)
-                pages.PageChanged -= RefreshPagingButtons;
+                pages.PageChanged -= RefreshPaging;
 
             if (ViewModel != null)
                 ViewModel.AlbumChanged -= OnAlbumChanged;

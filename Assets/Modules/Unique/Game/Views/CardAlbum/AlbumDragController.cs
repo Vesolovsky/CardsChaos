@@ -334,16 +334,21 @@ namespace Vesolovsky.Game.Views.Album
                 return;
 
             slot.Fill(card, _artwork.Resolve(card));
-            PlayImpactShake();
 
+            // The shake and the effect are both the reward for filing a card where it belongs, so
+            // they only fire when the card lands in its own slot - not on every card dropped into
+            // any square.
             if (card.BelongsAt(slot.PageSetId, slot.SlotIndex))
+            {
+                PlayImpactShake();
                 SpawnCorrectPlacementVfx(slot);
+            }
         }
 
         /// <summary>
-        /// The knock that runs through the whole album when a card lands, on top of the slot's
-        /// own punch. Every card gets it, right or wrong - the shake is about the card hitting
-        /// the page, not about it hitting the right square.
+        /// The knock that runs through the whole album when a card is filed correctly - the
+        /// weight behind a card landing in its own slot. A card dropped into the wrong square
+        /// gets none of it.
         /// </summary>
         private void PlayImpactShake()
         {
