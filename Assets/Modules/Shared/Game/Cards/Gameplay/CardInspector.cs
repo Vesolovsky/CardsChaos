@@ -122,6 +122,10 @@ namespace CardsChaos.Cards
                 return;
             }
 
+            // Space turns the card over from the keyboard, wherever the cursor is.
+            if (keyboard.spaceKey.wasPressedThisFrame)
+                _showingBack = !_showingBack;
+
             // The left button turns the card over when it lands on the card, and leaves when it
             // lands anywhere else - the card is the thing you are looking at, so clicking off it
             // means you are done.

@@ -147,6 +147,12 @@ namespace Vesolovsky.Game.Views
             return true;
         }
 
+        public void PromoteToTop(Card worldCard)
+        {
+            if (worldCard != null)
+                _hand.BringToTop(worldCard);
+        }
+
         public override void Dispose()
         {
             _album.PageChanged -= OnAlbumPageChanged;

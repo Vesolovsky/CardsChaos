@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_Card_UI
+  m_Name: M_Card_UI_Gray
   m_Shader: {fileID: 4800000, guid: 732b2da99ecc2a440bdbb19f0215e3bf, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -32,7 +32,7 @@ Material:
     - _Aspect: 0.6666666
     - _ColorMask: 15
     - _CornerRadius: 0.04736328
-    - _Grayscale: 0
+    - _Grayscale: 1
     - _Squareness: 1.73
     - _Stencil: 0
     - _StencilComp: 8

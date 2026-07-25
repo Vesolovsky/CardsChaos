@@ -1,9 +1,11 @@
 using CardsChaos.Cards;
 using CardsChaos.Cards.Album;
+using PrimeTween;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
+using VInspector;
 
 namespace Vesolovsky.Game.Views.Album
 {
@@ -43,8 +45,44 @@ namespace Vesolovsky.Game.Views.Album
         [FormerlySerializedAs("impactTarget")]
         [SerializeField] private RectTransform vfxAnchor;
 
+        [Tooltip("The material a misplaced card is drawn with - the grey twin of the card " +
+                 "material, M_Card_UI_Gray. Left empty, a wrong card just looks normal.")]
+        [SerializeField] private Material wrongCardMaterial;
+
+        [Header("Shake")]
+        [Tooltip("The flinch this slot takes when a card is dropped into it that does not belong " +
+                 "there - a small physical 'no' on a misplacement.")]
+        [FormerlySerializedAs("completionShakeStrength")]
+        [SerializeField] private Vector3 shakeStrength = new Vector3(5f, 5f, 0f);
+
+        [FormerlySerializedAs("completionShakeDuration")]
+        [SerializeField] private float shakeDuration = 0.18f;
+
+        [FormerlySerializedAs("completionShakeFrequency")]
+        [SerializeField] private float shakeFrequency = 22f;
+
+        [Header("Completion pop")]
+        [Tooltip("How much this slot swells when its page is completed, as its part of the ripple " +
+                 "that runs across the finished page. Subtle - a breath, not a bounce.")]
+        [SerializeField] private float popStrength = 0.05f;
+
+        [SerializeField] private float popDuration = 0.24f;
+
+        [Tooltip("How many times the swell oscillates. Low is a single clean rise and fall.")]
+        [SerializeField] private float popFrequency = 1.5f;
+
         private AlbumDragController _drag;
         private IAlbumCardInspector _inspector;
+
+        // The card image's own material, as the prefab set it up, so a card switched to grey can
+        // be switched back.
+        private Material _cardMaterial;
+
+        private Tween _shakeTween;
+        private Vector3 _shakeRest;
+
+        private Tween _popTween;
+        private Vector3 _popRestScale;
 
         // See AlbumHandCard: a gesture that began a drag out of this slot must not also inspect
         // when it is dropped back onto the same slot.
@@ -59,6 +97,9 @@ namespace Vesolovsky.Game.Views.Album
         public CardRef Card { get; private set; }
 
         public bool IsEmpty => !Card.IsValid;
+
+        /// <summary>Whether the card sitting here is the one that belongs here.</summary>
+        public bool HoldsCorrectCard => Card.BelongsAt(PageSetId, SlotIndex);
 
         /// <summary>
         /// False on the padding slots at the end of a short set's last page.
@@ -75,6 +116,13 @@ namespace Vesolovsky.Game.Views.Album
         public RectTransform Rect => (RectTransform)transform;
 
         public RectTransform VfxAnchor => vfxAnchor != null ? vfxAnchor : Rect;
+
+        private void Awake()
+        {
+            // Captured before anything swaps it, so a card sent grey can be given its colour back.
+            _cardMaterial = cardImage.material;
+            _popRestScale = Rect.localScale;
+        }
 
         public void Initialize(
             AlbumDragController drag, IAlbumCardInspector inspector, string pageSetId, int slotIndex,
@@ -117,6 +165,12 @@ namespace Vesolovsky.Game.Views.Album
             Card = card;
             cardImage.sprite = artwork;
 
+            // A card in the wrong square is drawn grey so it reads as out of place at a glance;
+            // the right card, and the fallback when no grey material is wired, is left in colour.
+            cardImage.material = HoldsCorrectCard || wrongCardMaterial == null
+                ? _cardMaterial
+                : wrongCardMaterial;
+
             ShowCard(true);
         }
 
@@ -124,8 +178,66 @@ namespace Vesolovsky.Game.Views.Album
         {
             Card = CardRef.None;
             cardImage.sprite = null;
+            cardImage.material = _cardMaterial;
 
             ShowCard(false);
+        }
+
+        /// <summary>Shakes this slot, to dial the flinch in from the inspector.</summary>
+        [Button]
+        private void TestShake() => PlayShake();
+
+        /// <summary>Swells this slot once, to dial the completion pop in from the inspector.</summary>
+        [Button]
+        private void TestPop() => PlayPop(0f, null);
+
+        /// <summary>
+        /// The flinch a slot gives when the wrong card is dropped into it - a small physical
+        /// signal that the card does not belong there.
+        /// </summary>
+        public void PlayShake()
+        {
+            RectTransform target = Rect;
+
+            // The rest position is captured while the slot is still, then restored before a
+            // re-triggered shake, so a jolt interrupted mid-way never leaves the slot adrift.
+            if (_shakeTween.isAlive)
+            {
+                _shakeTween.Stop();
+                target.localPosition = _shakeRest;
+            }
+            else
+            {
+                _shakeRest = target.localPosition;
+            }
+
+            _shakeTween = Tween.ShakeLocalPosition(target, shakeStrength, shakeDuration, shakeFrequency);
+        }
+
+        /// <summary>
+        /// The subtle swell a slot gives when its page is completed - it rises a touch and settles
+        /// straight back. The page strip fires it on every slot in turn, and hears back when the
+        /// slot has settled so it can knock the album.
+        /// </summary>
+        /// <param name="delay">Seconds to wait before swelling, for the slot's place in the ripple.</param>
+        /// <param name="onSettled">Run once the slot is back at rest.</param>
+        public void PlayPop(float delay, System.Action onSettled)
+        {
+            // Restored before a re-triggered pop, so a swell interrupted mid-rise never leaves the
+            // slot stuck a little large.
+            if (_popTween.isAlive)
+            {
+                _popTween.Stop();
+                Rect.localScale = _popRestScale;
+            }
+
+            var strength = new Vector3(popStrength, popStrength, 0f);
+            _popTween = Tween.PunchScale(Rect, strength, popDuration, popFrequency, startDelay: delay)
+                .OnComplete(() =>
+                {
+                    Rect.localScale = _popRestScale;
+                    onSettled?.Invoke();
+                });
         }
 
         /// <summary>

@@ -49,6 +49,17 @@ namespace Vesolovsky.Game.Views.Album
         [SerializeField] private float settleDuration = 0.22f;
         [SerializeField, SearchableEnum] private Ease settleEase = Ease.OutQuint;
 
+        [Header("Wheel")]
+        [Tooltip("How long the card carried by the wheel takes to travel from one end to the " +
+                 "other. Longer than a settle, so the journey reads.")]
+        [SerializeField] private float travelDuration = 0.4f;
+
+        [Tooltip("How far the travelling card bows up over the fan on its way across, in pixels, " +
+                 "so it passes above the others rather than through them.")]
+        [SerializeField] private float travelArc = 60f;
+
+        [SerializeField, SearchableEnum] private Ease travelEase = Ease.InOutQuad;
+
         // Matches the room's table, so the wheel has the same dead spot everywhere.
         private const float ScrollDeadzone = 0.01f;
 
@@ -59,6 +70,10 @@ namespace Vesolovsky.Game.Views.Album
         private IAlbumCardInspector _inspector;
         private CardHand _hand;
 
+        // The card the wheel just carried across, to be arced rather than slid on the next
+        // reconcile. Cleared once used.
+        private Card _pendingTraveller;
+
         [Inject]
         private void Inject(DiContainer container) => _container = container;
 
@@ -68,13 +83,21 @@ namespace Vesolovsky.Game.Views.Album
             _inspector = inspector;
 
             if (_hand != null)
+            {
                 _hand.Changed -= Refresh;
+                _hand.Cycled -= OnCycled;
+            }
 
             _hand = hand;
             _hand.Changed += Refresh;
+            _hand.Cycled += OnCycled;
 
             Reconcile(immediately: true);
         }
+
+        // The hand raises Cycled before Changed, so the traveller is noted here and used by the
+        // reconcile that Changed triggers a moment later.
+        private void OnCycled(Card traveller) => _pendingTraveller = traveller;
 
         /// <summary>Brings the pile back in line with the hand, animating the difference.</summary>
         public void Refresh() => Reconcile(immediately: false);
@@ -170,39 +193,43 @@ namespace Vesolovsky.Game.Views.Album
         }
 
         /// <summary>
-        /// Spreads the hand out. Index 0 sits at the left end and the last card at the right,
-        /// matching how <see cref="CardHand"/> reads its own fan, and each card is drawn over the
-        /// one to its left - so the card at the right end is the one on top and fully readable.
+        /// Spreads the hand out. Index 0 - the top of the hand, where new and just-handled cards
+        /// go - sits at the right end and on top, fully readable; the rest fan away to the left,
+        /// each drawn under the card to its right.
         ///
         /// The spread is centred on the container rather than grown from one edge, so filing a
         /// card closes the hand around the middle instead of dragging the whole fan sideways.
         /// </summary>
         private void Layout(bool immediately)
         {
-            float duration = immediately ? 0f : settleDuration;
+            Card traveller = _pendingTraveller;
+            _pendingTraveller = null;
+
             float last = Mathf.Max(1, _cards.Count - 1);
 
             for (int i = 0; i < _cards.Count; i++)
             {
-                // -0.5 at the left end, +0.5 at the right, 0 in the middle.
-                float offset = _cards.Count > 1 ? i / last - 0.5f : 0f;
+                // +0.5 at the right end (index 0, the top), -0.5 at the left, 0 in the middle.
+                float offset = _cards.Count > 1 ? 0.5f - i / last : 0f;
 
                 // A parabola through the two ends, peaking in the middle - squaring the offset is
                 // what makes it a bow rather than a ramp. The bow is measured above the ends, so
                 // with one card there are no ends for it to rise from and it stays put.
                 float arc = _cards.Count > 1 ? arcHeight * (1f - 4f * offset * offset) : 0f;
 
-                _cards[i].MoveTo(
-                    new Vector2(spacing * offset * last, arc),
-                    -anglePerCard * offset * last,
-                    duration,
-                    settleEase);
+                var position = new Vector2(spacing * offset * last, arc);
+                float angle = -anglePerCard * offset * last;
 
-                // Later siblings draw on top and later cards are further right, so walking the
-                // fan left to right stacks it correctly. SetAsLastSibling rather than an index,
-                // so anything else parented to the container stays behind the whole hand.
-                _cards[i].transform.SetAsLastSibling();
+                if (!immediately && _cards[i].WorldCard == traveller)
+                    _cards[i].ArcTo(position, angle, new Vector2(0f, travelArc), travelDuration, travelEase);
+                else
+                    _cards[i].MoveTo(position, angle, immediately ? 0f : settleDuration, settleEase);
             }
+
+            // Index 0 is the top of the hand and must draw over the rest. Walking from the back of
+            // the fan forward, each card takes the top in turn, so index 0 ends up drawn last.
+            for (int i = _cards.Count - 1; i >= 0; i--)
+                _cards[i].transform.SetAsLastSibling();
         }
 
         private AlbumHandCard CreateCard(Card worldCard)
@@ -242,7 +269,10 @@ namespace Vesolovsky.Game.Views.Album
         private void OnDestroy()
         {
             if (_hand != null)
+            {
                 _hand.Changed -= Refresh;
+                _hand.Cycled -= OnCycled;
+            }
         }
     }
 }

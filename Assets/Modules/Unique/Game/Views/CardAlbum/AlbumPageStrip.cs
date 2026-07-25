@@ -6,6 +6,7 @@ using PrimeTween;
 using RoboRyanTron.SearchableEnum;
 using UnityEngine;
 using UnityEngine.UI;
+using VInspector;
 using Zenject;
 
 namespace Vesolovsky.Game.Views.Album
@@ -47,6 +48,18 @@ namespace Vesolovsky.Game.Views.Album
         [Header("Paging")]
         [SerializeField] private float pageDuration = 0.45f;
         [SerializeField, SearchableEnum] private Ease pageEase = Ease.OutQuint;
+
+        [Header("Completion")]
+        [Tooltip("Seconds between one slot's swell and the next when a page is completed. Small - " +
+                 "the ripple should run across the page quickly, not crawl.")]
+        [SerializeField] private float completionStagger = 0.06f;
+
+        [Tooltip("The light album knock each slot gives as it settles back - the correct-placement " +
+                 "shake, but far gentler.")]
+        [SerializeField] private Vector3 completionShakeStrength = new Vector3(1.2f, 1.2f, 0f);
+
+        [SerializeField] private float completionShakeDuration = 0.14f;
+        [SerializeField] private float completionShakeFrequency = 20f;
 
         private readonly List<RectTransform> _pages = new List<RectTransform>();
         private readonly List<AlbumCardSlot> _slots = new List<AlbumCardSlot>();
@@ -137,6 +150,66 @@ namespace Vesolovsky.Game.Views.Album
             else
                 slot.Clear();
         }
+
+        /// <summary>
+        /// Called when a card lands in its own slot. When that placement was the one that
+        /// completed its page - every usable slot now holding its own card - the page celebrates.
+        /// </summary>
+        public void OnCardFiledCorrectly(AlbumCardSlot slot)
+        {
+            if (slot == null)
+                return;
+
+            int page = slot.SlotIndex / SlotsPerPage;
+            if (IsPageComplete(page))
+                PlayCompletion(page);
+        }
+
+        /// <summary>Whether every usable slot on a page holds the card that belongs in it.</summary>
+        private bool IsPageComplete(int page)
+        {
+            int start = page * SlotsPerPage;
+            int end = Mathf.Min(start + SlotsPerPage, _slots.Count);
+
+            for (int i = start; i < end; i++)
+            {
+                if (_slots[i].IsUsable && !_slots[i].HoldsCorrectCard)
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// The reward for finishing a page: each slot swells and settles in turn, and each one, as
+        /// it lands back, gives the album a very light knock - a ripple of little breaths running
+        /// across the completed page.
+        /// </summary>
+        private void PlayCompletion(int page)
+        {
+            int start = page * SlotsPerPage;
+            int end = Mathf.Min(start + SlotsPerPage, _slots.Count);
+
+            int order = 0;
+            for (int i = start; i < end; i++)
+            {
+                if (!_slots[i].IsUsable)
+                    continue;
+
+                _slots[i].PlayPop(order * completionStagger, OnPopSettled);
+                order++;
+            }
+        }
+
+        private void OnPopSettled() =>
+            _drag.PlayShake(completionShakeStrength, completionShakeDuration, completionShakeFrequency);
+
+        /// <summary>Runs the completion celebration on the open page, for the album's test button.</summary>
+        public void PlayCompletionEffect() => PlayCompletion(PageIndex);
+
+        /// <summary>Runs the completion celebration on the open page, to test it without filling a set.</summary>
+        [Button]
+        private void TestCompletion() => PlayCompletionEffect();
 
         public void GoToNextPage() => GoToPage(PageIndex + 1);
 

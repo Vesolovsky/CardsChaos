@@ -23,6 +23,10 @@ Shader "CardsChaos/Card UI"
         _Aspect ("Aspect (width / height)", Float) = 0.6666667
         _UvInset ("UV Inset (u, v, unused, unused)", Vector) = (0.005859375, 0.00390625, 0, 0)
 
+        // 0 draws the card in full colour, 1 fully desaturated. The album files a misplaced card
+        // in grey by handing it a material with this set to 1.
+        _Grayscale ("Grayscale", Range(0, 1)) = 0
+
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
         _StencilOp ("Stencil Operation", Float) = 0
@@ -105,6 +109,7 @@ Shader "CardsChaos/Card UI"
             float _Squareness;
             float _Aspect;
             float4 _UvInset;
+            float _Grayscale;
 
             v2f vert(appdata_t v)
             {
@@ -148,6 +153,11 @@ Shader "CardsChaos/Card UI"
                 float2 uv = (IN.texcoord - 0.5) * (1.0 - 2.0 * _UvInset.xy) + 0.5;
 
                 half4 color = (tex2D(_MainTex, uv) + _TextureSampleAdd) * IN.color;
+
+                // Desaturate towards perceived luminance. A misplaced card is drawn grey so it
+                // reads as out of place at a glance without hiding which card it is.
+                float luma = dot(color.rgb, float3(0.299, 0.587, 0.114));
+                color.rgb = lerp(color.rgb, luma.xxx, _Grayscale);
 
                 float distance = CardDistance(IN.texcoord);
 

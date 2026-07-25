@@ -8,6 +8,7 @@ using UnityEngine.InputSystem;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
 using Vesolovsky.Game.Views.Album;
+using VInspector;
 using Zenject;
 
 namespace Vesolovsky.Game.Views
@@ -56,10 +57,15 @@ namespace Vesolovsky.Game.Views
         [Tooltip("The open set's collection progress, correctly filed over total, as Z / K.")]
         [SerializeField] private VText collectionProgressText;
 
-        [Tooltip("The little kick the progress label takes when its number changes.")]
-        [SerializeField] private Vector3 progressPunch = new Vector3(0.25f, 0.25f, 0f);
+        [Tooltip("The little kick the progress label takes when its number changes. Keep it " +
+                 "small - this is meant to be felt, not seen.")]
+        [SerializeField] private Vector3 progressPunch = new Vector3(0.12f, 0.12f, 0f);
 
         [SerializeField] private float progressPunchDuration = 0.3f;
+
+        [Tooltip("How many times the kick oscillates. Lower is gentler - a single settle rather " +
+                 "than a buzz. This is the vibrato.")]
+        [SerializeField] private float progressPunchFrequency = 3f;
 
         [Header("Input")]
         [Tooltip("Opens and closes the album. Escape also closes it.")]
@@ -91,6 +97,7 @@ namespace Vesolovsky.Game.Views
             BindPagingButtons();
 
             pages.PageChanged += RefreshPaging;
+            drag.CardFiledCorrectly += pages.OnCardFiledCorrectly;
             ViewModel.AlbumChanged += OnAlbumChanged;
 
             ViewModel.IsOpen
@@ -152,6 +159,13 @@ namespace Vesolovsky.Game.Views
                 return;
             }
 
+            // Space turns the card over from the keyboard, wherever the cursor is.
+            if (keyboard.spaceKey.wasPressedThisFrame && !inspector.JustOpened)
+            {
+                inspector.Flip();
+                return;
+            }
+
             // JustOpened swallows the very click that opened the card - without it the card would
             // flip or close on the same press that brought it up.
             if (mouse == null || !mouse.leftButton.wasPressedThisFrame || inspector.JustOpened)
@@ -162,6 +176,13 @@ namespace Vesolovsky.Game.Views
             else
                 inspector.Close();
         }
+
+        /// <summary>
+        /// Plays the page-completion celebration on the open page, to preview it from the album
+        /// object itself rather than hunting down the page strip in play mode.
+        /// </summary>
+        [Button]
+        private void TestPageCompletion() => pages.PlayCompletionEffect();
 
         private void BuildSetButtons()
         {
@@ -271,7 +292,10 @@ namespace Vesolovsky.Game.Views
             _shownCollectionCount = filed;
 
             if (punch && changed)
-                Tween.PunchScale(collectionProgressText.rectTransform, progressPunch, progressPunchDuration);
+            {
+                Tween.PunchScale(collectionProgressText.rectTransform, progressPunch,
+                    progressPunchDuration, progressPunchFrequency);
+            }
         }
 
         private void OnIsOpenChanged(bool isOpen)
@@ -295,6 +319,9 @@ namespace Vesolovsky.Game.Views
         {
             if (pages != null)
                 pages.PageChanged -= RefreshPaging;
+
+            if (drag != null && pages != null)
+                drag.CardFiledCorrectly -= pages.OnCardFiledCorrectly;
 
             if (ViewModel != null)
                 ViewModel.AlbumChanged -= OnAlbumChanged;

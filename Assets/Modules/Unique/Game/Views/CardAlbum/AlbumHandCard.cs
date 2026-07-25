@@ -90,6 +90,43 @@ namespace Vesolovsky.Game.Views.Album
                 _rotationTween = Tween.LocalRotation(Rect, rotation, duration, ease);
         }
 
+        /// <summary>
+        /// Same as <see cref="MoveTo"/>, but bowed out along the way by <paramref name="arc"/>, so
+        /// the card visibly travels over the fan rather than sliding straight through it. Used for
+        /// the one card the wheel carries from one end to the other.
+        /// </summary>
+        public void ArcTo(Vector2 anchoredPosition, float angle, Vector2 arc, float duration, Ease ease)
+        {
+            StopTweens();
+
+            var rotation = Quaternion.Euler(0f, 0f, angle);
+
+            if (duration <= 0f)
+            {
+                Rect.anchoredPosition = anchoredPosition;
+                Rect.localRotation = rotation;
+                return;
+            }
+
+            Vector2 start = Rect.anchoredPosition;
+            Vector2 control = (start + anchoredPosition) * 0.5f + arc;
+            RectTransform rect = Rect;
+
+            // Quadratic bezier, the same curve the room's pile uses to swing a card clear of the
+            // stack: the control point is approached, never reached, so the bow reads softer than
+            // the offset suggests.
+            _positionTween = Tween.Custom(0f, 1f, duration, t =>
+            {
+                float inverse = 1f - t;
+                rect.anchoredPosition = inverse * inverse * start
+                                        + 2f * inverse * t * control
+                                        + t * t * anchoredPosition;
+            }, ease);
+
+            if (Rect.localRotation != rotation)
+                _rotationTween = Tween.LocalRotation(Rect, rotation, duration, ease);
+        }
+
         public void OnPointerDown(PointerEventData eventData) => _draggedSincePress = false;
 
         public void OnBeginDrag(PointerEventData eventData)

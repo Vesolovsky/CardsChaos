@@ -142,7 +142,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: ed8db9e2bf4d5ba44a31bd61a0603f1a, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -416,6 +416,12 @@ MonoBehaviour:
   cardImage: {fileID: 6484754655248762697}
   cardNumber: {fileID: 7629130216021713158}
   vfxAnchor: {fileID: 7242083463452885263}
+  wrongCardMaterial: {fileID: 2100000, guid: d06a4035ed8741c4f976b2333241ba4d, type: 2}
+  shakeStrength: {x: 5, y: 5, z: 0}
+  shakeDuration: 0.18
+  shakeFrequency: 22
+  foilOverlay: {fileID: 0}
+  foilRevealDuration: 0.5
 --- !u!114 &7629130216021713158
 MonoBehaviour:
   m_ObjectHideFlags: 0

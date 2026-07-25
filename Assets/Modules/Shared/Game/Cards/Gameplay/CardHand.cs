@@ -90,6 +90,13 @@ namespace CardsChaos.Cards
         /// </summary>
         public event System.Action Changed;
 
+        /// <summary>
+        /// Raised when the wheel carries one card from one end of the hand to the other, with the
+        /// card that made the journey. The album animates that card travelling across rather than
+        /// sliding straight through the others, the way the room's pile does.
+        /// </summary>
+        public event System.Action<Card> Cycled;
+
         public bool IsFull => _cards.Count >= slotCount;
 
         public bool HasRoom => _cards.Count < slotCount;
@@ -261,6 +268,24 @@ namespace CardsChaos.Cards
             Card traveller = Rotate(direction);
 
             Relayout(traveller);
+            Cycled?.Invoke(traveller);
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// Moves a card to the top of the hand (index 0), where new and just-handled cards belong.
+        /// A no-op when the card is already on top or not in the hand.
+        /// </summary>
+        public void BringToTop(Card card)
+        {
+            int index = _cards.IndexOf(card);
+            if (index <= 0)
+                return;
+
+            _cards.RemoveAt(index);
+            _cards.Insert(0, card);
+
+            Relayout();
             Changed?.Invoke();
         }
 

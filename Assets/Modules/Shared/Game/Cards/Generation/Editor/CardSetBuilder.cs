@@ -23,6 +23,7 @@ namespace CardsChaos.Cards.CardEditor
         private const string MeshPath = BaseArtFolder + "/CardMesh.asset";
         private const string BaseMaterialPath = BaseArtFolder + "/M_Card_Base.mat";
         private const string UIMaterialPath = BaseArtFolder + "/M_Card_UI.mat";
+        private const string UIGrayMaterialPath = BaseArtFolder + "/M_Card_UI_Gray.mat";
         private const string BasePrefabPath = BaseFolder + "/Card_Base.prefab";
         private const string CatalogPath = CardsRoot + "/CardCatalog.asset";
 
@@ -88,8 +89,10 @@ namespace CardsChaos.Cards.CardEditor
 
             // Cheap, and it has to run on both paths: the flat card's silhouette is derived from
             // the same measurements as the mesh, and the two drifting apart is exactly the bug
-            // this generation step exists to prevent.
-            BuildUIMaterial();
+            // this generation step exists to prevent. A grey twin is written alongside, which the
+            // album files a misplaced card with.
+            BuildUIMaterial(UIMaterialPath, grayscale: 0f);
+            BuildUIMaterial(UIGrayMaterialPath, grayscale: 1f);
 
             var setDefinitions = new List<CardSetDefinition>();
             int built = 0;
@@ -214,7 +217,7 @@ namespace CardsChaos.Cards.CardEditor
         /// until someone retunes the measurement. Sharing a single material also keeps every
         /// card in one batch.
         /// </summary>
-        private static Material BuildUIMaterial()
+        private static Material BuildUIMaterial(string path, float grayscale)
         {
             Shader shader = Shader.Find(UIShaderName);
             if (shader == null)
@@ -223,11 +226,11 @@ namespace CardsChaos.Cards.CardEditor
                     $"Shader '{UIShaderName}' not found. It may have failed to compile.");
             }
 
-            var material = AssetDatabase.LoadAssetAtPath<Material>(UIMaterialPath);
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)
             {
                 material = new Material(shader);
-                AssetDatabase.CreateAsset(material, UIMaterialPath);
+                AssetDatabase.CreateAsset(material, path);
             }
 
             material.shader = shader;
@@ -244,9 +247,10 @@ namespace CardsChaos.Cards.CardEditor
                 settings.UvInsetPixels / settings.TextureSize.y,
                 0f,
                 0f));
+            material.SetFloat("_Grayscale", grayscale);
 
             EditorUtility.SetDirty(material);
-            Debug.Log($"[CardSetBuilder] UI card material written to {UIMaterialPath}");
+            Debug.Log($"[CardSetBuilder] UI card material written to {path}");
 
             return material;
         }

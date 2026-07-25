@@ -1,3 +1,4 @@
+using CardsChaos.Cards;
 using CardsChaos.Cards.Album;
 using PrimeTween;
 using RoboRyanTron.SearchableEnum;
@@ -29,6 +30,12 @@ namespace Vesolovsky.Game.Views.Album
         /// which case the card stays exactly where it was.
         /// </summary>
         bool TryReturnToHand(AlbumCardSlot slot);
+
+        /// <summary>
+        /// Moves a card the player just handled to the top of the hand, so a picked-up-and-put-back
+        /// card ends up on top of the stack.
+        /// </summary>
+        void PromoteToTop(Card worldCard);
     }
 
     /// <summary>
@@ -105,11 +112,11 @@ namespace Vesolovsky.Game.Views.Album
         [SerializeField] private float shakeDuration = 0.22f;
         [SerializeField] private float shakeFrequency = 20f;
 
-        [Header("Correct placement")]
-        [Tooltip("Spawned on the slot when a card lands where it actually belongs. Optional - " +
-                 "leave it empty until the effect exists. The prefab is expected to clean itself " +
-                 "up; see ParticleDestroyer.")]
-        [SerializeField] private GameObject correctPlacementVfx;
+        /// <summary>
+        /// A card was just filed into the slot it belongs in. The page strip listens so it can
+        /// tell when a whole page has come together and celebrate it.
+        /// </summary>
+        public event System.Action<AlbumCardSlot> CardFiledCorrectly;
 
         private DiContainer _container;
         private IAlbumMoves _moves;
@@ -335,24 +342,34 @@ namespace Vesolovsky.Game.Views.Album
 
             slot.Fill(card, _artwork.Resolve(card));
 
-            // The shake and the effect are both the reward for filing a card where it belongs, so
-            // they only fire when the card lands in its own slot - not on every card dropped into
-            // any square.
+            // A card in its own slot gives the whole album a satisfying thunk and tells the page
+            // strip to check whether the page is now complete; a card in the wrong slot makes
+            // that one slot flinch, which reads as "that is not where this goes".
             if (card.BelongsAt(slot.PageSetId, slot.SlotIndex))
             {
                 PlayImpactShake();
-                SpawnCorrectPlacementVfx(slot);
+                CardFiledCorrectly?.Invoke(slot);
+            }
+            else
+            {
+                slot.PlayShake();
             }
         }
 
         /// <summary>
         /// The knock that runs through the whole album when a card is filed correctly - the
-        /// weight behind a card landing in its own slot. A card dropped into the wrong square
-        /// gets none of it.
+        /// weight behind a card landing in its own slot.
         /// </summary>
-        private void PlayImpactShake()
+        private void PlayImpactShake() => PlayShake(shakeStrength, shakeDuration, shakeFrequency);
+
+        /// <summary>
+        /// Shakes the whole album by the given amount. Public so the page-completion effect can
+        /// borrow it for its own much lighter knocks; the album shares one shake target and one
+        /// rest position, so the two never fight over where the album's centre is.
+        /// </summary>
+        public void PlayShake(Vector3 strength, float duration, float frequency)
         {
-            if (shakeTarget == null || shakeDuration <= 0f)
+            if (shakeTarget == null || duration <= 0f)
                 return;
 
             // Captured the first time rather than at Initialize: the layout has settled by the
@@ -364,30 +381,25 @@ namespace Vesolovsky.Game.Views.Album
             }
 
             // Stopping a shake leaves the target wherever the last frame put it, and starting the
-            // next one from there makes it the new rest position. Two cards filed in quick
-            // succession would walk the album off centre and it would never come back, so the
-            // rest position is restored by hand first.
+            // next one from there makes it the new rest position. A run of shakes would walk the
+            // album off centre and it would never come back, so the rest position is restored by
+            // hand first.
             if (_shakeTween.isAlive)
                 _shakeTween.Stop();
 
             shakeTarget.localPosition = _shakeRestPosition;
 
-            _shakeTween = Tween.ShakeLocalPosition(
-                shakeTarget, shakeStrength, shakeDuration, shakeFrequency);
-        }
-
-        private void SpawnCorrectPlacementVfx(AlbumCardSlot slot)
-        {
-            if (correctPlacementVfx == null)
-                return;
-
-            _container.InstantiatePrefab(correctPlacementVfx, slot.VfxAnchor);
+            _shakeTween = Tween.ShakeLocalPosition(shakeTarget, strength, duration, frequency);
         }
 
         /// <summary>
         /// Nobody took the card, so it travels back to where it was picked up rather than
         /// blinking out of the drag layer - the player let go somewhere for a reason, and seeing
         /// the card go back is what says the album refused it.
+        ///
+        /// A hand card, once home, rises to the top of the hand: a card the player picked up and
+        /// put back is the one they were last handling, so it belongs on top of the stack. A slot
+        /// card just returns to its slot.
         /// </summary>
         private void GoHome()
         {
@@ -397,6 +409,7 @@ namespace Vesolovsky.Game.Views.Album
             if (ghost == null)
             {
                 source?.OnCardReturned();
+                PromoteIfHandCard(source);
                 Release(taken: false);
                 return;
             }
@@ -415,9 +428,21 @@ namespace Vesolovsky.Game.Views.Album
                         Destroy(ghost.gameObject);
 
                     source.OnCardReturned();
+                    PromoteIfHandCard(source);
                 }, warnIfTargetDestroyed: false);
 
             Release(taken: false, destroyGhost: false);
+        }
+
+        /// <summary>
+        /// Sends a returned hand card to the top of the hand. Done once it is home rather than at
+        /// release, so the card slides back to where it was and then rises, instead of the whole
+        /// stack lurching the instant the button comes up.
+        /// </summary>
+        private void PromoteIfHandCard(IAlbumCardSource source)
+        {
+            if (source is AlbumHandCard handCard && handCard.WorldCard != null)
+                _moves.PromoteToTop(handCard.WorldCard);
         }
 
         /// <summary>
