@@ -27,6 +27,20 @@ namespace Vesolovsky.Game.Views.Album
         }
 
         /// <summary>
+        /// The back of the card, which is shared across its whole set. Null when the set is not
+        /// in the catalog or has no back art assigned - the inspect treats that as "cannot be
+        /// turned over" rather than drawing a blank.
+        /// </summary>
+        public Sprite ResolveBack(CardRef card)
+        {
+            if (!card.IsValid)
+                return null;
+
+            CardSetDefinition set = _catalog.FindSet(card.SetId);
+            return set != null ? set.BackArtwork : null;
+        }
+
+        /// <summary>
         /// The prefab of the card, for putting one back out into the world when the player takes
         /// it out of the album. Null when nothing matches.
         /// </summary>

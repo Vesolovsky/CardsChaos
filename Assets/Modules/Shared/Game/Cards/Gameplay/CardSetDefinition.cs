@@ -18,6 +18,10 @@ namespace CardsChaos.Cards
         [SerializeField] private Sprite icon;
         [SerializeField] private Sprite iconInnerShadow;
 
+        [Tooltip("The card back, shared by every card in the set - the same 'Revers_' art the 3D " +
+                 "card samples, kept here as a sprite so the album's inspect can flip a card over.")]
+        [SerializeField] private Sprite backArtwork;
+
         [SerializeField] private List<GameObject> cards = new List<GameObject>();
 
         // NonSerialized for the same reason as in CardCatalog: Unity serializes private
@@ -35,6 +39,7 @@ namespace CardsChaos.Cards
 
         public Sprite Icon => icon;
         public Sprite IconInnerShadow => iconInnerShadow;
+        public Sprite BackArtwork => backArtwork;
 
         public IReadOnlyList<GameObject> Cards => cards;
 

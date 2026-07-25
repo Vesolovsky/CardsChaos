@@ -24,9 +24,12 @@ namespace CardsChaos.Cards
     }
 
     /// <summary>
-    /// Close-up view of the selected card: clicking a card in hand opens it, LMB turns it over,
-    /// RMB and Escape leave, the cursor tilts it and the wheel swaps to the neighbouring card
-    /// without stepping out.
+    /// Close-up view of the selected card: clicking a card in hand opens it, clicking the card
+    /// itself turns it over, clicking off it leaves, RMB and Escape also leave, the cursor tilts
+    /// it and the wheel swaps to the neighbouring card without stepping out.
+    ///
+    /// The left button doing two things by where it lands - flip on the card, close off it -
+    /// matches the album's close-up, so a card reads the same however the player opened it.
     ///
     /// While it is open the camera is suspended and the rest of the hand is not interactive, so
     /// this type owns the whole input for as long as it is running.
@@ -35,12 +38,16 @@ namespace CardsChaos.Cards
     {
         private const float ScrollDeadzone = 0.01f;
 
+        // The card hangs right in front of the camera, so the ray never has far to travel.
+        private const float MaxPickDistance = 50f;
+
         // The mesh front is +Z and the anchor's +Z points away from the viewer, so the card
         // has to be turned around to face the camera; another half turn shows the back.
         private static readonly Quaternion FaceFront = Quaternion.AngleAxis(180f, Vector3.up);
         private static readonly Quaternion FaceBack = Quaternion.identity;
 
         private readonly CardHand _hand;
+        private readonly ICameraService _cameraService;
         private readonly IWorldInteractionLock _worldLock;
         private readonly ICardInspectLight _light;
         private readonly CardInspectSettings _settings;
@@ -55,11 +62,13 @@ namespace CardsChaos.Cards
         [Inject]
         public CardInspector(
             CardHand hand,
+            ICameraService cameraService,
             IWorldInteractionLock worldLock,
             CardInspectSettings settings,
             [InjectOptional] ICardInspectLight light)
         {
             _hand = hand;
+            _cameraService = cameraService;
             _worldLock = worldLock;
             _settings = settings;
             _light = light;
@@ -113,8 +122,21 @@ namespace CardsChaos.Cards
                 return;
             }
 
+            // The left button turns the card over when it lands on the card, and leaves when it
+            // lands anywhere else - the card is the thing you are looking at, so clicking off it
+            // means you are done.
             if (mouse.leftButton.wasPressedThisFrame)
-                _showingBack = !_showingBack;
+            {
+                if (PointerOnCard(mouse))
+                {
+                    _showingBack = !_showingBack;
+                }
+                else
+                {
+                    Exit();
+                    return;
+                }
+            }
 
             float scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > ScrollDeadzone)
@@ -165,6 +187,24 @@ namespace CardsChaos.Cards
             // The new face is its own brightness, so the lamps have to be re-aimed at it. Show()
             // eases across from where they are rather than starting over.
             _light?.Show(_card.FaceLuminance);
+        }
+
+        /// <summary>
+        /// Whether the cursor is over the card being inspected. The card follows the cursor only
+        /// by tilting - it stays centred - so its collider is where the ray looks, and it is a
+        /// trigger while held, hence <see cref="QueryTriggerInteraction.Collide"/>.
+        /// </summary>
+        private bool PointerOnCard(Mouse mouse)
+        {
+            Ray ray = _cameraService.SceenPointToRay(mouse.position.ReadValue());
+
+            if (!Physics.Raycast(ray, out RaycastHit hit, MaxPickDistance,
+                    Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide))
+            {
+                return false;
+            }
+
+            return hit.collider.GetComponentInParent<Card>() == _card;
         }
 
         private void Drive(Mouse mouse)

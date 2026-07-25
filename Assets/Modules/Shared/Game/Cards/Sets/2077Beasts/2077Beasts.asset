@@ -16,6 +16,7 @@ MonoBehaviour:
   setName: 2077 Beasts
   icon: {fileID: 21300000, guid: 4a451e62916895f4ebf7760746e4d121, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 8a1672e7758bf8d43b8a7dfa91731bc5, type: 3}
+  backArtwork: {fileID: 21300000, guid: cab2bbcd234029c48bc44e7ff95eb94c, type: 3}
   cards:
   - {fileID: 7896952062056927500, guid: cb1f5f7d4c437ae469667cb143d6f29c, type: 3}
   - {fileID: 4359650171744017240, guid: 9ad8666d81f96cf44a9a1b89fcde0f3b, type: 3}

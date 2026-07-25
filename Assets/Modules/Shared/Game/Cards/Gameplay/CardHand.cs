@@ -428,10 +428,12 @@ namespace CardsChaos.Cards
 
         private Quaternion SlotRotation(int index)
         {
-            // Face the viewer (the mesh front is +Z), then tilt along the layout.
+            // Face the viewer (the mesh front is +Z), then tilt along the layout. The pile turns
+            // by stack level rather than by index, for the same reason PilePosition places by it -
+            // so index 0 lands where the top card sits.
             float roll = _layout == CardHandLayout.Fan
                 ? -FanAngle(index)
-                : -pileAngleStep * index;
+                : -pileAngleStep * StackLevel(index);
 
             return Quaternion.AngleAxis(roll, Vector3.forward)
                    * Quaternion.AngleAxis(180f, Vector3.up);
@@ -439,11 +441,26 @@ namespace CardsChaos.Cards
 
         private Vector3 PilePosition(int index)
         {
+            // Placed by stack level, not by index: the pile is drawn from the bottom up, so the
+            // top of it - index 0, the newest card, the one the selection and the throw target -
+            // ends up at the front, nearest the camera and drawn over the rest. The cards occupy
+            // exactly the same set of slots either way; laying them out by index just puts the
+            // top card at the back, where it is buried and where F throws the card the player
+            // cannot see.
+            int level = StackLevel(index);
             return new Vector3(
-                pileStep.x * index,
-                pileStep.y * index,
-                -index * pileDepthStep);
+                pileStep.x * level,
+                pileStep.y * level,
+                -level * pileDepthStep);
         }
+
+        /// <summary>
+        /// How high a card sits in the pile, counting from the bottom. Index 0 is the top, so it
+        /// gets the highest level; the last card gets zero. This is what keeps the newest card on
+        /// top of the stack and undisturbed as cards come and go - a throw or a pick-up leaves
+        /// every other card's level unchanged.
+        /// </summary>
+        private int StackLevel(int index) => _cards.Count - 1 - index;
 
         private Vector3 FanPosition(int index)
         {

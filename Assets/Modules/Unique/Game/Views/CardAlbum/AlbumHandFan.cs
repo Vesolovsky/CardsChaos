@@ -56,14 +56,16 @@ namespace Vesolovsky.Game.Views.Album
 
         private DiContainer _container;
         private AlbumDragController _drag;
+        private IAlbumCardInspector _inspector;
         private CardHand _hand;
 
         [Inject]
         private void Inject(DiContainer container) => _container = container;
 
-        public void Initialize(AlbumDragController drag, CardHand hand)
+        public void Initialize(AlbumDragController drag, IAlbumCardInspector inspector, CardHand hand)
         {
             _drag = drag;
+            _inspector = inspector;
 
             if (_hand != null)
                 _hand.Changed -= Refresh;
@@ -211,7 +213,7 @@ namespace Vesolovsky.Game.Views.Album
             AlbumHandCard card = _container.InstantiatePrefabForComponent<AlbumHandCard>(
                 cardPrefab, container);
 
-            card.Initialize(_drag, worldCard);
+            card.Initialize(_drag, _inspector, worldCard);
             return card;
         }
 

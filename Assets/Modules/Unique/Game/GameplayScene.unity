@@ -36241,8 +36241,8 @@ MonoBehaviour:
     m_Bits: 1
   m_VolumeTrigger: {fileID: 0}
   m_VolumeFrameworkUpdateModeOption: 2
-  m_RenderPostProcessing: 0
-  m_Antialiasing: 0
+  m_RenderPostProcessing: 1
+  m_Antialiasing: 1
   m_AntialiasingQuality: 2
   m_StopNaN: 0
   m_Dithering: 0
@@ -41373,11 +41373,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: CardAlbumView
-      objectReference: {fileID: 0}
-    - target: {fileID: 6778811776195634923, guid: 33ca853b9ffc98c4f90180107a65375d,
-        type: 3}
-      propertyPath: m_Alpha
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

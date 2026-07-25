@@ -16,6 +16,7 @@ MonoBehaviour:
   setName: Moon birds
   icon: {fileID: 21300000, guid: 8f08df5f06ba44940b2e542c9581466a, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: f6a37ea5b94b0da42a0d3c8cdcc3a017, type: 3}
+  backArtwork: {fileID: 21300000, guid: e6f8950291f76e4429f47d192ec0ed26, type: 3}
   cards:
   - {fileID: 8929993697037217512, guid: 2bd906d804e4bce4c9e9389446ff4d8a, type: 3}
   - {fileID: 6753066275089666085, guid: c056d8cdf30d5b741badcb21292f32fb, type: 3}

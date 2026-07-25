@@ -16,7 +16,8 @@ namespace Vesolovsky.Game.Views.Album
     /// </summary>
     [AddComponentMenu("CardsChaos/Album/Card Slot")]
     public class AlbumCardSlot : MonoBehaviour,
-        IDropHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IAlbumCardSource
+        IDropHandler, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler,
+        IPointerClickHandler, IAlbumCardSource
     {
         [Tooltip("The slot's own frame, behind both states. Only ever hidden on the padding " +
                  "slots at the end of a short set's last page.")]
@@ -43,6 +44,11 @@ namespace Vesolovsky.Game.Views.Album
         [SerializeField] private RectTransform vfxAnchor;
 
         private AlbumDragController _drag;
+        private IAlbumCardInspector _inspector;
+
+        // See AlbumHandCard: a gesture that began a drag out of this slot must not also inspect
+        // when it is dropped back onto the same slot.
+        private bool _draggedSincePress;
 
         /// <summary>0-based position on the page. Slot 0 is where card number 1 belongs.</summary>
         public int SlotIndex { get; private set; }
@@ -70,9 +76,12 @@ namespace Vesolovsky.Game.Views.Album
 
         public RectTransform VfxAnchor => vfxAnchor != null ? vfxAnchor : Rect;
 
-        public void Initialize(AlbumDragController drag, string pageSetId, int slotIndex, CardSetDefinition set)
+        public void Initialize(
+            AlbumDragController drag, IAlbumCardInspector inspector, string pageSetId, int slotIndex,
+            CardSetDefinition set)
         {
             _drag = drag;
+            _inspector = inspector;
             PageSetId = pageSetId;
             SlotIndex = slotIndex;
             IsUsable = true;
@@ -141,6 +150,8 @@ namespace Vesolovsky.Game.Views.Album
 
         #region Taking a card back out
 
+        public void OnPointerDown(PointerEventData eventData) => _draggedSincePress = false;
+
         public void OnBeginDrag(PointerEventData eventData)
         {
             // Nothing to pick up, and no drag to start - without this the empty slot would eat
@@ -148,12 +159,27 @@ namespace Vesolovsky.Game.Views.Album
             if (!IsUsable || IsEmpty || eventData.button != PointerEventData.InputButton.Left)
                 return;
 
+            _draggedSincePress = true;
             _drag.Begin(this, eventData);
         }
 
         public void OnDrag(PointerEventData eventData) => _drag.Move(this, eventData);
 
         public void OnEndDrag(PointerEventData eventData) => _drag.End(this, eventData);
+
+        /// <summary>
+        /// A plain click on a filled slot opens the card up close, the same as clicking one in
+        /// hand. Anything that began a drag is not a click - dragging a card out and dropping it
+        /// straight back must not inspect it - so the two gestures never collide.
+        /// </summary>
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (!_draggedSincePress && IsUsable && !IsEmpty
+                && eventData.button == PointerEventData.InputButton.Left)
+            {
+                _inspector.Inspect(this);
+            }
+        }
 
         void IAlbumCardSource.OnCardLifted() => ShowCard(false);
 

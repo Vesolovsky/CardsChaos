@@ -56,6 +56,19 @@ namespace Vesolovsky.Game.Views.Album
         [SerializeField] private float liftScale = 1.06f;
         [SerializeField] private float liftDuration = 0.12f;
 
+        [Header("Sway")]
+        [Tooltip("Degrees of tilt per pixel-per-second of sideways travel. The card lags behind " +
+                 "the cursor as it is swept along, the way a held card would, then rights itself " +
+                 "when the cursor stops.")]
+        [SerializeField] private float swayPerVelocity = 0.012f;
+
+        [Tooltip("The most the card is ever allowed to lag, however fast it is flung.")]
+        [SerializeField] private float maxSway = 18f;
+
+        [Tooltip("How quickly the tilt follows the cursor's speed. Higher is twitchier; lower " +
+                 "lets the card trail further before it catches up.")]
+        [SerializeField] private float swayResponse = 12f;
+
         [Header("Going home")]
         [Tooltip("A card let go of over nothing. It travels back rather than vanishing, so the " +
                  "player can see where it went.")]
@@ -67,6 +80,17 @@ namespace Vesolovsky.Game.Views.Album
                  "lowered onto it.")]
         [SerializeField] private float dropDuration = 0.16f;
         [SerializeField, SearchableEnum] private Ease dropEase = Ease.InQuad;
+
+        [Tooltip("How the card rights itself as it lands. It carries in whatever tilt the sway " +
+                 "left it with, so an overshooting ease (OutBack) reads as the card slapping " +
+                 "flat against the page - the impetus of the drop.")]
+        [SerializeField] private float dropSpinDuration = 0.24f;
+        [SerializeField, SearchableEnum] private Ease dropSpinEase = Ease.OutBack;
+
+        [Tooltip("A tilt the card always winds up to before flattening, so even a card let go " +
+                 "of dead still lands with a visible turn rather than settling limp. Signed " +
+                 "toward the slot it is dropping onto.")]
+        [SerializeField] private float dropWindUp = 7f;
 
         [Header("Screen shake")]
         [Tooltip("What gets shaken when a card lands - the album's Root. It has to be the UI " +
@@ -100,6 +124,10 @@ namespace Vesolovsky.Game.Views.Album
         private Tween _shakeTween;
         private Vector3 _shakeRestPosition;
         private bool _shakeRestCaptured;
+
+        private Vector2 _lastGhostPosition;
+        private float _swayVelocity;
+        private float _swayAngle;
 
         /// <summary>True while a card is off the page and following the pointer.</summary>
         public bool IsDragging => _source != null;
@@ -155,6 +183,12 @@ namespace Vesolovsky.Game.Views.Album
 
             source.OnCardLifted();
 
+            // Fresh grip, so the card is not carrying any lag from the last drag.
+            _lastGhostPosition = ghostRect.anchoredPosition;
+            _swayVelocity = 0f;
+            _swayAngle = 0f;
+            ghostRect.localRotation = Quaternion.identity;
+
             Tween.Scale(ghostRect, liftScale, liftDuration, Ease.OutQuad);
         }
 
@@ -164,6 +198,39 @@ namespace Vesolovsky.Game.Views.Album
                 return;
 
             _ghost.rectTransform.anchoredPosition = ToLayer(eventData.position) + _grabOffset;
+        }
+
+        /// <summary>
+        /// Trails the card behind the cursor as it is swept along, and lets it right itself when
+        /// the cursor rests. Done here rather than in <see cref="Move"/> because Move only fires
+        /// when the pointer actually moves - the card has to keep easing back to upright on the
+        /// frames in between, or it would hang at whatever tilt the last flick left it.
+        /// </summary>
+        private void Update()
+        {
+            if (_ghost == null)
+                return;
+
+            RectTransform ghostRect = _ghost.rectTransform;
+            float dt = Time.deltaTime;
+            if (dt <= 0f)
+                return;
+
+            // Sideways speed, in pixels per second, smoothed so a single jittery frame does not
+            // snap the tilt.
+            Vector2 position = ghostRect.anchoredPosition;
+            float velocity = (position.x - _lastGhostPosition.x) / dt;
+            _lastGhostPosition = position;
+
+            float velocityBlend = 1f - Mathf.Exp(-swayResponse * dt);
+            _swayVelocity = Mathf.Lerp(_swayVelocity, velocity, velocityBlend);
+
+            // The card lags the motion, so it leans the opposite way to travel: swept right, its
+            // lower edge trails left and the top tips over to the right.
+            float target = Mathf.Clamp(-_swayVelocity * swayPerVelocity, -maxSway, maxSway);
+            _swayAngle = Mathf.Lerp(_swayAngle, target, velocityBlend);
+
+            ghostRect.localRotation = Quaternion.Euler(0f, 0f, _swayAngle);
         }
 
         public void End(IAlbumCardSource source, PointerEventData eventData)
@@ -226,15 +293,35 @@ namespace Vesolovsky.Game.Views.Album
             // later, by which time the drag has moved on to whatever came next.
             Image ghost = _ghost;
             RectTransform ghostRect = ghost.rectTransform;
+            Vector2 target = ToLayer(slot.Rect);
 
             Tween.Scale(ghostRect, 1f, dropDuration, dropEase);
 
             // No warning when the target goes: closing the album mid-flight destroys the ghost,
             // which is a normal end to the drag rather than something to report.
-            Tween.UIAnchoredPosition(ghostRect, ToLayer(slot.Rect), dropDuration, dropEase)
+            Tween.UIAnchoredPosition(ghostRect, target, dropDuration, dropEase)
                 .OnComplete(() => Settle(slot, card, ghost), warnIfTargetDestroyed: false);
 
+            PlayDropSpin(ghostRect, target);
+
             Release(taken: true, destroyGhost: false);
+        }
+
+        /// <summary>
+        /// The card rights itself as it lands. It winds up toward the slot first - so even a card
+        /// let go of dead still turns rather than settling limp - then flattens with an
+        /// overshoot, which is what reads as the slap of it hitting the page.
+        /// </summary>
+        private void PlayDropSpin(RectTransform ghostRect, Vector2 target)
+        {
+            // Once Release() nulls _ghost, Update stops writing the tilt, so the tween below owns
+            // the rotation for the rest of the flight without the two fighting.
+            float toward = target.x - ghostRect.anchoredPosition.x;
+            float sign = Mathf.Abs(toward) > 0.01f ? Mathf.Sign(toward) : 1f;
+
+            ghostRect.localRotation = Quaternion.Euler(0f, 0f, -sign * dropWindUp);
+
+            Tween.LocalRotation(ghostRect, Quaternion.identity, dropSpinDuration, dropSpinEase);
         }
 
         private void Settle(AlbumCardSlot slot, CardRef card, Image ghost)
@@ -310,6 +397,11 @@ namespace Vesolovsky.Game.Views.Album
             }
 
             Tween.Scale(ghost.rectTransform, 1f, returnDuration, returnEase);
+
+            // Flattens on the way home too - a card that gives up mid-sway would otherwise snap
+            // upright the instant it is let go.
+            Tween.LocalRotation(ghost.rectTransform, Quaternion.identity, returnDuration, returnEase);
+
             Tween.UIAnchoredPosition(
                     ghost.rectTransform, ToLayer(source.Rect), returnDuration, returnEase)
                 .OnComplete(() =>

@@ -16,6 +16,7 @@ MonoBehaviour:
   setName: It's just a bench
   icon: {fileID: 21300000, guid: a28f8f078df25ed4abbb6edf37411bdd, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: aa57c05eb1117d14b97febda49d55a13, type: 3}
+  backArtwork: {fileID: 21300000, guid: fd1f4a990395fca4ea4131933b021419, type: 3}
   cards:
   - {fileID: 2292611104239186962, guid: 3989190b3f3d10c47989a2f0e5a9b8e7, type: 3}
   - {fileID: 7126751407301843960, guid: 42ce9025792ea7340b539e3878fc2be0, type: 3}

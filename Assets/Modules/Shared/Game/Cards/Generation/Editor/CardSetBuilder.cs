@@ -343,6 +343,17 @@ namespace CardsChaos.Cards.CardEditor
                 ConfigureTextureImporter(path);
 
             var backTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(backPath);
+
+            // Already a sprite - the back is one of the pngs the import pass above ran over - so
+            // this only picks up the sub-asset the album's inspect flips a card over to.
+            var backSprite = AssetDatabase.LoadAssetAtPath<Sprite>(backPath);
+            if (backSprite == null)
+            {
+                Debug.LogError(
+                    $"[CardSetBuilder] '{backPath}' produced no Sprite. Cards in this set cannot " +
+                    "be turned over in the album's inspect.", backTexture);
+            }
+
             var fronts = pngPaths.Where(p => p != backPath).ToArray();
             var cards = new List<(int Number, GameObject Prefab)>(fronts.Length);
             float minLuminance = 1f;
@@ -407,7 +418,8 @@ namespace CardsChaos.Cards.CardEditor
                 setId,
                 cards.Select(card => card.Prefab).ToList(),
                 LoadSetIcon(setFolder, setId, IconSuffix),
-                LoadSetIcon(setFolder, setId, IconInnerShadowSuffix));
+                LoadSetIcon(setFolder, setId, IconInnerShadowSuffix),
+                backSprite);
         }
 
         /// <summary>
@@ -466,7 +478,8 @@ namespace CardsChaos.Cards.CardEditor
         }
 
         private static CardSetDefinition CreateSetDefinition(
-            string path, string setId, List<GameObject> cards, Sprite icon, Sprite iconInnerShadow)
+            string path, string setId, List<GameObject> cards, Sprite icon, Sprite iconInnerShadow,
+            Sprite backArtwork)
         {
             var definition = AssetDatabase.LoadAssetAtPath<CardSetDefinition>(path);
             if (definition == null)
@@ -479,6 +492,7 @@ namespace CardsChaos.Cards.CardEditor
             serialized.FindProperty("setId").stringValue = setId;
             serialized.FindProperty("icon").objectReferenceValue = icon;
             serialized.FindProperty("iconInnerShadow").objectReferenceValue = iconInnerShadow;
+            serialized.FindProperty("backArtwork").objectReferenceValue = backArtwork;
 
             // setName is deliberately untouched. It is the one field a human is expected to
             // correct - the generated name cannot know that Ballon'dOrs wants to read

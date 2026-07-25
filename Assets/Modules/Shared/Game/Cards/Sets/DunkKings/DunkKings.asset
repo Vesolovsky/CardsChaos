@@ -16,6 +16,7 @@ MonoBehaviour:
   setName: Dunk kings
   icon: {fileID: 21300000, guid: 49e998f81db866140b4129975b1de74d, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 035580eceb0c87c4fac77f2bf8191a3a, type: 3}
+  backArtwork: {fileID: 21300000, guid: a294b7194d6ee5f42aca00c768ffa11b, type: 3}
   cards:
   - {fileID: 9112028993693685356, guid: d7438568d1e66b645b188a973c702063, type: 3}
   - {fileID: 5136143711973413781, guid: 5c81b2efc5a604f45a0739fa4d4d1e05, type: 3}

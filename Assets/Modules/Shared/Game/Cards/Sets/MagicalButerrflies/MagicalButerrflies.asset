@@ -16,6 +16,7 @@ MonoBehaviour:
   setName: Magical buterrflies
   icon: {fileID: 21300000, guid: 75d3a3f64661f4948802080464f092fa, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: a794ba170adce554fbb9778892052738, type: 3}
+  backArtwork: {fileID: 21300000, guid: 5ff9f1917761c1742a116acd5f2f0abb, type: 3}
   cards:
   - {fileID: 2831144620116735565, guid: efbb227178c529b4b9228b3ce127a17a, type: 3}
   - {fileID: 7952324861502890711, guid: 016a8d1fd15a0f740a3b9635ea275842, type: 3}

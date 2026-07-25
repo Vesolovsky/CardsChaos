@@ -42,6 +42,9 @@ namespace Vesolovsky.Game.Views
         [Header("Dragging")]
         [SerializeField] private AlbumDragController drag;
 
+        [Header("Inspect")]
+        [SerializeField] private AlbumCardInspector inspector;
+
         [Header("Input")]
         [Tooltip("Opens and closes the album. Escape also closes it.")]
         [SerializeField] private Key toggleKey = Key.B;
@@ -59,8 +62,9 @@ namespace Vesolovsky.Game.Views
             base.InitialViewSetup(viewInitData);
 
             drag.Initialize(ViewModel, ViewModel.Artwork);
-            pages.Initialize(drag, ViewModel.Album, ViewModel.Artwork);
-            handPile.Initialize(drag, ViewModel.Hand);
+            inspector.Initialize(ViewModel.Artwork);
+            pages.Initialize(drag, inspector, ViewModel.Album, ViewModel.Artwork);
+            handPile.Initialize(drag, inspector, ViewModel.Hand);
 
             BuildSetButtons();
             BindPagingButtons();
@@ -85,6 +89,16 @@ namespace Vesolovsky.Game.Views
             if (keyboard == null || ViewModel == null)
                 return;
 
+            // The inspect is a layer over the album, so while it is open it owns the input: the
+            // same keys that would page or close the album turn and shut the card instead. Routed
+            // through here rather than read in the inspector's own Update so that a single Escape
+            // can never close the card and the album in one frame - only one place reads it.
+            if (inspector != null && inspector.IsOpen)
+            {
+                DriveInspector(keyboard);
+                return;
+            }
+
             if (keyboard[toggleKey].wasPressedThisFrame)
             {
                 if (ViewModel.IsOpen.Value)
@@ -99,6 +113,33 @@ namespace Vesolovsky.Game.Views
             // that wants the same key to back out of itself.
             if (ViewModel.IsOpen.Value && keyboard.escapeKey.wasPressedThisFrame)
                 ViewModel.Close();
+        }
+
+        /// <summary>
+        /// The card close-up's controls, the same as the room's inspector so a card reads the
+        /// same however it was opened: the right button and Escape close it, and the left button
+        /// turns it over when it lands on the card or leaves when it lands off it.
+        /// </summary>
+        private void DriveInspector(Keyboard keyboard)
+        {
+            Mouse mouse = Mouse.current;
+
+            bool rightClick = mouse != null && mouse.rightButton.wasPressedThisFrame;
+            if (rightClick || keyboard.escapeKey.wasPressedThisFrame)
+            {
+                inspector.Close();
+                return;
+            }
+
+            // JustOpened swallows the very click that opened the card - without it the card would
+            // flip or close on the same press that brought it up.
+            if (mouse == null || !mouse.leftButton.wasPressedThisFrame || inspector.JustOpened)
+                return;
+
+            if (inspector.IsPointerOverCard(mouse.position.ReadValue()))
+                inspector.Flip();
+            else
+                inspector.Close();
         }
 
         private void BuildSetButtons()
@@ -179,9 +220,18 @@ namespace Vesolovsky.Game.Views
         private void OnIsOpenChanged(bool isOpen)
         {
             if (isOpen)
+            {
                 Show(destroyCancellationToken).Forget();
+            }
             else
+            {
+                // A card left open when the album goes would come back both stale and, worse,
+                // still holding the input the next time the album opened.
+                if (inspector != null)
+                    inspector.Close();
+
                 Hide(destroyCancellationToken).Forget();
+            }
         }
 
         protected override void OnDestroy()

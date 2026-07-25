@@ -53,6 +53,7 @@ namespace Vesolovsky.Game.Views.Album
 
         private DiContainer _container;
         private AlbumDragController _drag;
+        private IAlbumCardInspector _inspector;
         private ICardAlbum _album;
         private CardArtworkResolver _artwork;
         private CardSetDefinition _set;
@@ -75,9 +76,12 @@ namespace Vesolovsky.Game.Views.Album
         [Inject]
         private void Inject(DiContainer container) => _container = container;
 
-        public void Initialize(AlbumDragController drag, ICardAlbum album, CardArtworkResolver artwork)
+        public void Initialize(
+            AlbumDragController drag, IAlbumCardInspector inspector, ICardAlbum album,
+            CardArtworkResolver artwork)
         {
             _drag = drag;
+            _inspector = inspector;
             _album = album;
             _artwork = artwork;
 
@@ -109,7 +113,7 @@ namespace Vesolovsky.Game.Views.Album
                     continue;
                 }
 
-                slot.Initialize(_drag, set.SetId, i, set);
+                slot.Initialize(_drag, _inspector, set.SetId, i, set);
                 RefreshSlot(i);
             }
 

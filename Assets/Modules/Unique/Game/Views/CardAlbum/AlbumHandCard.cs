@@ -15,14 +15,20 @@ namespace Vesolovsky.Game.Views.Album
     /// copy of it.
     /// </summary>
     [AddComponentMenu("CardsChaos/Album/Hand Card")]
-    public class AlbumHandCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler,
-        IAlbumCardSource
+    public class AlbumHandCard : MonoBehaviour, IPointerDownHandler, IBeginDragHandler,
+        IDragHandler, IEndDragHandler, IPointerClickHandler, IAlbumCardSource
     {
         [SerializeField] private Image cardImage;
 
         private AlbumDragController _drag;
+        private IAlbumCardInspector _inspector;
         private Tween _positionTween;
         private Tween _rotationTween;
+
+        // A press that turns into a drag must not also inspect on release. The event system
+        // usually suppresses that click itself, but a short drag back to where it started can
+        // slip one through - so the intent is tracked here rather than left to chance.
+        private bool _draggedSincePress;
 
         /// <summary>The card out in the room that this one is standing in for.</summary>
         public Card WorldCard { get; private set; }
@@ -33,9 +39,10 @@ namespace Vesolovsky.Game.Views.Album
 
         public RectTransform Rect => (RectTransform)transform;
 
-        public void Initialize(AlbumDragController drag, Card worldCard)
+        public void Initialize(AlbumDragController drag, IAlbumCardInspector inspector, Card worldCard)
         {
             _drag = drag;
+            _inspector = inspector;
             WorldCard = worldCard;
 
             CardIdentity identity = worldCard.Identity;
@@ -83,17 +90,31 @@ namespace Vesolovsky.Game.Views.Album
                 _rotationTween = Tween.LocalRotation(Rect, rotation, duration, ease);
         }
 
+        public void OnPointerDown(PointerEventData eventData) => _draggedSincePress = false;
+
         public void OnBeginDrag(PointerEventData eventData)
         {
             if (eventData.button != PointerEventData.InputButton.Left)
                 return;
 
+            _draggedSincePress = true;
             _drag.Begin(this, eventData);
         }
 
         public void OnDrag(PointerEventData eventData) => _drag.Move(this, eventData);
 
         public void OnEndDrag(PointerEventData eventData) => _drag.End(this, eventData);
+
+        /// <summary>
+        /// A plain click - press and release without a drag between them - opens the card up
+        /// close. Anything that began a drag is not a click, whatever the event system decides to
+        /// raise, so drag-to-file and click-to-inspect never fight over the same gesture.
+        /// </summary>
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (!_draggedSincePress && eventData.button == PointerEventData.InputButton.Left)
+                _inspector.Inspect(this);
+        }
 
         void IAlbumCardSource.OnCardLifted() => cardImage.enabled = false;
 

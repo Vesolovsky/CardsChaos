@@ -16,6 +16,7 @@ MonoBehaviour:
   setName: Ballon'd ors
   icon: {fileID: 21300000, guid: a6a08ff20adc01044992bd73cc3af133, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 71d1f0e39dc003b439e67e092dc4b199, type: 3}
+  backArtwork: {fileID: 21300000, guid: f27a1fadac8612049aa034dd90635b9b, type: 3}
   cards:
   - {fileID: 131918913808765611, guid: 3d274af82de9d68449e2a15e6d96687a, type: 3}
   - {fileID: 5420165000602209964, guid: 9b8ff4091062b0348a0e50feb044b537, type: 3}
