@@ -21,7 +21,10 @@ namespace Vesolovsky.Core.Services
             // something takes the room, but it is not the rig's alone - the card table and the
             // album read the same lock, which is the entire point of there being one.
             Container.BindInterfacesTo<WorldInteractionLock>().AsSingle();
-            Container.BindInterfacesTo<CameraPanController>().AsSingle();
+
+            // AndSelf so the Sprint upgrade's applier can reach the concrete controller to flip its
+            // sprint flag; the interface binding still drives the tick.
+            Container.BindInterfacesAndSelfTo<CameraPanController>().AsSingle();
             Container.BindInterfacesTo<CameraLookController>().AsSingle();
 
             // The camera has to be pointed before the table is asked what the cursor is over, or

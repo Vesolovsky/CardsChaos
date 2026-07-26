@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
+using Vesolovsky.Game.Services.Skills;
 using Vesolovsky.Game.Views.Album;
 using VInspector;
 using Zenject;
@@ -74,6 +75,7 @@ namespace Vesolovsky.Game.Views
         private readonly List<AlbumSetButton> _setButtons = new List<AlbumSetButton>();
 
         private DiContainer _container;
+        private IAlbumFocusRequest _albumFocus;
         private AlbumSetButton _openSet;
 
         // What the collection label currently reads, so the punch only fires when the number
@@ -81,8 +83,14 @@ namespace Vesolovsky.Game.Views
         // count, and that should not kick the label.
         private int _shownCollectionCount = -1;
 
+        // The focus channel is optional so the album still builds while the upgrade system is
+        // being wired up; Smart Album Open simply does nothing until its installer is present.
         [Inject]
-        private void InjectContainer(DiContainer container) => _container = container;
+        private void InjectContainer(DiContainer container, [InjectOptional] IAlbumFocusRequest albumFocus)
+        {
+            _container = container;
+            _albumFocus = albumFocus;
+        }
 
         protected override void InitialViewSetup(IViewInitData viewInitData)
         {
@@ -99,6 +107,9 @@ namespace Vesolovsky.Game.Views
             pages.PageChanged += RefreshPaging;
             drag.CardFiledCorrectly += pages.OnCardFiledCorrectly;
             ViewModel.AlbumChanged += OnAlbumChanged;
+
+            if (_albumFocus != null)
+                _albumFocus.OpenRequested += OnAlbumFocusRequested;
 
             ViewModel.IsOpen
                 .Subscribe(OnIsOpenChanged)
@@ -241,6 +252,27 @@ namespace Vesolovsky.Game.Views
         }
 
         /// <summary>
+        /// Carries out a Smart Album Open: opens the album if it is shut, turns to the requested
+        /// set and jumps straight to the page the skill worked out. The jump is immediate - the
+        /// point of the skill is to be already there, not to watch the pages flick past.
+        /// </summary>
+        private void OnAlbumFocusRequested(string setId, int pageIndex)
+        {
+            if (ViewModel == null)
+                return;
+
+            AlbumSetButton button = _setButtons.Find(b => b.Set != null && b.Set.SetId == setId);
+            if (button == null)
+                return;
+
+            if (!ViewModel.IsOpen.Value)
+                ViewModel.Open();
+
+            OpenSet(button);
+            pages.GoToPage(pageIndex, immediately: true);
+        }
+
+        /// <summary>
         /// Only the set counters are refreshed here. The slots themselves are left to the drag
         /// controller, which fills one at the moment the card actually lands on it - redrawing
         /// the page the instant the album changed would put the card in the slot while it is
@@ -325,6 +357,9 @@ namespace Vesolovsky.Game.Views
 
             if (ViewModel != null)
                 ViewModel.AlbumChanged -= OnAlbumChanged;
+
+            if (_albumFocus != null)
+                _albumFocus.OpenRequested -= OnAlbumFocusRequested;
 
             base.OnDestroy();
         }

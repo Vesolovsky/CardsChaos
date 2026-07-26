@@ -6,6 +6,7 @@ using UniRx;
 using UnityEngine;
 using Vesolovsky.Core.Services;
 using Vesolovsky.Core.UISystem;
+using Vesolovsky.Game.Services.Upgrades;
 using Vesolovsky.Game.Views.Album;
 using Zenject;
 
@@ -28,6 +29,7 @@ namespace Vesolovsky.Game.Views
         private readonly CardHand _hand;
         private readonly ICardFactory _cardFactory;
         private readonly IWorldInteractionLock _worldLock;
+        private readonly IAlbumSetOrder _setOrder;
 
         private readonly ReactiveProperty<bool> _isOpen = new ReactiveProperty<bool>(false);
 
@@ -37,7 +39,12 @@ namespace Vesolovsky.Game.Views
 
         public IReadOnlyReactiveProperty<bool> IsOpen => _isOpen;
 
-        public IReadOnlyList<CardSetDefinition> Sets => _catalog.Sets;
+        // Drawn from the order service rather than straight off the catalog, so the album lists its
+        // sets shuffled by default and A-to-Z once Alphabetical Sets is claimed. The order is read
+        // afresh each time the buttons are built. Falls back to the plain catalog order while the
+        // upgrade system is not yet wired in.
+        public IReadOnlyList<CardSetDefinition> Sets =>
+            _setOrder != null ? _setOrder.GetOrderedSets() : _catalog.Sets;
 
         public CardHand Hand => _hand;
 
@@ -51,13 +58,15 @@ namespace Vesolovsky.Game.Views
             ICardAlbum album,
             CardHand hand,
             ICardFactory cardFactory,
-            IWorldInteractionLock worldLock)
+            IWorldInteractionLock worldLock,
+            [InjectOptional] IAlbumSetOrder setOrder)
         {
             _catalog = catalog;
             _album = album;
             _hand = hand;
             _cardFactory = cardFactory;
             _worldLock = worldLock;
+            _setOrder = setOrder;
 
             Artwork = new CardArtworkResolver(catalog);
             _album.PageChanged += OnAlbumPageChanged;

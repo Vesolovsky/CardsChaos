@@ -17,6 +17,11 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: fe580f989f6cb0046bf7405f43109311
   m_SerializeEntries:
+  - m_GUID: 04ed1dcc0fc0f6d45ae5371147eef21e
+    m_Address: UpgradesView
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2086c83f5247b2f4da680153f675b848
     m_Address: ConfirmationPopupView
     m_ReadOnly: 0

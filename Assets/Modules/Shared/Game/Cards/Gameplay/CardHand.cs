@@ -101,6 +101,20 @@ namespace CardsChaos.Cards
 
         public bool HasRoom => _cards.Count < slotCount;
 
+        /// <summary>
+        /// How many cards the hand can hold. The Extra Card Slot upgrade raises it; the base value
+        /// is the one authored on the prefab. Lowering it below what is already held is allowed -
+        /// nothing is thrown away, the hand just refuses new cards until it drains back under.
+        /// </summary>
+        public int SlotCount
+        {
+            get => slotCount;
+            set => slotCount = Mathf.Max(0, value);
+        }
+
+        /// <summary>Free slots right now - what the magnet may fill.</summary>
+        public int FreeSlots => Mathf.Max(0, slotCount - _cards.Count);
+
         /// <summary>Index 0 is the top of the pile, same order the pile is drawn in.</summary>
         public IReadOnlyList<Card> Cards => _cards;
 
@@ -140,8 +154,11 @@ namespace CardsChaos.Cards
             card.AttachTo(anchor);
             _cards.Insert(0, card);
 
-            // No selection here on purpose: pointing at a card is what selects it, so claiming
-            // the new card would light it up until the cursor happened to move.
+            // The newest card takes the selection at once. A card picked up into an empty hand, or
+            // taken back out of the album, is the one the player means to act on next, and leaving
+            // the hand with nothing selected until the cursor happened to find a card was a gap -
+            // the wheel and the skills all read the selection.
+            Claim(card);
             Relayout();
             Changed?.Invoke();
             return true;
@@ -284,6 +301,50 @@ namespace CardsChaos.Cards
 
             _cards.RemoveAt(index);
             _cards.Insert(0, card);
+
+            Relayout();
+            Changed?.Invoke();
+        }
+
+        /// <summary>
+        /// Rearranges the hand into a given order, animating each card to its new slot. The order
+        /// must be a permutation of the cards currently held - the Hand Sort skill works out what
+        /// the order should be and hands it over, keeping the sorting rule out of the hand itself.
+        ///
+        /// The selection is a reference, not a slot, so it survives the shuffle pointing at the
+        /// same card; that card simply ends up somewhere else in the spread.
+        /// </summary>
+        public void Reorder(IReadOnlyList<Card> order)
+        {
+            if (order == null || order.Count != _cards.Count)
+            {
+                Debug.LogError(
+                    $"[{nameof(CardHand)}] Reorder needs a permutation of the {_cards.Count} cards " +
+                    $"held; got {order?.Count.ToString() ?? "null"}.", this);
+
+                return;
+            }
+
+            // Rejected wholesale rather than partly applied: a run that repeats or drops a card
+            // would leave the hand holding a different multiset than it started with, and a
+            // half-sorted hand is worse than an unsorted one.
+            foreach (Card card in order)
+            {
+                if (card == null || !_cards.Contains(card))
+                {
+                    Debug.LogError(
+                        $"[{nameof(CardHand)}] Reorder was given a card the hand is not holding.", this);
+
+                    return;
+                }
+            }
+
+            _cards.Clear();
+            _cards.AddRange(order);
+
+            // The sort settles the selection on the top of the pile rather than following the old
+            // selection off to wherever its card landed in the new order.
+            Claim(_cards.Count > 0 ? _cards[0] : null);
 
             Relayout();
             Changed?.Invoke();

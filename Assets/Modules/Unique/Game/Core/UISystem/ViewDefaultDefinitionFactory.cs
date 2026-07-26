@@ -19,6 +19,9 @@ namespace Vesolovsky.Game.UISystem
                 case CardAlbumView:
                     return new CardAlbumViewDefinition();
 
+                case UpgradesView:
+                    return new UpgradesViewDefinition();
+
                 default:
                     Debug.Log($"Can't create default View Definition. View of type: '{view.GetType()}' not handled.");
                     return null;
@@ -40,6 +43,9 @@ namespace Vesolovsky.Game.UISystem
 
                 case ViewName.CardAlbum:
                     return new CardAlbumViewDefinition();
+
+                case ViewName.Upgrades:
+                    return new UpgradesViewDefinition();
 
                 default:
                     Debug.Log($"Can't create default View Definition. ViewName: '{viewName}' not handled.");

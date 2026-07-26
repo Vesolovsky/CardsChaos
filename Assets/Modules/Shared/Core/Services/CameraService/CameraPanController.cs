@@ -10,6 +10,11 @@ namespace Vesolovsky.Core.Services
         [Tooltip("World units per second at full tilt. The table is small - a card is 0.063 wide.")]
         public float Speed = 0.35f;
 
+        [Tooltip("How much faster the camera moves while sprinting (holding Shift), once the " +
+                 "Sprint upgrade is unlocked. 1 is no faster; the upgrade has no effect until this " +
+                 "is above 1.")]
+        public float SprintMultiplier = 1.8f;
+
         [Tooltip("How sharply the pan eases in and out. Higher is snappier; 0 disables smoothing.")]
         public float Smoothing = 12f;
 
@@ -49,6 +54,13 @@ namespace Vesolovsky.Core.Services
 
         private Vector3 _velocity;
 
+        /// <summary>
+        /// Whether sprinting is available. Off until the game's Sprint upgrade is claimed and an
+        /// applier turns it on; kept as a plain flag so the camera - which lives in Core - owes the
+        /// upgrade system nothing.
+        /// </summary>
+        public bool SprintUnlocked { get; set; }
+
         [Inject]
         public CameraPanController(
             ICameraService cameraService, IWorldInteractionLock worldLock, CameraPanSettings settings)
@@ -75,7 +87,14 @@ namespace Vesolovsky.Core.Services
                 return;
 
             Transform pivot = camera.transform;
-            Vector3 target = ReadDirection(keyboard, pivot) * _settings.Speed;
+
+            // Sprint scales the target speed while Shift is held, so the ease still carries the
+            // camera up to and down from the faster pace rather than snapping between the two.
+            float speed = _settings.Speed;
+            if (SprintUnlocked && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed))
+                speed *= _settings.SprintMultiplier;
+
+            Vector3 target = ReadDirection(keyboard, pivot) * speed;
 
             // Framerate independent exponential approach, so the ease does not change
             // with the refresh rate.

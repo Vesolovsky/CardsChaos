@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62c16f77e68f0614d915f48e963e76f7, type: 3}
+  m_Name: UpgradesCatalog
+  m_EditorClassIdentifier: 
+  permanents:
+  - {fileID: 11400000, guid: cf734b1457ec53f41a282602d0b6f66e, type: 2}
+  - {fileID: 11400000, guid: 6b64f3a8204242443a5674986c2e8b8f, type: 2}
+  skills:
+  - {fileID: 11400000, guid: 383b2cb3a5501f64d95e0bf4dae20174, type: 2}
+  - {fileID: 11400000, guid: ce11e6571cda2ce41be11428160e0eb5, type: 2}
+  - {fileID: 11400000, guid: 7ab877493ba263147ae5fa10be58339e, type: 2}
+  oneTimes:
+  - {fileID: 11400000, guid: 630e0fbadec93534cb67dc439795d32c, type: 2}
+  - {fileID: 11400000, guid: 47e4bac0e46e6d64694ff21ae548add6, type: 2}
