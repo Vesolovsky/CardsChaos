@@ -17,7 +17,8 @@ MonoBehaviour:
   description: Opens album on correct set and page for current card
   icon: {fileID: 21300000, guid: 15f3494971d45a74b811f2a903073ad1, type: 3}
   skillId: 1
-  activationKey: 43
+  activationAction: {fileID: -646311109329717399, guid: 8cff13d2b1c787347bf206f8968e49ed,
+    type: 3}
   levels:
   - cost: 1
     value: 0

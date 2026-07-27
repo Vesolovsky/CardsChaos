@@ -7,5 +7,6 @@ namespace Vesolovsky.Game.UISystem
         ConfirmationPopup = 825724,
         CardAlbum = 696473,
         Upgrades = 550470,
+        GameplayHud = 300508,
     }
 }

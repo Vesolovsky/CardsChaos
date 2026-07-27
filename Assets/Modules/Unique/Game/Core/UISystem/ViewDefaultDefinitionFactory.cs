@@ -22,6 +22,9 @@ namespace Vesolovsky.Game.UISystem
                 case UpgradesView:
                     return new UpgradesViewDefinition();
 
+                case GameplayHudView:
+                    return new GameplayHudViewDefinition();
+
                 default:
                     Debug.Log($"Can't create default View Definition. View of type: '{view.GetType()}' not handled.");
                     return null;
@@ -46,6 +49,9 @@ namespace Vesolovsky.Game.UISystem
 
                 case ViewName.Upgrades:
                     return new UpgradesViewDefinition();
+
+                case ViewName.GameplayHud:
+                    return new GameplayHudViewDefinition();
 
                 default:
                     Debug.Log($"Can't create default View Definition. ViewName: '{viewName}' not handled.");

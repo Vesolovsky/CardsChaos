@@ -97,6 +97,12 @@ namespace CardsChaos.Cards
         /// </summary>
         public event System.Action<Card> Cycled;
 
+        /// <summary>
+        /// Raised when a pickup is turned away because the hand is already full. Nothing changes in
+        /// the hand; it exists so the HUD can flinch the count and say why the card stayed down.
+        /// </summary>
+        public event System.Action PickUpRejected;
+
         public bool IsFull => _cards.Count >= slotCount;
 
         public bool HasRoom => _cards.Count < slotCount;
@@ -148,6 +154,7 @@ namespace CardsChaos.Cards
                     $"Hand is full ({_cards.Count}/{slotCount}); '{card.name}' stays on the floor.",
                     this);
 
+                PickUpRejected?.Invoke();
                 return false;
             }
 

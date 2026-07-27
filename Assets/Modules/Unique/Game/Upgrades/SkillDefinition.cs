@@ -33,15 +33,16 @@ namespace Vesolovsky.Game.Upgrades
         [Tooltip("Which skill this is. Pairs the definition with the handler that carries it out.")]
         [SerializeField] private SkillId skillId;
 
-        [Tooltip("The key that activates the skill from the keyboard.")]
-        [SerializeField] private Key activationKey;
+        [Tooltip("The action that fires the skill. Its binding, from the game's input asset, is both " +
+                 "what the keyboard reads and the key the HUD shows in the skill's hint.")]
+        [SerializeField] private InputActionReference activationAction;
 
         [Tooltip("The levels, lowest first. Level 1 both unlocks the skill and is its first use.")]
         [SerializeField] private List<Level> levels = new List<Level>();
 
         public SkillId SkillId => skillId;
 
-        public Key ActivationKey => activationKey;
+        public InputActionReference ActivationAction => activationAction;
 
         public override int MaxLevel => levels.Count;
 

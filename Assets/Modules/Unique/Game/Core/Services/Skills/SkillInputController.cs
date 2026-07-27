@@ -36,17 +36,18 @@ namespace Vesolovsky.Game.Services.Skills
             if (_gate.Blocked)
                 return;
 
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null)
-                return;
-
             foreach (SkillDefinition definition in _catalog.Skills)
             {
                 if (definition == null)
                     continue;
 
-                var key = keyboard[definition.ActivationKey];
-                if (key != null && key.wasPressedThisFrame)
+                // The key is read straight off the skill's own action, so rebinding it is an edit to
+                // the input asset and nothing here has to know.
+                InputAction action = definition.ActivationAction != null
+                    ? definition.ActivationAction.action
+                    : null;
+
+                if (action != null && action.WasPressedThisFrame())
                     _skills.TryActivate(definition.SkillId);
             }
         }

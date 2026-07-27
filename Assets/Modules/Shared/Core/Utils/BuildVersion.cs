@@ -9,7 +9,7 @@ namespace Vesolovsky.Core
         /// <summary>
         /// MajorVersion.Variant
         /// </summary>
-        public const string CURRENT_VERSION = "0.15";
+        public const string CURRENT_VERSION = "0.1";
         
         [SerializeField] private VText versionText;
 

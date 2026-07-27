@@ -3,8 +3,10 @@ using Cysharp.Threading.Tasks;
 using UniRx;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Vesolovsky.Core.Services.Input;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
+using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Views.Upgrades;
 using Zenject;
 
@@ -32,17 +34,24 @@ namespace Vesolovsky.Game.Views
         [SerializeField] private UpgradeSkillItem skillItemPrefab;
         [SerializeField] private UpgradeTaskItem taskItemPrefab;
 
-        [Header("Input")]
-        [Tooltip("Opens and closes the screen. Escape also closes it.")]
-        [SerializeField] private Key toggleKey = Key.U;
-
         private readonly List<UpgradeSkillItem> _skillItems = new List<UpgradeSkillItem>();
         private readonly List<UpgradeTaskItem> _taskItems = new List<UpgradeTaskItem>();
 
         private DiContainer _container;
+        private IGameplayPanels _panels;
+        private IInputActions _input;
+        private InputAction _toggleAction;
 
         [Inject]
-        private void InjectContainer(DiContainer container) => _container = container;
+        private void InjectContainer(
+            DiContainer container,
+            [InjectOptional] IGameplayPanels panels,
+            [InjectOptional] IInputActions input)
+        {
+            _container = container;
+            _panels = panels;
+            _input = input;
+        }
 
         protected override void InitialViewSetup(IViewInitData viewInitData)
         {
@@ -56,9 +65,24 @@ namespace Vesolovsky.Game.Views
 
             BuildItems();
 
+            // The HUD's upgrades button pulls the same lever the toggle key does.
+            if (_panels != null)
+                _panels.UpgradesToggleRequested += Toggle;
+
+            if (_input != null)
+                _toggleAction = _input.Find(GameInputActions.ToggleUpgrades);
+
             ViewModel.IsOpen
                 .Subscribe(OnIsOpenChanged)
                 .AddTo(this);
+        }
+
+        protected override void OnDestroy()
+        {
+            if (_panels != null)
+                _panels.UpgradesToggleRequested -= Toggle;
+
+            base.OnDestroy();
         }
 
         private void Update()
@@ -67,19 +91,28 @@ namespace Vesolovsky.Game.Views
             if (keyboard == null || ViewModel == null)
                 return;
 
-            if (keyboard[toggleKey].wasPressedThisFrame)
+            if (_toggleAction != null && _toggleAction.WasPressedThisFrame())
             {
-                if (ViewModel.IsOpen.Value)
-                    ViewModel.Close();
-                else
-                    ViewModel.Open();
-
+                Toggle();
                 return;
             }
 
             // Escape only ever closes, so it never fights other panels for the key.
             if (ViewModel.IsOpen.Value && keyboard.escapeKey.wasPressedThisFrame)
                 ViewModel.Close();
+        }
+
+        /// <summary>Opens the screen if it is shut and shuts it if it is open - the U key and the
+        /// HUD's upgrades button both land here.</summary>
+        private void Toggle()
+        {
+            if (ViewModel == null)
+                return;
+
+            if (ViewModel.IsOpen.Value)
+                ViewModel.Close();
+            else
+                ViewModel.Open();
         }
 
         private void BuildItems()

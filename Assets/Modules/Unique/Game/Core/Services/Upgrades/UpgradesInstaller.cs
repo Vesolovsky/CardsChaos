@@ -1,4 +1,5 @@
 using UnityEngine;
+using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Services.Progress;
 using Vesolovsky.Game.Services.Skills;
 using Vesolovsky.Game.Upgrades;
@@ -34,6 +35,11 @@ namespace Vesolovsky.Game.Services.Upgrades
 
             Container.Bind<IAlbumSetOrder>().To<AlbumSetOrder>().AsSingle();
             Container.Bind<IAlbumFocusRequest>().To<AlbumFocusRequest>().AsSingle();
+
+            // The HUD's channel to open the album and upgrades screens. Bound here beside the
+            // album focus request because both are scene-level lines between the HUD or a skill and
+            // a screen that lives in its own context.
+            Container.Bind<IGameplayPanels>().To<GameplayPanels>().AsSingle();
 
             // Read by the skill input, set by the upgrades view while it is open.
             Container.Bind<ISkillGate>().To<SkillGate>().AsSingle();

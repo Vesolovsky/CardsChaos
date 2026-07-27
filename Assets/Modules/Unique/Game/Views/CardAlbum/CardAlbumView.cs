@@ -5,8 +5,10 @@ using PrimeTween;
 using UniRx;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Vesolovsky.Core.Services.Input;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
+using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Services.Skills;
 using Vesolovsky.Game.Views.Album;
 using VInspector;
@@ -68,14 +70,13 @@ namespace Vesolovsky.Game.Views
                  "than a buzz. This is the vibrato.")]
         [SerializeField] private float progressPunchFrequency = 3f;
 
-        [Header("Input")]
-        [Tooltip("Opens and closes the album. Escape also closes it.")]
-        [SerializeField] private Key toggleKey = Key.B;
-
         private readonly List<AlbumSetButton> _setButtons = new List<AlbumSetButton>();
 
         private DiContainer _container;
         private IAlbumFocusRequest _albumFocus;
+        private IGameplayPanels _panels;
+        private IInputActions _input;
+        private InputAction _toggleAction;
         private AlbumSetButton _openSet;
 
         // What the collection label currently reads, so the punch only fires when the number
@@ -86,10 +87,16 @@ namespace Vesolovsky.Game.Views
         // The focus channel is optional so the album still builds while the upgrade system is
         // being wired up; Smart Album Open simply does nothing until its installer is present.
         [Inject]
-        private void InjectContainer(DiContainer container, [InjectOptional] IAlbumFocusRequest albumFocus)
+        private void InjectContainer(
+            DiContainer container,
+            [InjectOptional] IAlbumFocusRequest albumFocus,
+            [InjectOptional] IGameplayPanels panels,
+            [InjectOptional] IInputActions input)
         {
             _container = container;
             _albumFocus = albumFocus;
+            _panels = panels;
+            _input = input;
         }
 
         protected override void InitialViewSetup(IViewInitData viewInitData)
@@ -110,6 +117,13 @@ namespace Vesolovsky.Game.Views
 
             if (_albumFocus != null)
                 _albumFocus.OpenRequested += OnAlbumFocusRequested;
+
+            // The HUD's album button pulls the same lever the toggle key does.
+            if (_panels != null)
+                _panels.AlbumToggleRequested += Toggle;
+
+            if (_input != null)
+                _toggleAction = _input.Find(GameInputActions.ToggleAlbum);
 
             ViewModel.IsOpen
                 .Subscribe(OnIsOpenChanged)
@@ -138,13 +152,9 @@ namespace Vesolovsky.Game.Views
                 return;
             }
 
-            if (keyboard[toggleKey].wasPressedThisFrame)
+            if (_toggleAction != null && _toggleAction.WasPressedThisFrame())
             {
-                if (ViewModel.IsOpen.Value)
-                    ViewModel.Close();
-                else
-                    ViewModel.Open();
-
+                Toggle();
                 return;
             }
 
@@ -152,6 +162,19 @@ namespace Vesolovsky.Game.Views
             // that wants the same key to back out of itself.
             if (ViewModel.IsOpen.Value && keyboard.escapeKey.wasPressedThisFrame)
                 ViewModel.Close();
+        }
+
+        /// <summary>Opens the album if it is shut and shuts it if it is open - the B key and the
+        /// HUD's album button both land here.</summary>
+        private void Toggle()
+        {
+            if (ViewModel == null)
+                return;
+
+            if (ViewModel.IsOpen.Value)
+                ViewModel.Close();
+            else
+                ViewModel.Open();
         }
 
         /// <summary>
@@ -360,6 +383,9 @@ namespace Vesolovsky.Game.Views
 
             if (_albumFocus != null)
                 _albumFocus.OpenRequested -= OnAlbumFocusRequested;
+
+            if (_panels != null)
+                _panels.AlbumToggleRequested -= Toggle;
 
             base.OnDestroy();
         }

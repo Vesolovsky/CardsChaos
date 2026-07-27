@@ -17,7 +17,8 @@ MonoBehaviour:
   description: Sort the cards currently held in your hand
   icon: {fileID: 21300000, guid: 9839e1fc72611964e8fd0f3c92e0aa82, type: 3}
   skillId: 2
-  activationKey: 42
+  activationAction: {fileID: -1409449071350357369, guid: 8cff13d2b1c787347bf206f8968e49ed,
+    type: 3}
   levels:
   - cost: 1
     value: 0

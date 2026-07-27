@@ -17,7 +17,8 @@ MonoBehaviour:
   description: Pull matching cards toward you
   icon: {fileID: 21300000, guid: c1ea632c71804484989c3e38d304cfcb, type: 3}
   skillId: 0
-  activationKey: 41
+  activationAction: {fileID: 7367171664919262095, guid: 8cff13d2b1c787347bf206f8968e49ed,
+    type: 3}
   levels:
   - cost: 2
     value: 1

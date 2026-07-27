@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
+using Vesolovsky.Core.Services.Input;
 using Zenject;
 
 namespace CardsChaos.Cards
@@ -12,8 +14,22 @@ namespace CardsChaos.Cards
         [Tooltip("Optional. Left empty the close-up simply uses whatever light the room offers.")]
         [SerializeField] private CardInspectLight inspectLight;
 
+        [Tooltip("The game's one input schema - every rebindable key lives here. Read by the card " +
+                 "table, the album, the upgrades screen, the skills and the HUD.")]
+        [SerializeField] private InputActionAsset inputActions;
+
         public override void InstallBindings()
         {
+            // Kept enabled for the whole scene and disposed with it. NonLazy so the enable happens
+            // at startup rather than waiting for the first thing to read a key.
+            if (inputActions != null)
+                Container.BindInstance(inputActions);
+            else
+                Debug.LogError($"[{nameof(CardsInstaller)}] No {nameof(InputActionAsset)} assigned; " +
+                               "gameplay keys will not fire.", this);
+
+            Container.BindInterfacesTo<InputActions>().AsSingle().NonLazy();
+
             Container.Bind<ICardCatalog>().FromInstance(catalog).AsSingle();
             Container.Bind<CardHand>().FromInstance(hand).AsSingle();
             Container.BindInstance(inspectSettings).AsSingle();

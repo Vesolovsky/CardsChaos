@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.Services;
+using Vesolovsky.Core.Services.Input;
 using Zenject;
 
 namespace CardsChaos.Cards
@@ -24,6 +25,9 @@ namespace CardsChaos.Cards
         private readonly ICardInspector _inspector;
         private readonly IWorldInteractionLock _worldLock;
 
+        private readonly InputAction _throw;
+        private readonly InputAction _toggleHand;
+
         private Card _target;
         private Card _outlined;
 
@@ -32,20 +36,23 @@ namespace CardsChaos.Cards
             ICameraService cameraService,
             CardHand hand,
             ICardInspector inspector,
-            IWorldInteractionLock worldLock)
+            IWorldInteractionLock worldLock,
+            IInputActions input)
         {
             _cameraService = cameraService;
             _hand = hand;
             _inspector = inspector;
             _worldLock = worldLock;
+
+            _throw = input.Find(GameInputActions.Throw);
+            _toggleHand = input.Find(GameInputActions.ToggleHand);
         }
 
         public void Tick()
         {
             Mouse mouse = Mouse.current;
-            Keyboard keyboard = Keyboard.current;
 
-            if (mouse == null || keyboard == null)
+            if (mouse == null)
                 return;
 
             // Whoever holds the room owns the mouse - the close-up, the album. This runs before
@@ -75,7 +82,7 @@ namespace CardsChaos.Cards
                     _hand.PickUp(_target);
             }
 
-            if (keyboard.fKey.wasPressedThisFrame)
+            if (_throw != null && _throw.WasPressedThisFrame())
             {
                 _hand.ThrowSelected();
 
@@ -85,7 +92,7 @@ namespace CardsChaos.Cards
                 Aim(null);
             }
 
-            if (keyboard.tabKey.wasPressedThisFrame)
+            if (_toggleHand != null && _toggleHand.WasPressedThisFrame())
                 _hand.ToggleLayout();
 
             float scroll = mouse.scroll.ReadValue().y;

@@ -22,6 +22,11 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 156a546369e04c442bdd0dd84f143b14
+    m_Address: GameplayHudView
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2086c83f5247b2f4da680153f675b848
     m_Address: ConfirmationPopupView
     m_ReadOnly: 0
