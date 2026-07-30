@@ -77,6 +77,11 @@ namespace Vesolovsky.Game.Views
             if (_isOpen.Value)
                 return;
 
+            // Do not open on top of something that already holds the room - a card close-up, the
+            // upgrades screen, the pause menu. Matches the upgrades screen's own guard.
+            if (_worldLock.IsLocked)
+                return;
+
             // Taken before the view is told, so the frame the album appears on is already a frame
             // the room is not listening in.
             _worldHandle = _worldLock.Acquire(this);

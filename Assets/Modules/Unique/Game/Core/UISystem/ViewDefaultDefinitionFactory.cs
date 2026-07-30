@@ -25,6 +25,9 @@ namespace Vesolovsky.Game.UISystem
                 case GameplayHudView:
                     return new GameplayHudViewDefinition();
 
+                case PauseView:
+                    return new PauseViewDefinition();
+
                 default:
                     Debug.Log($"Can't create default View Definition. View of type: '{view.GetType()}' not handled.");
                     return null;
@@ -52,6 +55,9 @@ namespace Vesolovsky.Game.UISystem
 
                 case ViewName.GameplayHud:
                     return new GameplayHudViewDefinition();
+
+                case ViewName.Pause:
+                    return new PauseViewDefinition();
 
                 default:
                     Debug.Log($"Can't create default View Definition. ViewName: '{viewName}' not handled.");

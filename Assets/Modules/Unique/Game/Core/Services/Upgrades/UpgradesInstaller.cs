@@ -1,5 +1,6 @@
 using UnityEngine;
 using Vesolovsky.Game.Services.Hud;
+using Vesolovsky.Game.Services.Pause;
 using Vesolovsky.Game.Services.Progress;
 using Vesolovsky.Game.Services.Skills;
 using Vesolovsky.Game.Upgrades;
@@ -43,6 +44,10 @@ namespace Vesolovsky.Game.Services.Upgrades
 
             // Read by the skill input, set by the upgrades view while it is open.
             Container.Bind<ISkillGate>().To<SkillGate>().AsSingle();
+
+            // "Is the clock stopped" - set by the pause menu, read by anything that runs on game
+            // time (currently the skill cooldowns).
+            Container.Bind<IPauseState>().To<PauseState>().AsSingle();
 
             // Each handler is registered as an ISkillHandler; the service takes them as a list.
             Container.BindInterfacesAndSelfTo<CardMagnetSkill>().AsSingle();

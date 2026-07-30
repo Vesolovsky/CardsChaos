@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Vesolovsky.Game.Services.Pause;
 using Vesolovsky.Game.Services.Upgrades;
 using Vesolovsky.Game.Upgrades;
 using Zenject;
@@ -21,6 +22,7 @@ namespace Vesolovsky.Game.Services.Skills
 
         private readonly UpgradeCatalog _catalog;
         private readonly IUpgradeService _upgrades;
+        private readonly IPauseState _pauseState;
         private readonly Dictionary<SkillId, ISkillHandler> _handlers = new Dictionary<SkillId, ISkillHandler>();
 
         private readonly Dictionary<SkillId, float> _cooldownRemaining = new Dictionary<SkillId, float>();
@@ -28,10 +30,12 @@ namespace Vesolovsky.Game.Services.Skills
 
         [Inject]
         public SkillService(
-            UpgradeCatalog catalog, IUpgradeService upgrades, List<ISkillHandler> handlers)
+            UpgradeCatalog catalog, IUpgradeService upgrades, List<ISkillHandler> handlers,
+            IPauseState pauseState)
         {
             _catalog = catalog;
             _upgrades = upgrades;
+            _pauseState = pauseState;
 
             foreach (ISkillHandler handler in handlers)
             {
@@ -93,6 +97,11 @@ namespace Vesolovsky.Game.Services.Skills
 
         public void Tick()
         {
+            // Cooldowns run on game time, and the pause menu stops the clock - a wait held over the
+            // pause should come back with exactly as long left as it went in with.
+            if (_pauseState != null && _pauseState.IsPaused)
+                return;
+
             if (_cooldownRemaining.Count == 0)
                 return;
 

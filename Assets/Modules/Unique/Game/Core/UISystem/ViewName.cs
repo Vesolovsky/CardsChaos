@@ -8,5 +8,6 @@ namespace Vesolovsky.Game.UISystem
         CardAlbum = 696473,
         Upgrades = 550470,
         GameplayHud = 300508,
+        Pause = 444784,
     }
 }
