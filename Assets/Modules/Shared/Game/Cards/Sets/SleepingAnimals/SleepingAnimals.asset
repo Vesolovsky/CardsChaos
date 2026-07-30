@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: SleepingAnimals
+  m_EditorClassIdentifier: 
+  setId: SleepingAnimals
+  setName: 
+  icon: {fileID: 21300000, guid: 83a3127f85fb4e34aaec51ad9917e852, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 52508f0e559297342aa3c0018b0083b3, type: 3}
+  backArtwork: {fileID: 21300000, guid: c94b8ee519f24d5438e329201a11f357, type: 3}
+  cards:
+  - {fileID: 7418132924695533587, guid: c4df1773df078c646b6b9444adc6929a, type: 3}
+  - {fileID: 7729966918333484887, guid: eadbd85e3ccaac8439de8f4e70b320f3, type: 3}
+  - {fileID: 1097606570865256367, guid: 433b5131f3c34bb449969b87b6997930, type: 3}
+  - {fileID: 6564026921616081994, guid: fab43b3e3884106428adc64fbef85c5c, type: 3}
+  - {fileID: 8372539677874508529, guid: 13398f3b02b2c70429e37fa586685945, type: 3}
+  - {fileID: 5660760108458417907, guid: 8de519dfcd11b984fad24f5d02517492, type: 3}
+  - {fileID: 7466422807199610665, guid: f62f0494c0758d94d979c0b9bb0ef3ef, type: 3}
+  - {fileID: 2772306397813078538, guid: 1cfc8a2ea83c2334e871b58afde250fe, type: 3}
+  - {fileID: 6516617417993851624, guid: 5899b27502db1064aba8b68df9f84fb6, type: 3}
+  - {fileID: 4916300343488228537, guid: 994bea0c6a8442442b5a830d99e66bd1, type: 3}
+  - {fileID: 890266278353150585, guid: 2c4457dff8f44794cb4ad5fe83f96c56, type: 3}
+  - {fileID: 9221713077705687695, guid: 0fe68f58e4f846e488659eed389ed191, type: 3}
+  - {fileID: 1966296207471885926, guid: 7f3ee3de1452b834db291207da8d9aed, type: 3}
+  - {fileID: 6834687422560587473, guid: 9150ca0845188084698aaf0c180e7e5a, type: 3}
+  - {fileID: 7293819547613197505, guid: 58375dfde8665cc449f6fdab38340409, type: 3}
+  - {fileID: 6183666366202856549, guid: 339a2a8694ce25a498f75cafcb14bec9, type: 3}
+  - {fileID: 1766588626477134980, guid: d684d0bc9711b244eb02592dfa118e9b, type: 3}
+  - {fileID: 7129741552272852687, guid: 499daef58a369694fa39a61e2c2890ca, type: 3}
+  - {fileID: 1827986112090522609, guid: 5e7b1f8df1fd9c24aa16595fe6a696a8, type: 3}
+  - {fileID: 2963884639025381127, guid: 0c202de424c965d4cbe6a47bb51f84f4, type: 3}
+  - {fileID: 3670405439714988728, guid: 2edd5e45a91cd8f4e88c2959f424ef05, type: 3}
+  - {fileID: 8926306694525649565, guid: f6f5057d5ce74ea4bb47c8c49dd84882, type: 3}
+  - {fileID: 2612319407264256996, guid: be5b52f2a8e857642bffa61d63e1c81a, type: 3}
+  - {fileID: 7599821410010635063, guid: d102fe3fab25557418c516e448a6f73b, type: 3}
+  - {fileID: 1735936639585876823, guid: ede48d24316d4534297820460a68d880, type: 3}
+  - {fileID: 3883898042877474785, guid: 2b602b58e76a8a14aa608ff375e23017, type: 3}
+  - {fileID: 8781468526432035379, guid: bbe92070ed82dc645b7aa03aecc1384b, type: 3}
+  - {fileID: 6747449035050512432, guid: 44fd7d6515299814db4051bcf7b4d2aa, type: 3}
+  - {fileID: 4083506160399916874, guid: 69f32f4e54923f14c9e8feebdea6621b, type: 3}
+  - {fileID: 4639533663280948320, guid: b8b2d7b82775ff04aadb3e2f147d14e7, type: 3}

@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: AnimalsInTheRain
+  m_EditorClassIdentifier: 
+  setId: AnimalsInTheRain
+  setName: 
+  icon: {fileID: 21300000, guid: 572785034c960d44ca5ee87eb68f6afc, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: f19b335b9d97bd04385487abf85423f3, type: 3}
+  backArtwork: {fileID: 21300000, guid: e778d46ce61bfad4ba6e8043ca5ec3ad, type: 3}
+  cards:
+  - {fileID: 3928711126255694860, guid: 3cba16cf47a779246907add839b9f842, type: 3}
+  - {fileID: 3496608688627468136, guid: 25793a8423f88684099114c08f05ec00, type: 3}
+  - {fileID: 2692595116897220272, guid: d50ca4fb28962944a8f28ede9900278a, type: 3}
+  - {fileID: 989447098191967821, guid: 01f9e022166ef70499ea03bd771ed431, type: 3}
+  - {fileID: 5681819916125339261, guid: fb7a52755d2164149b32a4b15a8f9fe7, type: 3}
+  - {fileID: 2270202913887890918, guid: bb3e24d3dc6bf824aa11fdb86b427713, type: 3}
+  - {fileID: 4144682729599585180, guid: b642fe5c5df4fb94f874a0f58dbe4bf9, type: 3}
+  - {fileID: 8055346720501669854, guid: 477c884a7548f31499b45c12f564f27c, type: 3}
+  - {fileID: 3367737725941087945, guid: 0c24f5d2425e5aa4f8d5f23f42f0ceea, type: 3}
+  - {fileID: 426883688677955673, guid: 3efc6c46612a1374d81c04ddca6aba9f, type: 3}
+  - {fileID: 4612455083498247201, guid: 75f15a51a6626dd4197a982318b2eef0, type: 3}
+  - {fileID: 1239474302689043365, guid: 0451e7d21aef4dd4ea2bd7b467ebf3aa, type: 3}
+  - {fileID: 353177767818057656, guid: 61911818fa3c0024f87c6e63367bbecd, type: 3}
+  - {fileID: 1462779624860438596, guid: 874b6295fb671c94698d7d7533c4da11, type: 3}
+  - {fileID: 7719862293360895724, guid: 93dea5448e8341e4d970cb58fd703844, type: 3}
+  - {fileID: 2016903077608385928, guid: b80883fbfe1ff2e4bad6ddfc4275da0c, type: 3}
+  - {fileID: 271119746554864398, guid: fa6d9a64f8ba4ea41aa1ae12d6146d1e, type: 3}
+  - {fileID: 4504023442353161488, guid: eab4a86cc08ef464c9ec5adb8c6db687, type: 3}
+  - {fileID: 3985969932244461887, guid: 8f017b060683167489783c929ba42bb0, type: 3}
+  - {fileID: 7668127791246392044, guid: 6994272dfeba4d94fb4e52144a89cd49, type: 3}
+  - {fileID: 4426641103391850741, guid: 14c1ff1502ab7194c89843da074768ea, type: 3}
+  - {fileID: 4652755490667222778, guid: 73b44a6adddddb74e92739264005bf9b, type: 3}
+  - {fileID: 6473687491141311212, guid: c961167b623cefe47bb78b6e79854212, type: 3}
+  - {fileID: 6300415970279624361, guid: 06d6bf6cae60d654288502d8df559c61, type: 3}
+  - {fileID: 7999337794921963890, guid: de72838a4c246e547b3c112369ee50e8, type: 3}
+  - {fileID: 423789351076465925, guid: 7ea8ada1ef900fd4c9da7aa5e747fe5a, type: 3}
+  - {fileID: 3340692622518187268, guid: 8c9f22d5867a6c140a4ed8f65cb2ab34, type: 3}
+  - {fileID: 6724530161505679443, guid: 12e370bab559a204ca11c553bfa12884, type: 3}
+  - {fileID: 135277628425893956, guid: ad9a13982acd23742863d45177d59ddb, type: 3}
+  - {fileID: 288412972194174080, guid: b420f4e8db8dcd14c8ba2e4402bd3b32, type: 3}

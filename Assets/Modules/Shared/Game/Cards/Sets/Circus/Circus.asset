@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: Circus
+  m_EditorClassIdentifier: 
+  setId: Circus
+  setName: 
+  icon: {fileID: 21300000, guid: c562da6fbd356ba43904c4d793b56269, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 3782f88c24a7a9e47a7f9def4d3a5bd6, type: 3}
+  backArtwork: {fileID: 21300000, guid: 2f4a148d8c56b464b913dfda81dd2d8a, type: 3}
+  cards:
+  - {fileID: 6730539192270943065, guid: d35130bf5f5d00a4b87896cc693646c6, type: 3}
+  - {fileID: 7212409105426045636, guid: c49e1ce6498783a4891999bf4aea1750, type: 3}
+  - {fileID: 6440688578159837723, guid: 5f8df04930abccc40bec873471292b69, type: 3}
+  - {fileID: 7950485588135962022, guid: 9bb470de7dde1b6409c4e252278a6481, type: 3}
+  - {fileID: 3781202683942860025, guid: b8ba0bf893055904ba78eb4d474dd214, type: 3}
+  - {fileID: 7998060987424296095, guid: 5235c20b6d002884bba84819a6c089cf, type: 3}
+  - {fileID: 464257389986226322, guid: 6135d1b197f660e4f922c40fc035e193, type: 3}
+  - {fileID: 1872151997388433989, guid: 20f2d0aceab6dfb4c9ed741ec894bc87, type: 3}
+  - {fileID: 3874358415682886160, guid: c25bd932e0ae4cb41b852ea1d543e010, type: 3}
+  - {fileID: 83795398714133631, guid: f9c772666c3a24d4484f4531a1ff6fa5, type: 3}
+  - {fileID: 8237747900887136816, guid: 971f11b3b6b47444b8cee1f515432470, type: 3}
+  - {fileID: 2026476479398631100, guid: 3e42df62f38d32045a2d83afbc7352d9, type: 3}
+  - {fileID: 2748197836454527631, guid: e35bc2c870e2cad4099c2832876dc489, type: 3}
+  - {fileID: 2357890551732592467, guid: 92bde7986a3b2164b870dcfdcd41ecf7, type: 3}
+  - {fileID: 7152906948281491809, guid: 1abd690f6b079a44398b16560a2cdf5c, type: 3}
+  - {fileID: 3037465154338663936, guid: a8eab2f256423554bb3796ba95837885, type: 3}
+  - {fileID: 5805972970380916717, guid: d1285034a60e9b8499ddd563bc15b428, type: 3}
+  - {fileID: 789875051286133292, guid: 116cb39836848b64c81f7081c231489c, type: 3}
+  - {fileID: 2031144757977885986, guid: cb50c78f6f331644d9d74052c3c96638, type: 3}
+  - {fileID: 8702565537463899155, guid: 01ba59d724b05634d996edccaa51d7ff, type: 3}

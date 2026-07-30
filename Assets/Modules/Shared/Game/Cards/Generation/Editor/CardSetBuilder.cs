@@ -281,7 +281,10 @@ namespace CardsChaos.Cards.CardEditor
 
             var renderer = root.AddComponent<MeshRenderer>();
             renderer.sharedMaterial = material;
-            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+            // Cards do not cast shadows: a table of hundreds of them casting into a cascaded
+            // shadow map is the scene's biggest cost for a shadow that, on a card lying flat, is
+            // barely there. They still receive the room's shadows so they do not look unlit.
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = true;
 
             var collider = root.AddComponent<BoxCollider>();

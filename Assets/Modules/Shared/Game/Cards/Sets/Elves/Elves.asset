@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: Elves
+  m_EditorClassIdentifier: 
+  setId: Elves
+  setName: 
+  icon: {fileID: 21300000, guid: db1831298d00e5248bdee6811a453794, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 52526ce02461c5e428f6f1fea11e7ef5, type: 3}
+  backArtwork: {fileID: 21300000, guid: e731c3d67fe495c42a88b2ddbcd575d4, type: 3}
+  cards:
+  - {fileID: 271632612961107894, guid: 21785481703ac1b4f9b75b5e1b743e66, type: 3}
+  - {fileID: 1630025718976011235, guid: 2833dddd60a9a8d409ab3ec292321b42, type: 3}
+  - {fileID: 479450174304623522, guid: 76306bd00640fd14d88ee0c75f4fb96a, type: 3}
+  - {fileID: 962443604504753644, guid: 520226d576dc80d4984fcf46d30c89bf, type: 3}
+  - {fileID: 741198074379214969, guid: 15a4fabe9e80aeb408108ca9579cf5f0, type: 3}
+  - {fileID: 5756250610589130911, guid: 2b3a95030927ee647b3d538c0c8477f2, type: 3}
+  - {fileID: 5950055433467440397, guid: e69139bd0e30b1041b040f423f8b1f08, type: 3}
+  - {fileID: 8244015853781043793, guid: 74a0d5de4b19d504f92e0dd3a3b5c1c1, type: 3}
+  - {fileID: 8063783839557397173, guid: 4df7b90ceb969ab4f902d2a0066749bd, type: 3}
+  - {fileID: 7874510312353342920, guid: 4bf8d838c5b144344b1970ceaf5911f3, type: 3}
+  - {fileID: 5173053062852341640, guid: 00c1c8caf776032468e454d48a6d336a, type: 3}
+  - {fileID: 3852446671258056434, guid: 9436a3fa2b9320547ac63895ae0a2781, type: 3}
+  - {fileID: 5521373107245289922, guid: fc3bd4ff8c5dbf94895c2de4013947c0, type: 3}
+  - {fileID: 5953658917099919555, guid: 10c4560ca822b0a41a44d0d1214ef028, type: 3}
+  - {fileID: 2979493245370896041, guid: 8faa1a6c0467a46499266ec39a1397cd, type: 3}
+  - {fileID: 3954629318554408899, guid: 7ef9631bd974d0d41bc34a346d0650ea, type: 3}
+  - {fileID: 4185499507179131850, guid: be1c1adc029f1a34891539e8c9dcc2d7, type: 3}
+  - {fileID: 3002252771715120129, guid: ec3be152a585eb34696e2369fb99ad3f, type: 3}
+  - {fileID: 4427498497906015031, guid: 27506c3dd2a75f3458243c9dba75d0d5, type: 3}
+  - {fileID: 533352139363164109, guid: 536fcae295a1d08468cd1341067d79b0, type: 3}
+  - {fileID: 1045886622970462549, guid: 677db9a32d3d0d4498a1a2a16015ffea, type: 3}
+  - {fileID: 6316743861605382175, guid: 1fdb25fdbfcfa524681f173ece4b9c68, type: 3}
+  - {fileID: 660890879712181609, guid: 19f4e2bcf1979b740a28dd21d7556e8f, type: 3}
+  - {fileID: 5518862664714387598, guid: fbf04277853058e4a94cf1d47618b214, type: 3}
+  - {fileID: 612823256257926239, guid: f81dff70aa6942041a6d6d66c3c550c8, type: 3}
+  - {fileID: 5012111507384408904, guid: 2179cefa8ba792f40ba445b51badd874, type: 3}
+  - {fileID: 4646953301365720567, guid: fe346cf0436fef24c8377d2040892693, type: 3}
+  - {fileID: 9041140097325473806, guid: 94ed20e742c9cc9409c63f00e6026046, type: 3}
+  - {fileID: 5001982164390352848, guid: 15d993e22864882429b24b35fd23c147, type: 3}
+  - {fileID: 7890069347823320255, guid: 54ca92e44f2e5af49a5bc85da3a7125d, type: 3}

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: CuteSpiders
+  m_EditorClassIdentifier: 
+  setId: CuteSpiders
+  setName: 
+  icon: {fileID: 21300000, guid: 42b41dcbfaed02e46ae0fb607d894fa5, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: fdf1898b317225048a5b44f4e1f8b168, type: 3}
+  backArtwork: {fileID: 21300000, guid: bd59664ac1055024594f1a1e242d02ac, type: 3}
+  cards:
+  - {fileID: 4441461279579841805, guid: 3362ff24d24e78448b1884390940f2e4, type: 3}
+  - {fileID: 7678620534231528633, guid: 0ffab32c078fe4a4397727984358f679, type: 3}
+  - {fileID: 1787828184829744334, guid: 5f3bc17380d994a4d8f4a909b96a179c, type: 3}
+  - {fileID: 5465967859354644353, guid: 7c55635841531a449a797dc19b22ea78, type: 3}
+  - {fileID: 4967775125055808255, guid: a41f109857582994dbd79175d24d65aa, type: 3}
+  - {fileID: 6985826978057327177, guid: 899f06b4aa0a8334a9f49ff3bb5a1bc3, type: 3}
+  - {fileID: 2297950624275462610, guid: c599a1a28d2ac314ea363f8002cde965, type: 3}
+  - {fileID: 4850438071916040009, guid: a208f6cf7a45ceb41abe6cbce5c73556, type: 3}
+  - {fileID: 943355040867041732, guid: 11d94123d3dca9540b5b491aa1575435, type: 3}
+  - {fileID: 1267543335525840181, guid: 7fbe00cb96a39bb41b6561a8172977bd, type: 3}
+  - {fileID: 6706269543260882516, guid: 4b66e7b17c23a9f489e6ff656cbc4a90, type: 3}
+  - {fileID: 5831421840178672763, guid: 89e00a9b296219a49ba4fa1406b5d859, type: 3}
+  - {fileID: 2988888842704317539, guid: 31884b5f3533f1d42b21459f99406b6a, type: 3}
+  - {fileID: 9063369983635321373, guid: 666372c9c3e19014985a302ec91affb8, type: 3}
+  - {fileID: 8022747701507798392, guid: a3f05dc945bfb9a4a8b48c3c0f4bfc15, type: 3}
+  - {fileID: 6551527858217815028, guid: da82dc29621a1644abe202517bc45f6d, type: 3}
+  - {fileID: 8734874863683960724, guid: 106328e53ec0b524e89fc96d953e278f, type: 3}
+  - {fileID: 6326285162378529530, guid: d332ba0da2a27f140bb792fd4873c7c7, type: 3}
+  - {fileID: 4214319709612432181, guid: 47a4594d93fe84b43a1c0a29568be4e3, type: 3}
+  - {fileID: 709120898951304629, guid: a29ac29d26256b944bb231be9c86d2d3, type: 3}

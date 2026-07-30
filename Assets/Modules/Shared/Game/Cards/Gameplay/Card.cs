@@ -1,3 +1,4 @@
+using System.Collections;
 using PrimeTween;
 using UnityEngine;
 
@@ -42,6 +43,13 @@ namespace CardsChaos.Cards
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
         private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
 
+        // A thrown card is thin and moving fast at a table of other thin cards - exactly the case
+        // speculative contacts were found to tunnel through (see CardSetBuilder). Continuous
+        // Dynamic sweeps instead, and it costs next to nothing here: only the handful of cards in
+        // flight are simulated at all, since the hundreds at rest are frozen kinematic below.
+        private const CollisionDetectionMode FlightCollision =
+            CollisionDetectionMode.ContinuousDynamic;
+
         private Rigidbody _body;
         private BoxCollider _collider;
         private MeshRenderer _renderer;
@@ -50,6 +58,10 @@ namespace CardsChaos.Cards
         private Tween _positionTween;
         private Tween _rotationTween;
         private CardHighlight _highlight = CardHighlight.None;
+
+        // Runs only while a card is falling, and only ever for the handful in flight at once. It
+        // waits for the body to fall asleep and then freezes it out of the simulation for good.
+        private Coroutine _settleWatch;
 
         public bool IsHeld { get; private set; }
 
@@ -69,6 +81,16 @@ namespace CardsChaos.Cards
             _collider = GetComponent<BoxCollider>();
             _renderer = GetComponent<MeshRenderer>();
             Identity = GetComponent<CardIdentity>();
+        }
+
+        private void Start()
+        {
+            // A card that begins in the air - scattered by the spawner, or dropped in by hand and
+            // left dynamic - falls under the cheap flight settings and freezes itself the moment it
+            // lands. One placed already frozen (see FreezeInPlace) is left alone, so a hand-laid
+            // table pays nothing on load.
+            if (!_body.isKinematic)
+                EnterFlight();
         }
 
         public void SetHighlight(CardHighlight highlight)
@@ -91,12 +113,18 @@ namespace CardsChaos.Cards
 
         public void AttachTo(Transform parent)
         {
+            // Picked up before it had settled, the card must not freeze itself while in hand.
+            StopSettleWatch();
+
             IsHeld = true;
             // Only cards on the table can be hovered, so one entering the hand must not
             // carry the ring in with it.
             _highlight = CardHighlight.None;
             ApplyMaterialOverrides();
 
+            // A card grabbed before it settled is still in a continuous mode, which is illegal on
+            // a kinematic body - drop it to Discrete before freezing.
+            _body.collisionDetectionMode = CollisionDetectionMode.Discrete;
             _body.isKinematic = true;
             // Stays in the physics scene, but as a trigger. The mouse has to be able to find a
             // card in hand in order to select it, while a solid collider riding along in front
@@ -107,9 +135,6 @@ namespace CardsChaos.Cards
             // would have the body keep writing its own one-step-old pose over the tween,
             // which shows up as a card twitching in place.
             _body.interpolation = RigidbodyInterpolation.None;
-            // A card in hand hangs right in front of the camera, so its shadow sweeps across
-            // the whole table for no gain.
-            _renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
             transform.SetParent(parent, worldPositionStays: true);
         }
@@ -183,13 +208,85 @@ namespace CardsChaos.Cards
 
             transform.SetParent(null, worldPositionStays: true);
 
-            _renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-            _collider.isTrigger = false;
             _body.detectCollisions = true;
-            _body.interpolation = RigidbodyInterpolation.Interpolate;
-            _body.isKinematic = false;
+            EnterFlight();
             _body.velocity = velocity;
             _body.angularVelocity = angularVelocity;
+            // It has been kinematic the whole time it sat in hand; without this the throw would
+            // not take hold until physics next chose to wake the body on its own.
+            _body.WakeUp();
+        }
+
+        /// <summary>
+        /// Puts the body back into the simulation under the settings a falling card wants and
+        /// starts watching for it to come to rest. Shared by a thrown card and by one that begins
+        /// life in the air.
+        /// </summary>
+        private void EnterFlight()
+        {
+            _body.isKinematic = false;
+            _collider.isTrigger = false;
+            // Set only once the body is dynamic again - a continuous mode is illegal on a
+            // kinematic body and Unity warns if it is written while one still is.
+            _body.collisionDetectionMode = FlightCollision;
+            _body.interpolation = RigidbodyInterpolation.Interpolate;
+
+            BeginSettleWatch();
+        }
+
+        /// <summary>
+        /// Freezes the card where it stands without waiting for it to settle, for cards laid out by
+        /// hand that are already at rest. Spares the scene hundreds of bodies waking on load only
+        /// to fall straight back asleep.
+        /// </summary>
+        public void FreezeInPlace()
+        {
+            StopSettleWatch();
+            EnterResting();
+        }
+
+        /// <summary>
+        /// Takes a card out of the simulation once it has come to rest. Hundreds of kinematic cards
+        /// cost nothing to keep standing; only the few in flight are simulated at all.
+        /// </summary>
+        private void EnterResting()
+        {
+            _settleWatch = null;
+
+            _collider.isTrigger = false;
+            _body.interpolation = RigidbodyInterpolation.None;
+            // Step down off the continuous mode before freezing: it is illegal on a kinematic body.
+            _body.collisionDetectionMode = CollisionDetectionMode.Discrete;
+            _body.isKinematic = true;
+        }
+
+        private void BeginSettleWatch()
+        {
+            StopSettleWatch();
+
+            if (isActiveAndEnabled)
+                _settleWatch = StartCoroutine(FreezeWhenAsleep());
+        }
+
+        private void StopSettleWatch()
+        {
+            if (_settleWatch == null)
+                return;
+
+            StopCoroutine(_settleWatch);
+            _settleWatch = null;
+        }
+
+        private IEnumerator FreezeWhenAsleep()
+        {
+            var step = new WaitForFixedUpdate();
+
+            // PhysX reports a body asleep only after it has held still for a stretch, so this
+            // fires when the card has genuinely come to rest rather than between two bounces.
+            while (!_body.IsSleeping())
+                yield return step;
+
+            EnterResting();
         }
 
         private void ApplyMaterialOverrides()

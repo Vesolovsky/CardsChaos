@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: Lapland
+  m_EditorClassIdentifier: 
+  setId: Lapland
+  setName: 
+  icon: {fileID: 21300000, guid: 31595fae68268564990b93a4732fe49d, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: b94390def7cd58e45a21dc56d27502c8, type: 3}
+  backArtwork: {fileID: 21300000, guid: baebb27b1b88b3f4c92a41fad5259c59, type: 3}
+  cards:
+  - {fileID: 7667602853181245904, guid: 0ea61b095009d1c498ef9678daf4f7b8, type: 3}
+  - {fileID: 3993522675052598357, guid: f152d2f309f8cab4d9580f035ddbd7b1, type: 3}
+  - {fileID: 5372270657202934479, guid: f15fc4c52c292fd42aec1f917a2f3910, type: 3}
+  - {fileID: 4379949238188063961, guid: ed51cc13e693ed7498743840bed93218, type: 3}
+  - {fileID: 1197004591351380535, guid: 397c96aff3df53645b2440befd22cea6, type: 3}
+  - {fileID: 9113110403719696161, guid: fa17634ff5c1edc4fb550ce9aa299efc, type: 3}
+  - {fileID: 559508895556219800, guid: 685c717a51e24764fb7514d89e6de6bc, type: 3}
+  - {fileID: 3034986610807082487, guid: de948509a311f9645934a6e696399e0b, type: 3}
+  - {fileID: 8620846819767482713, guid: 3422077fe1eef87438c376e940c36f22, type: 3}
+  - {fileID: 9149993119279417020, guid: cb5c2f61e238a3f45b94d175ff15c76d, type: 3}
+  - {fileID: 9079042627157429610, guid: fd17580b0323d574d962a37c617cd9db, type: 3}
+  - {fileID: 494143398942494769, guid: 02a31da2107ac594a9e719f14f58c933, type: 3}
+  - {fileID: 7854419740158226540, guid: d0c80bf623e7f3e4ca0173cc724bb4b0, type: 3}
+  - {fileID: 2188333328902610310, guid: 31fce167e08fff24bbe794e8f7e7e6cf, type: 3}
+  - {fileID: 3476020075870719284, guid: 183e1d549ae709b48a95d2083fd6df01, type: 3}
+  - {fileID: 3242597452172190605, guid: 3bf2c34c9ea5e9b4e8050b3b97d8fea1, type: 3}
+  - {fileID: 7796392098359596832, guid: 34110bf299497e94b8e8b418d2142147, type: 3}
+  - {fileID: 606680084710884462, guid: 615ada410513fa6479773b0ec25ebc4e, type: 3}
+  - {fileID: 1830506317572291452, guid: f9cdb1f7047e1cf409d1dcede7c691af, type: 3}
+  - {fileID: 6489554117302177865, guid: dd83a0a894283e449a1b457fde6ee21a, type: 3}
+  - {fileID: 7006775500354003617, guid: 483d41df186f32840921a1a68c43c7c9, type: 3}
+  - {fileID: 2169825484582877687, guid: 23811ffbaac5d1142a9c66455774f856, type: 3}
+  - {fileID: 271395922894483766, guid: 6b69f525741e80b43a65e09d6c0ab6f1, type: 3}
+  - {fileID: 875196324247029767, guid: eb8ca7f1a23fe534baf7bce6312bd659, type: 3}
+  - {fileID: 2363300294609436923, guid: b8186f4e2ae93a94aae09f11d1e84255, type: 3}
+  - {fileID: 4087104634729470423, guid: 11c90e0292d567746ba4f322a4db7438, type: 3}
+  - {fileID: 1038175415261113968, guid: 518d369f5c58d884e8278b32089114d0, type: 3}
+  - {fileID: 2740467158195511912, guid: 2706e889ce463fd4ea8d39defa7b56ff, type: 3}
+  - {fileID: 3597351463617522628, guid: 4ee392916b9209740bf80ce7b10084bb, type: 3}
+  - {fileID: 8549862126774430807, guid: 32bcd5524216cd146ac8fd90ca2728d1, type: 3}

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: ChineseCuisine
+  m_EditorClassIdentifier: 
+  setId: ChineseCuisine
+  setName: 
+  icon: {fileID: 21300000, guid: 6b5d9d6662201c84eac1f1087d64c3a7, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 64a535caaddd1254da07eeb0acc0e03f, type: 3}
+  backArtwork: {fileID: 21300000, guid: 13a9c488c19c8fa48ae8879db3d5f11b, type: 3}
+  cards:
+  - {fileID: 1087526637794074581, guid: 791c65d343c0659488827ad06583a15e, type: 3}
+  - {fileID: 8476755605381590082, guid: b48c8da6353dc9f47bc7e71b9c23b051, type: 3}
+  - {fileID: 1353490349589702411, guid: ee25960307993af4d9e472cb5ce130e0, type: 3}
+  - {fileID: 3030944784706007256, guid: c738d547217f2ac409431d76a2bd1ab6, type: 3}
+  - {fileID: 3570403427922812377, guid: 96d2e9cea0769f94aa2ba80caa38bd92, type: 3}
+  - {fileID: 1064227504570077964, guid: b4fa0593460ccf94dab55566e2e77d61, type: 3}
+  - {fileID: 2514615623046131909, guid: 407c5a9b758dc2c49a207f65bf41f19d, type: 3}
+  - {fileID: 8513548205306708806, guid: 7f7d302d8e9393f4d979ad9a2b7da5ca, type: 3}
+  - {fileID: 6425067798642573228, guid: 581cf81ab4094d340964ca76371730aa, type: 3}
+  - {fileID: 2538951963562338132, guid: 77028b2e92636914c8d1fd98d39060e5, type: 3}
+  - {fileID: 7245241986178815487, guid: 84a7f83d1a6dfbf4695677f104bc2ae2, type: 3}
+  - {fileID: 3836920939349064222, guid: 7920d6489d53fbb46bdc4054d5127456, type: 3}
+  - {fileID: 5237052442572687058, guid: d6266590c257f764b8c3133cedf64dfa, type: 3}
+  - {fileID: 4047327508396621988, guid: 673d688336432474186da89f14717c11, type: 3}
+  - {fileID: 6889525468273619409, guid: 6bb70708e7a49c24c91330bac08fddab, type: 3}
+  - {fileID: 3628913960212814283, guid: 7dd49f83b5cf1734d874fe5f10cd57a5, type: 3}
+  - {fileID: 2164919025159354331, guid: 2237133295f1d374c860261b774c7f8d, type: 3}
+  - {fileID: 9203828600275979342, guid: d53c5b421d82f1c42a49fb2d174df1d7, type: 3}
+  - {fileID: 1972641137565366248, guid: 83941b3c82150ca4badcac505b2622e0, type: 3}
+  - {fileID: 6021950143887900427, guid: d128681c5d031b14a9e9c8cc7d7e7a4f, type: 3}
