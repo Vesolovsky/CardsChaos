@@ -28,6 +28,9 @@ namespace Vesolovsky.Game.UISystem
                 case PauseView:
                     return new PauseViewDefinition();
 
+                case SettingsView:
+                    return new SettingsViewDefinition();
+
                 default:
                     Debug.Log($"Can't create default View Definition. View of type: '{view.GetType()}' not handled.");
                     return null;
@@ -58,6 +61,9 @@ namespace Vesolovsky.Game.UISystem
 
                 case ViewName.Pause:
                     return new PauseViewDefinition();
+
+                case ViewName.Settings:
+                    return new SettingsViewDefinition();
 
                 default:
                     Debug.Log($"Can't create default View Definition. ViewName: '{viewName}' not handled.");

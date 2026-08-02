@@ -77,6 +77,7 @@ namespace Vesolovsky.Game.Views
         private IGameplayPanels _panels;
         private IInputActions _input;
         private InputAction _toggleAction;
+        private InputAction _flipCardAction;
         private AlbumSetButton _openSet;
 
         // What the collection label currently reads, so the punch only fires when the number
@@ -123,7 +124,10 @@ namespace Vesolovsky.Game.Views
                 _panels.AlbumToggleRequested += Toggle;
 
             if (_input != null)
+            {
                 _toggleAction = _input.Find(GameInputActions.ToggleAlbum);
+                _flipCardAction = _input.Find(GameInputActions.FlipCard);
+            }
 
             ViewModel.IsOpen
                 .Subscribe(OnIsOpenChanged)
@@ -143,7 +147,7 @@ namespace Vesolovsky.Game.Views
                 return;
 
             // The inspect is a layer over the album, so while it is open it owns the input: the
-            // same keys that would page or close the album turn and shut the card instead. Routed
+            // same inputs that would page or close the album turn and shut the card instead. Routed
             // through here rather than read in the inspector's own Update so that a single Escape
             // can never close the card and the album in one frame - only one place reads it.
             if (inspector != null && inspector.IsOpen)
@@ -179,8 +183,8 @@ namespace Vesolovsky.Game.Views
 
         /// <summary>
         /// The card close-up's controls, the same as the room's inspector so a card reads the
-        /// same however it was opened: the right button and Escape close it, and the left button
-        /// turns it over when it lands on the card or leaves when it lands off it.
+        /// same however it was opened: the right button and Escape close it, the Flip Card action
+        /// turns it over, and the left button flips on-card or leaves when it lands off-card.
         /// </summary>
         private void DriveInspector(Keyboard keyboard)
         {
@@ -193,8 +197,9 @@ namespace Vesolovsky.Game.Views
                 return;
             }
 
-            // Space turns the card over from the keyboard, wherever the cursor is.
-            if (keyboard.spaceKey.wasPressedThisFrame && !inspector.JustOpened)
+            // The rebindable flip action works wherever the cursor is.
+            if (_flipCardAction != null && _flipCardAction.WasPressedThisFrame()
+                && !inspector.JustOpened)
             {
                 inspector.Flip();
                 return;

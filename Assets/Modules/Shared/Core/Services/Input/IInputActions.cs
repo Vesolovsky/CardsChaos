@@ -30,6 +30,9 @@ namespace Vesolovsky.Core.Services.Input
         public const string ToggleHand = "ToggleHand";
         public const string ToggleAlbum = "ToggleAlbum";
         public const string ToggleUpgrades = "ToggleUpgrades";
+        public const string Sprint = "Sprint";
+        public const string Interact = "Interact";
+        public const string FlipCard = "FlipCard";
     }
 
     public class InputActions : IInputActions, IDisposable

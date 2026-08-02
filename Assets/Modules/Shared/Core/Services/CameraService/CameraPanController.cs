@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Vesolovsky.Core.Services.Input;
 using Zenject;
 
 namespace Vesolovsky.Core.Services
@@ -10,7 +11,7 @@ namespace Vesolovsky.Core.Services
         [Tooltip("World units per second at full tilt. The table is small - a card is 0.063 wide.")]
         public float Speed = 0.35f;
 
-        [Tooltip("How much faster the camera moves while sprinting (holding Shift), once the " +
+        [Tooltip("How much faster the camera moves while the Sprint action is held, once the " +
                  "Sprint upgrade is unlocked. 1 is no faster; the upgrade has no effect until this " +
                  "is above 1.")]
         public float SprintMultiplier = 1.8f;
@@ -51,6 +52,7 @@ namespace Vesolovsky.Core.Services
         private readonly ICameraService _cameraService;
         private readonly IWorldInteractionLock _worldLock;
         private readonly CameraPanSettings _settings;
+        private readonly InputAction _sprint;
 
         private Vector3 _velocity;
 
@@ -63,11 +65,15 @@ namespace Vesolovsky.Core.Services
 
         [Inject]
         public CameraPanController(
-            ICameraService cameraService, IWorldInteractionLock worldLock, CameraPanSettings settings)
+            ICameraService cameraService,
+            IWorldInteractionLock worldLock,
+            CameraPanSettings settings,
+            IInputActions input)
         {
             _cameraService = cameraService;
             _worldLock = worldLock;
             _settings = settings;
+            _sprint = input.Find(GameInputActions.Sprint);
         }
 
         public void Tick()
@@ -88,10 +94,10 @@ namespace Vesolovsky.Core.Services
 
             Transform pivot = camera.transform;
 
-            // Sprint scales the target speed while Shift is held, so the ease still carries the
+            // Sprint scales the target speed while its action is held, so the ease still carries the
             // camera up to and down from the faster pace rather than snapping between the two.
             float speed = _settings.Speed;
-            if (SprintUnlocked && (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed))
+            if (SprintUnlocked && _sprint != null && _sprint.IsPressed())
                 speed *= _settings.SprintMultiplier;
 
             Vector3 target = ReadDirection(keyboard, pivot) * speed;

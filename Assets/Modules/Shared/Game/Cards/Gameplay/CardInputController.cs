@@ -7,9 +7,9 @@ using Zenject;
 namespace CardsChaos.Cards
 {
     /// <summary>
-    /// Mouse and keyboard driver for everything outside the close-up: LMB either picks a card up
-    /// off the floor or opens the one in hand, F throws the selected card away, TAB spreads the
-    /// hand out and the wheel walks through it.
+    /// Mouse and keyboard driver for everything outside the close-up: the Interact action either
+    /// picks a card up off the floor or opens the one in hand, Throw discards the selected card,
+    /// Toggle Hand spreads the hand out and the wheel walks through it.
     ///
     /// A card in hand can be chosen two ways - pointed at, or reached with the wheel - and the
     /// choice sticks either way, so the cursor is free to wander off without the hand forgetting
@@ -28,6 +28,7 @@ namespace CardsChaos.Cards
 
         private readonly InputAction _throw;
         private readonly InputAction _toggleHand;
+        private readonly InputAction _interact;
 
         private Card _target;
         private Card _outlined;
@@ -49,6 +50,7 @@ namespace CardsChaos.Cards
 
             _throw = input.Find(GameInputActions.Throw);
             _toggleHand = input.Find(GameInputActions.ToggleHand);
+            _interact = input.Find(GameInputActions.Interact);
         }
 
         public void Tick()
@@ -80,7 +82,7 @@ namespace CardsChaos.Cards
 
             Aim(FindCardUnderCursor(mouse));
 
-            if (mouse.leftButton.wasPressedThisFrame && _target != null)
+            if (_interact != null && _interact.WasPressedThisFrame() && _target != null)
             {
                 if (_target.IsHeld)
                     _inspector.TryOpen();
