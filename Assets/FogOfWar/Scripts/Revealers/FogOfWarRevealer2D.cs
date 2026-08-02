@@ -16,6 +16,12 @@ namespace FOW
     {
         private RaycastHit2D[] InitialRayResults;
         private PhysicsScene2D physicsScene2D;
+
+        private void Awake()
+        {
+            // Keep the physics scene valid even when the empty-mask path skips _InitRevealer.
+            physicsScene2D = gameObject.scene.GetPhysicsScene2D();
+        }
         
         protected override void _InitRevealer(int StepCount)
         {
@@ -152,6 +158,12 @@ namespace FOW
                         distToHider = distBetweenVectors(samplePoint.position, EyePosition);
                         if (distToHider < UnobscuredRadius || (distToHider < sightDist && Mathf.Abs(AngleBetweenVector2(samplePoint.position - EyePosition, ForwardVectorCached)) < ViewAngle / 2))
                         {
+                            if (ObstacleMask.value == 0)
+                            {
+                                seen = true;
+                                break;
+                            }
+
                             SetHiderPosition(samplePoint.position);
                             if (!physicsScene2D.Raycast(EyePosition, hiderPosition - EyePosition, distToHider, ObstacleMask))
                             {
@@ -203,6 +215,9 @@ namespace FOW
             float distToPoint = distBetweenVectors(point, EyePosition);
             if (distToPoint < UnobscuredRadius || (distToPoint < sightDist && Mathf.Abs(AngleBetweenVector2(point - EyePosition, GetForward())) < ViewAngle / 2))
             {
+                if (ObstacleMask.value == 0)
+                    return true;
+
                 SetHiderPosition(point);
                 if (!physicsScene2D.Raycast(EyePosition, hiderPosition - transform.position, distToPoint, ObstacleMask))
                     return true;

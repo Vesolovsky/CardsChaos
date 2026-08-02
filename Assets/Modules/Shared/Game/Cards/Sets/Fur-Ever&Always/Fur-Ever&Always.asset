@@ -16,7 +16,7 @@ MonoBehaviour:
   setName: Fur-Ever&Always
   icon: {fileID: 21300000, guid: cfda457785cc4524f9c434f433b28ab4, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: a30078b4c5c77d34e8e1e8469ad4d3e0, type: 3}
-  backArtwork: {fileID: 21300000, guid: cbf5e86addeb02b40add986eecadb001, type: 3}
+  backArtwork: {fileID: 2800000, guid: cbf5e86addeb02b40add986eecadb001, type: 3}
   cards:
   - {fileID: 1153152678101002169, guid: 0f4b4c5e18d579c4da2b92fb236f2986, type: 3}
   - {fileID: 6886060231821697407, guid: aa70bcf8b6a8bde42a13ecab76d54f30, type: 3}

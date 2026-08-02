@@ -87,6 +87,8 @@ namespace Vesolovsky.Game.Views.Album
         // See AlbumHandCard: a gesture that began a drag out of this slot must not also inspect
         // when it is dropped back onto the same slot.
         private bool _draggedSincePress;
+        private System.IDisposable _mipRequest;
+        private bool _fullResolutionRequested;
 
         /// <summary>0-based position on the page. Slot 0 is where card number 1 belongs.</summary>
         public int SlotIndex { get; private set; }
@@ -164,6 +166,7 @@ namespace Vesolovsky.Game.Views.Album
         {
             Card = card;
             cardImage.sprite = artwork;
+            RefreshMipRequest();
 
             // A card in the wrong square is drawn grey so it reads as out of place at a glance;
             // the right card, and the fallback when no grey material is wired, is left in colour.
@@ -178,9 +181,53 @@ namespace Vesolovsky.Game.Views.Album
         {
             Card = CardRef.None;
             cardImage.sprite = null;
+            RefreshMipRequest();
             cardImage.material = _cardMaterial;
 
             ShowCard(false);
+        }
+
+        /// <summary>
+        /// Pins only cards on the page currently visible through the album viewport. Other pages
+        /// stay populated for paging, but their high-resolution mips can leave memory.
+        /// </summary>
+        public void SetFullResolution(bool requested)
+        {
+            if (_fullResolutionRequested == requested)
+                return;
+
+            _fullResolutionRequested = requested;
+            RefreshMipRequest();
+        }
+
+        private void RefreshMipRequest()
+        {
+            // Acquire first so replacing a slot with the same texture never momentarily clears a
+            // request another visible UI element is sharing.
+            System.IDisposable next = _fullResolutionRequested
+                ? CardMipStreaming.RequestFullResolution(cardImage.sprite)
+                : null;
+
+            _mipRequest?.Dispose();
+            _mipRequest = next;
+        }
+
+        private void OnEnable()
+        {
+            if (_fullResolutionRequested)
+                RefreshMipRequest();
+        }
+
+        private void OnDisable()
+        {
+            _mipRequest?.Dispose();
+            _mipRequest = null;
+        }
+
+        private void OnDestroy()
+        {
+            _mipRequest?.Dispose();
+            _mipRequest = null;
         }
 
         /// <summary>Shakes this slot, to dial the flinch in from the inspector.</summary>

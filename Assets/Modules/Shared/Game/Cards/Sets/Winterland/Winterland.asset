@@ -16,7 +16,7 @@ MonoBehaviour:
   setName: Winterland
   icon: {fileID: 21300000, guid: e9b65e44e5d48ce45bd2a7f55ffad037, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: e9b71e4e01428a94dafc6c09480032d4, type: 3}
-  backArtwork: {fileID: 21300000, guid: 64723a1faebddfe45a77269d4a4b9e2d, type: 3}
+  backArtwork: {fileID: 2800000, guid: 64723a1faebddfe45a77269d4a4b9e2d, type: 3}
   cards:
   - {fileID: 6164913689101988652, guid: d1bb9b3cf36b59e42b151bf8b6892b51, type: 3}
   - {fileID: 5279433831279020962, guid: fe1aaa40bfae9334aaff9de89f305f9d, type: 3}

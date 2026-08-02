@@ -16,7 +16,7 @@ MonoBehaviour:
   setName: 2077 Phantoms
   icon: {fileID: 21300000, guid: ce69e1498eb342b468de4660d9b4b387, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 1a68925d7a2fb2c4ab527e884c5fb63f, type: 3}
-  backArtwork: {fileID: 21300000, guid: b5e628de7fa637f44991d01b9c03287f, type: 3}
+  backArtwork: {fileID: 2800000, guid: b5e628de7fa637f44991d01b9c03287f, type: 3}
   cards:
   - {fileID: 3342653961217644275, guid: 04e825abf267a4741b4f9f4babd11a69, type: 3}
   - {fileID: 3652464461582461150, guid: ee3aad63df9d4004a9931aa660cfdc84, type: 3}

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Handbags
   m_EditorClassIdentifier: 
   setId: Handbags
-  setName: 
+  setName: Handbags
   icon: {fileID: 21300000, guid: a523331ec0f8ee6498509f75fa685909, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: d17a7522de7fe2148ab72a678927883b, type: 3}
-  backArtwork: {fileID: 21300000, guid: 7b202df2d1a455f4f9bb19d7b7c7cf47, type: 3}
+  backArtwork: {fileID: 2800000, guid: 7b202df2d1a455f4f9bb19d7b7c7cf47, type: 3}
   cards:
   - {fileID: 4271797902735436860, guid: 5a082fb550eec3b469006066ff964e77, type: 3}
   - {fileID: 483114712848956393, guid: bb65484984cfb5b4cb62866e92ff7faa, type: 3}

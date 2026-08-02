@@ -255,7 +255,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 73f803db51e37f74886ffcdb9f378668, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2024,7 +2024,6 @@ MonoBehaviour:
   progressPunch: {x: 0.125, y: 0.125, z: 0}
   progressPunchDuration: 0.5
   progressPunchFrequency: 3
-  toggleKey: 16
 --- !u!114 &32629488864117445
 MonoBehaviour:
   m_ObjectHideFlags: 0

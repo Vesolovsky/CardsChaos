@@ -34,6 +34,7 @@ namespace CardsChaos.Cards
             Container.Bind<CardHand>().FromInstance(hand).AsSingle();
             Container.BindInstance(inspectSettings).AsSingle();
             Container.Bind<ICardFactory>().To<CardFactory>().AsSingle();
+            Container.BindInterfacesTo<CardOutlinePresenter>().AsSingle().NonLazy();
 
             // Bound only when it is actually there, so the inspector's optional dependency stays
             // unresolved rather than resolving to a null it would have to guard against anyway.

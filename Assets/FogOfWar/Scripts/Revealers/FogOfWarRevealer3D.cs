@@ -27,6 +27,13 @@ namespace FOW
 #if UNITY_2022_2_OR_NEWER
 		public QueryParameters RayQueryParameters;
 #endif
+		private void Awake()
+		{
+			// The empty-mask fast path does not allocate the raycast jobs, but hider queries
+			// still need a valid scene if a layer is enabled later at runtime.
+			physicsScene = gameObject.scene.GetPhysicsScene();
+		}
+
 		protected override void _InitRevealer(int StepCount)
 		{
             physicsScene = gameObject.scene.GetPhysicsScene();
@@ -591,6 +598,11 @@ namespace FOW
 			//if ((distToHider < sightDist && Mathf.Abs(AngleBetweenVector2(samplePoint.position - EyePosition, ForwardVectorCached)) <= ViewAngle / 2))
 			if (Mathf.Abs(AngleBetweenVector2(samplePoint.position - EyePosition, ForwardVectorCached)) <= ViewAngle / 2)
 			{
+				// A zero layer mask can never block this sample. Avoid entering PhysX for the
+				// hider checks just as the sight-shape fast path does for the radial casts.
+				if (ObstacleMask.value == 0)
+					return true;
+
 				revealerOrigin = EyePosition;
 				if (CalculateHidersAtHiderHeight)
 					SetRevealerOrigin(EyePosition, samplePoint.position);
@@ -676,6 +688,9 @@ namespace FOW
 			float distToPoint = DistBetweenVectors(point, EyePosition);
 			if (distToPoint < UnobscuredRadius || (distToPoint < sightDist && Mathf.Abs(AngleBetweenVector2(point - EyePosition, ForwardVectorCached)) < ViewAngle / 2))
 			{
+				if (ObstacleMask.value == 0)
+					return true;
+
 				SetHiderPosition(point, EyePosition);
 				if (!physicsScene.Raycast(EyePosition, hiderPosition - CachedTransform.position, distToPoint, ObstacleMask))
 					return true;

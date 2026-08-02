@@ -1,3 +1,5 @@
+using System;
+using CardsChaos.Cards;
 using CardsChaos.Cards.Album;
 using PrimeTween;
 using UnityEngine;
@@ -67,6 +69,9 @@ namespace Vesolovsky.Game.Views.Album
         private float _openScale;
         private int _openedFrame = -1;
         private Tween _fadeTween;
+        private IDisposable _frontMipRequest;
+        private IDisposable _backMipRequest;
+        private int _mipRequestVersion;
 
         public bool IsOpen { get; private set; }
 
@@ -116,6 +121,7 @@ namespace Vesolovsky.Game.Views.Album
 
             _front = front;
             _back = _artwork.ResolveBack(source.Card);
+            RequestFullResolution();
 
             _showingBack = false;
             _facing = 0f;
@@ -129,6 +135,9 @@ namespace Vesolovsky.Game.Views.Album
             group.blocksRaycasts = true;
             group.interactable = true;
 
+            // Opening the inspector must never wait on texture streaming. The visible page has
+            // already requested its front artwork; both close-up faces are additionally pinned
+            // above and can sharpen asynchronously without holding the interaction hostage.
             Fade(1f);
         }
 
@@ -153,7 +162,14 @@ namespace Vesolovsky.Game.Views.Album
             group.blocksRaycasts = false;
             group.interactable = false;
 
-            Fade(0f);
+            int requestVersion = _mipRequestVersion;
+            Fade(0f, () =>
+            {
+                // A new inspect can interrupt the fade. Its requests belong to the new card and
+                // must not be released by the completion callback left over from this close.
+                if (!IsOpen && requestVersion == _mipRequestVersion)
+                    ReleaseMipRequests();
+            });
         }
 
         private void Update()
@@ -183,18 +199,44 @@ namespace Vesolovsky.Game.Views.Album
             cardImage.rectTransform.localScale = new Vector3(_openScale * width, _openScale, 1f);
         }
 
-        private void Fade(float alpha)
+        private void Fade(float alpha, Action onComplete = null)
         {
             if (_fadeTween.isAlive)
                 _fadeTween.Stop();
 
-            _fadeTween = Tween.Alpha(group, alpha, fadeDuration);
+            _fadeTween = onComplete == null
+                ? Tween.Alpha(group, alpha, fadeDuration)
+                : Tween.Alpha(group, alpha, fadeDuration).OnComplete(onComplete);
+        }
+
+        private void RequestFullResolution()
+        {
+            ReleaseMipRequests();
+            _mipRequestVersion++;
+            _frontMipRequest = CardMipStreaming.RequestFullResolution(_front);
+            _backMipRequest = CardMipStreaming.RequestFullResolution(_back);
+        }
+
+        private void ReleaseMipRequests()
+        {
+            _frontMipRequest?.Dispose();
+            _frontMipRequest = null;
+
+            _backMipRequest?.Dispose();
+            _backMipRequest = null;
+        }
+
+        private void OnDisable()
+        {
+            ReleaseMipRequests();
         }
 
         private void OnDestroy()
         {
             if (_fadeTween.isAlive)
                 _fadeTween.Stop();
+
+            ReleaseMipRequests();
         }
     }
 }

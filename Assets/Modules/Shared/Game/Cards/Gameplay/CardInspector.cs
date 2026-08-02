@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.Services;
@@ -34,7 +35,7 @@ namespace CardsChaos.Cards
     /// While it is open the camera is suspended and the rest of the hand is not interactive, so
     /// this type owns the whole input for as long as it is running.
     /// </summary>
-    public class CardInspector : ITickable, ICardInspector
+    public class CardInspector : ITickable, ICardInspector, IDisposable
     {
         private const float ScrollDeadzone = 0.01f;
 
@@ -47,6 +48,7 @@ namespace CardsChaos.Cards
         private static readonly Quaternion FaceBack = Quaternion.identity;
 
         private readonly CardHand _hand;
+        private readonly ICardCatalog _catalog;
         private readonly ICameraService _cameraService;
         private readonly IWorldInteractionLock _worldLock;
         private readonly ICardInspectLight _light;
@@ -56,18 +58,22 @@ namespace CardsChaos.Cards
         private bool _showingBack;
         private int _openedFrame = -1;
         private System.IDisposable _worldHandle;
+        private IDisposable _frontMipRequest;
+        private IDisposable _backMipRequest;
 
         public bool IsInspecting => _card != null;
 
         [Inject]
         public CardInspector(
             CardHand hand,
+            ICardCatalog catalog,
             ICameraService cameraService,
             IWorldInteractionLock worldLock,
             CardInspectSettings settings,
             [InjectOptional] ICardInspectLight light)
         {
             _hand = hand;
+            _catalog = catalog;
             _cameraService = cameraService;
             _worldLock = worldLock;
             _settings = settings;
@@ -85,6 +91,7 @@ namespace CardsChaos.Cards
 
             _card = card;
             _card.SetInspected(true);
+            RequestFullResolution(_card);
             _showingBack = false;
             _openedFrame = Time.frameCount;
             _worldHandle = _worldLock.Acquire(this);
@@ -158,6 +165,7 @@ namespace CardsChaos.Cards
                 _card.SetInspected(false);
 
             _hand.ReturnFromInspect(_card);
+            ReleaseMipRequests();
 
             _card = null;
             _showingBack = false;
@@ -187,10 +195,42 @@ namespace CardsChaos.Cards
             }
 
             _card.SetInspected(true);
+            RequestFullResolution(_card);
 
             // The new face is its own brightness, so the lamps have to be re-aimed at it. Show()
             // eases across from where they are rather than starting over.
             _light?.Show(_card.FaceLuminance);
+        }
+
+        private void RequestFullResolution(Card card)
+        {
+            ReleaseMipRequests();
+
+            CardIdentity identity = card != null ? card.Identity : null;
+            if (identity == null)
+                return;
+
+            _frontMipRequest = CardMipStreaming.RequestFullResolution(identity.ArtworkTexture);
+
+            CardSetDefinition set = _catalog.FindSet(identity.SetId);
+            _backMipRequest = CardMipStreaming.RequestFullResolution(
+                set != null ? set.BackTexture : null);
+        }
+
+        private void ReleaseMipRequests()
+        {
+            _frontMipRequest?.Dispose();
+            _frontMipRequest = null;
+
+            _backMipRequest?.Dispose();
+            _backMipRequest = null;
+        }
+
+        public void Dispose()
+        {
+            ReleaseMipRequests();
+            _worldHandle?.Dispose();
+            _worldHandle = null;
         }
 
         /// <summary>

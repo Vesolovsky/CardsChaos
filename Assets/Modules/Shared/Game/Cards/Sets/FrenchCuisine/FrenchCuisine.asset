@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: FrenchCuisine
   m_EditorClassIdentifier: 
   setId: FrenchCuisine
-  setName: 
+  setName: French cuisine
   icon: {fileID: 21300000, guid: de33540f6bb0c77438bdd20ab6ab8dfd, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 047a4fa7817f7924a9e07cd509c2ab4d, type: 3}
-  backArtwork: {fileID: 21300000, guid: 6eeb00d7a0809844d801f9c32e05c459, type: 3}
+  backArtwork: {fileID: 2800000, guid: 6eeb00d7a0809844d801f9c32e05c459, type: 3}
   cards:
   - {fileID: 654210474322930227, guid: 3b312d41ae06234488baaedc0d1737ed, type: 3}
   - {fileID: 5643142183256998361, guid: aa31b15463281c84d9003e017c929a0a, type: 3}

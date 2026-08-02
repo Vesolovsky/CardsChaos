@@ -16,7 +16,7 @@ MonoBehaviour:
   setName: My first painting!
   icon: {fileID: 21300000, guid: 74f7a06ad2a503b4ab9acdaa39ebbfc7, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 71e94d7fa550bd641a9e6a7b65af2e30, type: 3}
-  backArtwork: {fileID: 21300000, guid: 0a9d431cb96982c47bc8a876ea1f8e31, type: 3}
+  backArtwork: {fileID: 2800000, guid: 0a9d431cb96982c47bc8a876ea1f8e31, type: 3}
   cards:
   - {fileID: 5094218553528968340, guid: a1bd7f844e4b35142902faaf5d70a7d5, type: 3}
   - {fileID: 3133296214544659364, guid: 3a1689904f1688d4f90353903328b000, type: 3}

@@ -199,6 +199,9 @@ namespace CardsChaos.Cards.CardEditor
             mesh.SetTriangles(triangles, 0);
             mesh.RecalculateTangents();
             mesh.RecalculateBounds();
+            // Runtime-created meshes do not receive this metric automatically. Mip streaming
+            // uses it to choose the required card-art mip for a renderer on screen.
+            mesh.RecalculateUVDistributionMetrics();
             mesh.UploadMeshData(false);
 
             return mesh;

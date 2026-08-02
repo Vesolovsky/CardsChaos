@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Spain
   m_EditorClassIdentifier: 
   setId: Spain
-  setName: 
+  setName: Spain
   icon: {fileID: 21300000, guid: 110f79e463d7b5b4ab3376a92a278ed9, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 4520f17bbf3039a4fa1d52d13637b7d1, type: 3}
-  backArtwork: {fileID: 21300000, guid: a18b005afe9b5a34294b05946144c658, type: 3}
+  backArtwork: {fileID: 2800000, guid: a18b005afe9b5a34294b05946144c658, type: 3}
   cards:
   - {fileID: 2835206849093672128, guid: 80c4f803336fe40488a0f10c192a0424, type: 3}
   - {fileID: 6172356830265482649, guid: 867cbf5ff08bc5f48a21fde7cb809965, type: 3}

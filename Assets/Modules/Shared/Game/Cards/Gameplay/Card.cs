@@ -4,14 +4,8 @@ using UnityEngine;
 
 namespace CardsChaos.Cards
 {
-    public enum CardHighlight
-    {
-        None,
-        Hovered,
-    }
-
-    [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(BoxCollider))]
+    [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
     [AddComponentMenu("CardsChaos/Card")]
     public class Card : MonoBehaviour
@@ -38,36 +32,52 @@ namespace CardsChaos.Cards
                  "reads it so a pale card is not lit as hard as a dark one.")]
         [SerializeField, Range(0f, 1f)] private float faceLuminance = 0.5f;
 
-        private static readonly int OutlineColorId = Shader.PropertyToID("_OutlineColor");
-        private static readonly int OutlineWidthId = Shader.PropertyToID("_OutlineWidth");
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
         private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
 
         // A thrown card is thin and moving fast at a table of other thin cards - exactly the case
         // speculative contacts were found to tunnel through (see CardSetBuilder). Continuous
         // Dynamic sweeps instead, and it costs next to nothing here: only the handful of cards in
-        // flight are simulated at all, since the hundreds at rest are frozen kinematic below.
+        // flight are simulated at all, since cards at rest have no Rigidbody.
         private const CollisionDetectionMode FlightCollision =
             CollisionDetectionMode.ContinuousDynamic;
 
+        // Keep runtime-created bodies identical to the old authored Rigidbody. These values are
+        // deliberately applied in one place so editor placement and runtime throws use the same
+        // thin-card solver setup.
+        private const float BodyMass = 0.005f;
+        private const float BodyDrag = 0f;
+        private const float BodyAngularDrag = 0.05f;
+        private const int BodySolverIterations = 16;
+        private const int BodySolverVelocityIterations = 4;
+        private const float BodyMaxDepenetrationVelocity = 1f;
+
         private Rigidbody _body;
         private BoxCollider _collider;
+        private MeshFilter _meshFilter;
         private MeshRenderer _renderer;
         private MaterialPropertyBlock _propertyBlock;
 
         private Tween _positionTween;
         private Tween _rotationTween;
-        private CardHighlight _highlight = CardHighlight.None;
-
         // Runs only while a card is falling, and only ever for the handful in flight at once. It
         // waits for the body to fall asleep and then freezes it out of the simulation for good.
         private Coroutine _settleWatch;
+        private Coroutine _restingBodyRemoval;
 
         public bool IsHeld { get; private set; }
 
         public bool IsInspected { get; private set; }
 
         public float FaceLuminance => faceLuminance;
+
+        public Mesh OutlineMesh => _meshFilter != null ? _meshFilter.sharedMesh : null;
+
+        public MeshRenderer OutlineRenderer => _renderer;
+
+        public Color OutlineColor => hoverColor;
+
+        public float OutlineWidth => hoverWidth;
 
         /// <summary>
         /// Which card this is - set, number, face. Cached because the album asks every card in
@@ -79,27 +89,24 @@ namespace CardsChaos.Cards
         {
             _body = GetComponent<Rigidbody>();
             _collider = GetComponent<BoxCollider>();
+            _meshFilter = GetComponent<MeshFilter>();
             _renderer = GetComponent<MeshRenderer>();
             Identity = GetComponent<CardIdentity>();
         }
 
         private void Start()
         {
-            // A card that begins in the air - scattered by the spawner, or dropped in by hand and
-            // left dynamic - falls under the cheap flight settings and freezes itself the moment it
-            // lands. One placed already frozen (see FreezeInPlace) is left alone, so a hand-laid
-            // table pays nothing on load.
-            if (!_body.isKinematic)
-                EnterFlight();
-        }
-
-        public void SetHighlight(CardHighlight highlight)
-        {
-            if (_highlight == highlight)
+            // Runtime spawns enter flight explicitly through BeginFlight. Keep this fallback for
+            // intentionally-authored dynamic cards, but do not restart a watch the factory already
+            // created between Awake and this first frame. A legacy authored kinematic body is
+            // retired here; a card already attached to the hand must retain its kinematic body.
+            if (_body == null || _settleWatch != null || IsHeld)
                 return;
 
-            _highlight = highlight;
-            ApplyMaterialOverrides();
+            if (_body.isKinematic)
+                EnterResting();
+            else
+                BeginFlight();
         }
 
         public void SetInspected(bool inspected)
@@ -116,25 +123,25 @@ namespace CardsChaos.Cards
             // Picked up before it had settled, the card must not freeze itself while in hand.
             StopSettleWatch();
 
+            Rigidbody body = EnsureBody();
+
             IsHeld = true;
-            // Only cards on the table can be hovered, so one entering the hand must not
-            // carry the ring in with it.
-            _highlight = CardHighlight.None;
             ApplyMaterialOverrides();
 
             // A card grabbed before it settled is still in a continuous mode, which is illegal on
             // a kinematic body - drop it to Discrete before freezing.
-            _body.collisionDetectionMode = CollisionDetectionMode.Discrete;
-            _body.isKinematic = true;
+            body.collisionDetectionMode = CollisionDetectionMode.Discrete;
+            body.isKinematic = true;
+            body.useGravity = false;
             // Stays in the physics scene, but as a trigger. The mouse has to be able to find a
             // card in hand in order to select it, while a solid collider riding along in front
             // of the camera would shove the cards on the floor aside as the player walks.
-            _body.detectCollisions = true;
+            body.detectCollisions = true;
             _collider.isTrigger = true;
             // The hand drives the transform directly from Update. Leaving interpolation on
             // would have the body keep writing its own one-step-old pose over the tween,
             // which shows up as a card twitching in place.
-            _body.interpolation = RigidbodyInterpolation.None;
+            body.interpolation = RigidbodyInterpolation.None;
 
             transform.SetParent(parent, worldPositionStays: true);
         }
@@ -200,16 +207,13 @@ namespace CardsChaos.Cards
         {
             StopTweens();
 
-            // Every override drops at the same moment, so apply the block just once.
-            _highlight = CardHighlight.None;
             IsHeld = false;
             IsInspected = false;
             ApplyMaterialOverrides();
 
             transform.SetParent(null, worldPositionStays: true);
 
-            _body.detectCollisions = true;
-            EnterFlight();
+            BeginFlight();
             _body.velocity = velocity;
             _body.angularVelocity = angularVelocity;
             // It has been kinematic the whole time it sat in hand; without this the throw would
@@ -222,14 +226,18 @@ namespace CardsChaos.Cards
         /// starts watching for it to come to rest. Shared by a thrown card and by one that begins
         /// life in the air.
         /// </summary>
-        private void EnterFlight()
+        public void BeginFlight()
         {
-            _body.isKinematic = false;
+            Rigidbody body = EnsureBody();
+
+            body.detectCollisions = true;
+            body.useGravity = true;
+            body.isKinematic = false;
             _collider.isTrigger = false;
             // Set only once the body is dynamic again - a continuous mode is illegal on a
             // kinematic body and Unity warns if it is written while one still is.
-            _body.collisionDetectionMode = FlightCollision;
-            _body.interpolation = RigidbodyInterpolation.Interpolate;
+            body.collisionDetectionMode = FlightCollision;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
 
             BeginSettleWatch();
         }
@@ -246,18 +254,99 @@ namespace CardsChaos.Cards
         }
 
         /// <summary>
-        /// Takes a card out of the simulation once it has come to rest. Hundreds of kinematic cards
-        /// cost nothing to keep standing; only the few in flight are simulated at all.
+        /// Takes a card out of the simulation once it has come to rest. Its BoxCollider remains as
+        /// an immovable static collider; only the few cards in flight retain a Rigidbody.
         /// </summary>
         private void EnterResting()
         {
             _settleWatch = null;
 
+            if (_restingBodyRemoval != null)
+            {
+                StopCoroutine(_restingBodyRemoval);
+                _restingBodyRemoval = null;
+            }
+
             _collider.isTrigger = false;
-            _body.interpolation = RigidbodyInterpolation.None;
+            if (_body == null)
+                return;
+
+            Rigidbody body = _body;
+            body.interpolation = RigidbodyInterpolation.None;
             // Step down off the continuous mode before freezing: it is illegal on a kinematic body.
-            _body.collisionDetectionMode = CollisionDetectionMode.Discrete;
-            _body.isKinematic = true;
+            body.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+            if (!body.isKinematic)
+            {
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+            }
+
+            // Freeze immediately so the card cannot get one final physics step. Removing the body
+            // is delayed through the interaction frame: if the player grabs this card in Update,
+            // EnsureBody cancels the removal and safely reuses the already configured body.
+            body.isKinematic = true;
+            body.useGravity = false;
+
+            if (Application.isPlaying && isActiveAndEnabled)
+                _restingBodyRemoval = StartCoroutine(RemoveRestingBody(body));
+            else
+                RemoveRestingBodyImmediately(body);
+        }
+
+        private IEnumerator RemoveRestingBody(Rigidbody body)
+        {
+            yield return null;
+            _restingBodyRemoval = null;
+
+            if (body != null && _body == body && !IsHeld && body.isKinematic)
+                RemoveRestingBodyImmediately(body);
+        }
+
+        private void RemoveRestingBodyImmediately(Rigidbody body)
+        {
+            if (_body == body)
+                _body = null;
+
+            if (Application.isPlaying)
+                Destroy(body);
+            else
+                DestroyImmediate(body);
+        }
+
+        /// <summary>
+        /// Returns the card's physics body, creating and tuning one only when the card is about to
+        /// be held or simulated. Resting cards intentionally have only a static BoxCollider.
+        /// </summary>
+        public Rigidbody EnsureBody()
+        {
+            if (_restingBodyRemoval != null)
+            {
+                StopCoroutine(_restingBodyRemoval);
+                _restingBodyRemoval = null;
+            }
+
+            if (_body == null)
+                _body = GetComponent<Rigidbody>();
+
+            if (_body == null)
+            {
+                _body = gameObject.AddComponent<Rigidbody>();
+                // A newly added body starts in the cheapest safe state. BeginFlight opts it into
+                // dynamics immediately when needed; AttachTo keeps it kinematic for hand motion.
+                _body.collisionDetectionMode = CollisionDetectionMode.Discrete;
+                _body.interpolation = RigidbodyInterpolation.None;
+                _body.useGravity = false;
+                _body.isKinematic = true;
+            }
+
+            _body.mass = BodyMass;
+            _body.drag = BodyDrag;
+            _body.angularDrag = BodyAngularDrag;
+            _body.solverIterations = BodySolverIterations;
+            _body.solverVelocityIterations = BodySolverVelocityIterations;
+            _body.maxDepenetrationVelocity = BodyMaxDepenetrationVelocity;
+            return _body;
         }
 
         private void BeginSettleWatch()
@@ -283,19 +372,18 @@ namespace CardsChaos.Cards
 
             // PhysX reports a body asleep only after it has held still for a stretch, so this
             // fires when the card has genuinely come to rest rather than between two bounces.
-            while (!_body.IsSleeping())
+            while (_body != null && !_body.IsSleeping())
                 yield return step;
 
-            EnterResting();
+            if (_body != null)
+                EnterResting();
         }
 
         private void ApplyMaterialOverrides()
         {
-            bool outlined = _highlight == CardHighlight.Hovered;
-
-            // Clearing the block rather than zeroing the values matters: a renderer carrying
-            // any property block drops out of SRP batching for good.
-            if (!outlined && !IsHeld && !IsInspected)
+            // Clearing the block rather than zeroing values returns resting cards to the SRP
+            // Batcher. Only the handful currently held or inspected carry per-renderer state.
+            if (!IsHeld && !IsInspected)
             {
                 _renderer.SetPropertyBlock(null);
                 return;
@@ -305,12 +393,6 @@ namespace CardsChaos.Cards
             // material, which is how the card gets its normal smoothness back on release.
             _propertyBlock ??= new MaterialPropertyBlock();
             _propertyBlock.Clear();
-
-            if (outlined)
-            {
-                _propertyBlock.SetColor(OutlineColorId, hoverColor);
-                _propertyBlock.SetFloat(OutlineWidthId, hoverWidth);
-            }
 
             if (IsInspected)
             {
@@ -340,6 +422,9 @@ namespace CardsChaos.Cards
                 _rotationTween.Stop();
         }
 
-        private void OnDestroy() => StopTweens();
+        private void OnDestroy()
+        {
+            StopTweens();
+        }
     }
 }

@@ -355,6 +355,12 @@ namespace Vesolovsky.Game.Views
 
         private void OnIsOpenChanged(bool isOpen)
         {
+            // UI Images are not camera-driven mip-streaming renderers. Explicitly keep only the
+            // current album page sharp while it is on screen, and release it as soon as the album
+            // closes so the world can use the budget.
+            if (pages != null)
+                pages.SetFullResolutionEnabled(isOpen);
+
             if (isOpen)
             {
                 Show(destroyCancellationToken).Forget();

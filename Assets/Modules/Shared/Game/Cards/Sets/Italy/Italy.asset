@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Italy
   m_EditorClassIdentifier: 
   setId: Italy
-  setName: 
+  setName: Italy
   icon: {fileID: 21300000, guid: 94b61cdad7b12304f8095c593ab3ffde, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: ee8c07f553cc7b046ba99e8fe1f0c7d6, type: 3}
-  backArtwork: {fileID: 21300000, guid: bf15371b5636dcb41b42c16a2b59abc2, type: 3}
+  backArtwork: {fileID: 2800000, guid: bf15371b5636dcb41b42c16a2b59abc2, type: 3}
   cards:
   - {fileID: 8520065609856591847, guid: c34bbf2bc2cbf30468111b1597bdc2eb, type: 3}
   - {fileID: 8994226400879479795, guid: 116e6a62e10978b488d0281e5d0bf91b, type: 3}

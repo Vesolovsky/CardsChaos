@@ -60,7 +60,15 @@ namespace FOW
         {
             instance = this;
             RenderTextureDescriptor blitTargetDescriptor = renderingData.cameraData.cameraTargetDescriptor;
-            //blitTargetDescriptor.depthBufferBits = 0;
+
+            // This target only carries the colour produced by a full-screen blit. It is never
+            // depth-tested, sampled per MSAA sample, or mipmapped, so inheriting those buffers
+            // from an 8x-MSAA camera multiplies transient memory without changing the image.
+            blitTargetDescriptor.depthBufferBits = 0;
+            blitTargetDescriptor.msaaSamples = 1;
+            blitTargetDescriptor.bindMS = false;
+            blitTargetDescriptor.useMipMap = false;
+            blitTargetDescriptor.autoGenerateMips = false;
 
             var renderer = renderingData.cameraData.renderer;
 
@@ -88,7 +96,10 @@ namespace FOW
                 return;
 
             CommandBuffer cmd = CommandBufferPool.Get(m_ProfilerTag);
-            renderingData.cameraData.camera.depthTextureMode = DepthTextureMode.DepthNormals;
+            // Every active FOW appearance samples scene depth, but none of them needs a normals
+            // texture. Preserve flags requested by other effects and avoid making FOW itself
+            // responsible for a DepthNormals prepass when SSAO is changed or disabled later.
+            renderingData.cameraData.camera.depthTextureMode |= DepthTextureMode.Depth;
 
             SetShaderProperties(renderingData.cameraData.camera);
 

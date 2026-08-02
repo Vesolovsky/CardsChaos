@@ -23,6 +23,7 @@ namespace CardsChaos.Cards
         private readonly ICameraService _cameraService;
         private readonly CardHand _hand;
         private readonly ICardInspector _inspector;
+        private readonly ICardOutlinePresenter _outline;
         private readonly IWorldInteractionLock _worldLock;
 
         private readonly InputAction _throw;
@@ -36,12 +37,14 @@ namespace CardsChaos.Cards
             ICameraService cameraService,
             CardHand hand,
             ICardInspector inspector,
+            ICardOutlinePresenter outline,
             IWorldInteractionLock worldLock,
             IInputActions input)
         {
             _cameraService = cameraService;
             _hand = hand;
             _inspector = inspector;
+            _outline = outline;
             _worldLock = worldLock;
 
             _throw = input.Find(GameInputActions.Throw);
@@ -53,7 +56,10 @@ namespace CardsChaos.Cards
             Mouse mouse = Mouse.current;
 
             if (mouse == null)
+            {
+                Aim(null);
                 return;
+            }
 
             // Whoever holds the room owns the mouse - the close-up, the album. This runs before
             // the close-up does (see the execution order in CardsInstaller), so the click that
@@ -78,17 +84,16 @@ namespace CardsChaos.Cards
             {
                 if (_target.IsHeld)
                     _inspector.TryOpen();
-                else
-                    _hand.PickUp(_target);
+                else if (_hand.PickUp(_target))
+                    Aim(null);
             }
 
             if (_throw != null && _throw.WasPressedThisFrame())
             {
                 _hand.ThrowSelected();
 
-                // The thrown card is very likely still under the cursor, and it drops its own
-                // outline on the way out. Forgetting it here is what lets the next frame notice
-                // it again and light it back up as a card on the floor.
+                // The thrown card is very likely still under the cursor. Forgetting it here lets
+                // the next frame notice it again as a floor card instead of retaining stale aim.
                 Aim(null);
             }
 
@@ -121,19 +126,24 @@ namespace CardsChaos.Cards
         {
             _target = card;
 
-            // Cards in hand wear the ring for as long as they stay selected, and the hand puts it
-            // there. Only the floor is lit by the cursor alone, and only while it rests on it.
+            // A card in hand communicates selection by being lifted out of the pile. The outline
+            // is a floor-only affordance and exists only while the cursor rests on that card.
             Card floorCard = card != null && !card.IsHeld ? card : null;
 
             if (_outlined != floorCard)
             {
-                if (_outlined != null)
-                    _outlined.SetHighlight(CardHighlight.None);
-
                 _outlined = floorCard;
 
                 if (_outlined != null)
-                    _outlined.SetHighlight(CardHighlight.Hovered);
+                    _outline.SetTarget(_outlined);
+                else
+                    _outline.Clear();
+            }
+            else if (floorCard == null)
+            {
+                // Keep the presenter authoritative even if its target was changed or invalidated
+                // outside this controller between two frames with no floor card under the cursor.
+                _outline.Clear();
             }
 
             // Pointing at a card in hand claims the selection. Pointing away deliberately does

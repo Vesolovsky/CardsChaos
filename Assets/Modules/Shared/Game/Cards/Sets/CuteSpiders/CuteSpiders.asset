@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: CuteSpiders
   m_EditorClassIdentifier: 
   setId: CuteSpiders
-  setName: 
+  setName: Cute spiders
   icon: {fileID: 21300000, guid: 42b41dcbfaed02e46ae0fb607d894fa5, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: fdf1898b317225048a5b44f4e1f8b168, type: 3}
-  backArtwork: {fileID: 21300000, guid: bd59664ac1055024594f1a1e242d02ac, type: 3}
+  backArtwork: {fileID: 2800000, guid: bd59664ac1055024594f1a1e242d02ac, type: 3}
   cards:
   - {fileID: 4441461279579841805, guid: 3362ff24d24e78448b1884390940f2e4, type: 3}
   - {fileID: 7678620534231528633, guid: 0ffab32c078fe4a4397727984358f679, type: 3}

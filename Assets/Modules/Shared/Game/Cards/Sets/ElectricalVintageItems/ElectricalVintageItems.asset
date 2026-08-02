@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: ElectricalVintageItems
   m_EditorClassIdentifier: 
   setId: ElectricalVintageItems
-  setName: 
+  setName: Electrical vintage items
   icon: {fileID: 21300000, guid: 4b0765153ce6564488b3553955adab74, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 659b5bd7516e3a74899ff6f80e91c76f, type: 3}
-  backArtwork: {fileID: 21300000, guid: d3f4738cd56415d418d3e355a7324486, type: 3}
+  backArtwork: {fileID: 2800000, guid: d3f4738cd56415d418d3e355a7324486, type: 3}
   cards:
   - {fileID: 5540534683349980941, guid: c123c090e7920d04c9295e349049e644, type: 3}
   - {fileID: 6224554212492954448, guid: adc7f86413cc48142823c4fd5927d237, type: 3}

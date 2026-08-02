@@ -72,6 +72,19 @@ namespace CardsChaos.Cards.CardEditor
         [MenuItem("Tools/Cards/Build All Card Sets")]
         public static void BuildAll() => Build(rebuildExisting: true);
 
+        [MenuItem("Tools/Cards/Recalculate Card Mesh Streaming Metrics")]
+        public static void RecalculateCardMeshStreamingMetrics()
+        {
+            Mesh mesh = AssetDatabase.LoadAssetAtPath<Mesh>(MeshPath);
+            if (mesh == null)
+                throw new System.InvalidOperationException($"Card mesh is missing at '{MeshPath}'.");
+
+            mesh.RecalculateUVDistributionMetrics();
+            EditorUtility.SetDirty(mesh);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[CardSetBuilder] Recalculated and saved card mesh UV streaming metrics.", mesh);
+        }
+
         /// <summary>
         /// Only touches sets that have no generated definition yet. Everything already built
         /// (mesh, base prefab, existing sets) is reused as is, which is why this is the fast path.
@@ -175,6 +188,7 @@ namespace CardsChaos.Cards.CardEditor
                 existing.uv2 = generated.uv2;
                 existing.triangles = generated.triangles;
                 existing.RecalculateBounds();
+                existing.RecalculateUVDistributionMetrics();
                 EditorUtility.SetDirty(existing);
                 Object.DestroyImmediate(generated);
                 Debug.Log($"[CardSetBuilder] Updated mesh: {existing.vertexCount} verts, {existing.triangles.Length / 3} tris.");
@@ -262,12 +276,6 @@ namespace CardsChaos.Cards.CardEditor
             material.SetFloat("_Metallic", 0f);
             material.SetColor("_EdgeTint", Color.white);
             material.SetFloat("_EdgeDarken", 0.18f);
-            // The hover/selected outline is driven per card from a property block, so the
-            // material has to keep it switched off. Left unset the value is whatever the
-            // asset happened to be saved with - M_Card_Base was stuck at the 0.01 maximum,
-            // which put a permanent white shell on anything using it.
-            material.SetFloat("_OutlineWidth", 0f);
-            material.SetColor("_OutlineColor", Color.white);
             material.enableInstancing = true;
         }
 
@@ -291,20 +299,6 @@ namespace CardsChaos.Cards.CardEditor
             collider.size = new Vector3(settings.Width, settings.Height, settings.Thickness + CardColliderClearance);
             collider.center = Vector3.zero;
             collider.contactOffset = CardContactOffset;
-
-            var body = root.AddComponent<Rigidbody>();
-            body.mass = 0.005f;
-            body.interpolation = RigidbodyInterpolation.Interpolate;
-            // Speculative contacts were letting cards pass through each other; sweeping
-            // against the other dynamic cards is what actually stops it, at the cost of a
-            // more expensive broadphase.
-            body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            // A pile of thin plates is the worst case for a stacking solver - the 6/1
-            // project defaults let it settle through itself.
-            body.solverIterations = 16;
-            body.solverVelocityIterations = 4;
-            // Push overlaps apart gently rather than firing the card out of the pile.
-            body.maxDepenetrationVelocity = 1f;
 
             root.AddComponent<CardIdentity>();
             root.AddComponent<Card>();
@@ -351,16 +345,6 @@ namespace CardsChaos.Cards.CardEditor
 
             var backTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(backPath);
 
-            // Already a sprite - the back is one of the pngs the import pass above ran over - so
-            // this only picks up the sub-asset the album's inspect flips a card over to.
-            var backSprite = AssetDatabase.LoadAssetAtPath<Sprite>(backPath);
-            if (backSprite == null)
-            {
-                Debug.LogError(
-                    $"[CardSetBuilder] '{backPath}' produced no Sprite. Cards in this set cannot " +
-                    "be turned over in the album's inspect.", backTexture);
-            }
-
             var fronts = pngPaths.Where(p => p != backPath).ToArray();
             var cards = new List<(int Number, GameObject Prefab)>(fronts.Length);
             float minLuminance = 1f;
@@ -373,16 +357,6 @@ namespace CardsChaos.Cards.CardEditor
                 ParseCardName(fileName, out int number, out string displayName);
 
                 var frontTexture = AssetDatabase.LoadAssetAtPath<Texture2D>(frontPath);
-
-                // Loaded after the import pass above has run, so the sub-asset is guaranteed to
-                // exist even on the run that first flips a set over to sprites.
-                var frontSprite = AssetDatabase.LoadAssetAtPath<Sprite>(frontPath);
-                if (frontSprite == null)
-                {
-                    Debug.LogError(
-                        $"[CardSetBuilder] '{frontPath}' produced no Sprite. The album will have " +
-                        "nothing to draw for this card.", frontTexture);
-                }
 
                 string safeName = $"{setId}_{fileName}";
 
@@ -398,7 +372,7 @@ namespace CardsChaos.Cards.CardEditor
                     basePrefab,
                     $"{prefabFolder}/Card_{safeName}.prefab",
                     material,
-                    frontSprite,
+                    frontTexture,
                     setId,
                     number,
                     displayName,
@@ -426,7 +400,7 @@ namespace CardsChaos.Cards.CardEditor
                 cards.Select(card => card.Prefab).ToList(),
                 LoadSetIcon(setFolder, setId, IconSuffix),
                 LoadSetIcon(setFolder, setId, IconInnerShadowSuffix),
-                backSprite);
+                backTexture);
         }
 
         /// <summary>
@@ -486,7 +460,7 @@ namespace CardsChaos.Cards.CardEditor
 
         private static CardSetDefinition CreateSetDefinition(
             string path, string setId, List<GameObject> cards, Sprite icon, Sprite iconInnerShadow,
-            Sprite backArtwork)
+            Texture2D backArtwork)
         {
             var definition = AssetDatabase.LoadAssetAtPath<CardSetDefinition>(path);
             if (definition == null)
@@ -497,14 +471,17 @@ namespace CardsChaos.Cards.CardEditor
 
             var serialized = new SerializedObject(definition);
             serialized.FindProperty("setId").stringValue = setId;
+
+            SerializedProperty setNameProperty = serialized.FindProperty("setName");
+            if (string.IsNullOrWhiteSpace(setNameProperty.stringValue))
+                setNameProperty.stringValue = CardSetNameBuilder.Humanize(setId);
+
             serialized.FindProperty("icon").objectReferenceValue = icon;
             serialized.FindProperty("iconInnerShadow").objectReferenceValue = iconInnerShadow;
             serialized.FindProperty("backArtwork").objectReferenceValue = backArtwork;
 
-            // setName is deliberately untouched. It is the one field a human is expected to
-            // correct - the generated name cannot know that Ballon'dOrs wants to read
-            // "Ballon d'Or" - so it is owned by Tools/Cards/Build Set Names, which only ever
-            // writes it on request. See CardSetNameBuilder.
+            // Humanize is only a safe initial value: it cannot know that Ballon'dOrs should read
+            // "Ballon d'Or". A non-empty, hand-corrected name is therefore never overwritten.
             SerializedProperty cardsProperty = serialized.FindProperty("cards");
             cardsProperty.arraySize = cards.Count;
             for (int i = 0; i < cards.Count; i++)
@@ -553,7 +530,7 @@ namespace CardsChaos.Cards.CardEditor
             GameObject basePrefab,
             string path,
             Material material,
-            Sprite artwork,
+            Texture2D artwork,
             string setId,
             int number,
             string displayName,
@@ -585,13 +562,11 @@ namespace CardsChaos.Cards.CardEditor
         }
 
         /// <summary>
-        /// Card faces are imported as sprites, and that is the whole trick behind the album not
-        /// needing a second copy of the art: a Sprite-type import still produces the Texture2D
-        /// the card material samples in the world, with the Sprite hanging off it as a sub-asset
-        /// for the UI. One file, one texture in memory, both uses served.
-        ///
-        /// Everything the 3D side needs is kept alongside it - mips for the thousands of cards on
-        /// the floor, clamped wrapping, anisotropy - none of which a sprite import forbids.
+        /// Card faces are plain streamed Texture2D assets. The album creates a lightweight Sprite
+        /// wrapper at runtime, so its UI and the world material still share exactly one texture.
+        /// Importing as Default also lets Standalone use BC7 after POT scaling; Unity 2022.3
+        /// silently falls back to an uncompressed format for these NPOT files when they are Sprite
+        /// assets with mip maps.
         /// </summary>
         private static void ConfigureTextureImporter(string path)
         {
@@ -611,39 +586,57 @@ namespace CardsChaos.Cards.CardEditor
             }
 
             var textureType = importer.textureType;
-            var spriteMode = importer.spriteImportMode;
             var mipmap = importer.mipmapEnabled;
             var wrap = importer.wrapMode;
             var filter = importer.filterMode;
             var aniso = importer.anisoLevel;
             var srgb = importer.sRGBTexture;
+            var readable = importer.isReadable;
+            var streamingMipmaps = importer.streamingMipmaps;
+            var streamingMipmapsPriority = importer.streamingMipmapsPriority;
             var alphaSource = importer.alphaSource;
             var npot = importer.npotScale;
 
-            Set(ref textureType, TextureImporterType.Sprite);
-            Set(ref spriteMode, SpriteImportMode.Single);
+            Set(ref textureType, TextureImporterType.Default);
             Set(ref mipmap, true);
             Set(ref wrap, TextureWrapMode.Clamp);
             Set(ref filter, FilterMode.Trilinear);
             Set(ref aniso, 8);
             Set(ref srgb, true);
+            Set(ref readable, false);
+            Set(ref streamingMipmaps, true);
+            Set(ref streamingMipmapsPriority, 0);
             // The faces are opaque, so there is no alpha worth storing - and dropping it keeps
             // the tight-mesh question below moot as well.
             Set(ref alphaSource, TextureImporterAlphaSource.None);
-            // A sprite import would otherwise be free to rescale a non-power-of-two face, which
-            // on a 1024x1536 card means resampling the artwork for nothing.
-            Set(ref npot, TextureImporterNPOTScale.None);
+            // POT dimensions are required for BC7. ToLarger never removes authored samples; the
+            // normalized UV mapping restores the same picture proportions on the card and UI.
+            Set(ref npot, TextureImporterNPOTScale.ToLarger);
 
-            // Tight is the sprite default and would hand the UI a mesh cut to the alpha shape.
-            // On an opaque card that is the full rect anyway, so all it buys is a slower import
-            // and a silhouette that changes if the art ever gains a transparent corner.
-            var spriteSettings = new TextureImporterSettings();
-            importer.ReadTextureSettings(spriteSettings);
+            TextureImporterPlatformSettings standalone =
+                importer.GetPlatformTextureSettings("Standalone");
 
-            if (spriteSettings.spriteMeshType != SpriteMeshType.FullRect)
+            if (!standalone.overridden
+                || standalone.maxTextureSize != 2048
+                || standalone.resizeAlgorithm != TextureResizeAlgorithm.Mitchell
+                || standalone.format != TextureImporterFormat.BC7
+                || standalone.textureCompression != TextureImporterCompression.Compressed
+                || standalone.compressionQuality != 50
+                || standalone.ignorePlatformSupport
+                || standalone.crunchedCompression
+                || standalone.allowsAlphaSplitting)
             {
-                spriteSettings.spriteMeshType = SpriteMeshType.FullRect;
-                importer.SetTextureSettings(spriteSettings);
+                standalone.name = "Standalone";
+                standalone.overridden = true;
+                standalone.maxTextureSize = 2048;
+                standalone.resizeAlgorithm = TextureResizeAlgorithm.Mitchell;
+                standalone.format = TextureImporterFormat.BC7;
+                standalone.textureCompression = TextureImporterCompression.Compressed;
+                standalone.compressionQuality = 50;
+                standalone.ignorePlatformSupport = false;
+                standalone.crunchedCompression = false;
+                standalone.allowsAlphaSplitting = false;
+                importer.SetPlatformTextureSettings(standalone);
                 changed = true;
             }
 
@@ -651,12 +644,14 @@ namespace CardsChaos.Cards.CardEditor
                 return;
 
             importer.textureType = textureType;
-            importer.spriteImportMode = spriteMode;
             importer.mipmapEnabled = mipmap;
             importer.wrapMode = wrap;
             importer.filterMode = filter;
             importer.anisoLevel = aniso;
             importer.sRGBTexture = srgb;
+            importer.isReadable = readable;
+            importer.streamingMipmaps = streamingMipmaps;
+            importer.streamingMipmapsPriority = streamingMipmapsPriority;
             importer.alphaSource = alphaSource;
             importer.npotScale = npot;
             importer.alphaIsTransparency = false;

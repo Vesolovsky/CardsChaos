@@ -6,26 +6,22 @@ using UnityEngine;
 namespace CardsChaos.Cards.CardEditor
 {
     /// <summary>
-    /// Fills in the readable set names the album's buttons show, derived from the folder ids.
+    /// Fills missing readable set names the album's buttons show, derived from the folder ids.
     ///
-    /// Deliberately a separate menu item from Build All Card Sets. The derived name is a decent
-    /// first draft and nothing more - it cannot know that Ballon'dOrs wants to read "Ballon d'Or",
-    /// or that MagicalButerrflies is a typo - so the rebuild that runs constantly must not touch
-    /// the field, and the pass that overwrites it must be something you choose to run.
-    ///
-    /// It does overwrite, so every change is logged as before/after and the whole run is a single
-    /// undo step.
+    /// The derived name is a decent first draft and nothing more - it cannot know that
+    /// Ballon'dOrs wants to read "Ballon d'Or", so this pass never overwrites a non-empty,
+    /// hand-corrected name. CardSetBuilder applies the same rule while generating a set.
     /// </summary>
     public static class CardSetNameBuilder
     {
-        [MenuItem("Tools/Cards/Build Set Names")]
+        [MenuItem("Tools/Cards/Fill Missing Set Names")]
         public static void BuildAll()
         {
             string[] guids = AssetDatabase.FindAssets($"t:{nameof(CardSetDefinition)}");
             var changes = new List<string>();
 
             Undo.IncrementCurrentGroup();
-            Undo.SetCurrentGroupName("Build Set Names");
+            Undo.SetCurrentGroupName("Fill Missing Set Names");
             int undoGroup = Undo.GetCurrentGroup();
 
             foreach (string guid in guids)
@@ -40,21 +36,21 @@ namespace CardsChaos.Cards.CardEditor
                 SerializedProperty nameProperty = serialized.FindProperty("setName");
 
                 string previous = nameProperty.stringValue;
+                if (!string.IsNullOrWhiteSpace(previous))
+                    continue;
+
                 string generated = Humanize(serialized.FindProperty("setId").stringValue);
 
-                if (previous == generated)
+                if (string.IsNullOrEmpty(generated))
                     continue;
 
                 nameProperty.stringValue = generated;
 
-                // ApplyModifiedProperties rather than the WithoutUndo variant the rest of the
-                // generation uses: this is the one pass that can destroy hand-written text, so
-                // Ctrl+Z has to be able to bring it back.
+                // Keep the menu operation undoable even though it only fills empty fields; this
+                // lets a generated first draft be reverted before someone writes the final name.
                 serialized.ApplyModifiedProperties();
 
-                changes.Add(string.IsNullOrEmpty(previous)
-                    ? $"  {definition.SetId}: -> \"{generated}\""
-                    : $"  {definition.SetId}: \"{previous}\" -> \"{generated}\"");
+                changes.Add($"  {definition.SetId}: -> \"{generated}\"");
             }
 
             Undo.CollapseUndoOperations(undoGroup);
@@ -62,12 +58,12 @@ namespace CardsChaos.Cards.CardEditor
 
             if (changes.Count == 0)
             {
-                Debug.Log($"[CardSetNameBuilder] {guids.Length} set(s) checked, all names already current.");
+                Debug.Log($"[CardSetNameBuilder] {guids.Length} set(s) checked, none had a missing name.");
                 return;
             }
 
             Debug.Log(
-                $"[CardSetNameBuilder] Rewrote {changes.Count} of {guids.Length} set name(s). " +
+                $"[CardSetNameBuilder] Filled {changes.Count} of {guids.Length} missing set name(s). " +
                 $"Undo restores them.\n{string.Join("\n", changes)}");
         }
 

@@ -71,6 +71,7 @@ namespace Vesolovsky.Game.Views.Album
         private CardArtworkResolver _artwork;
         private CardSetDefinition _set;
         private Tween _slideTween;
+        private bool _fullResolutionEnabled;
 
         /// <summary>Raised after the page index changes, so the paging buttons can re-enable.</summary>
         public event Action PageChanged;
@@ -108,6 +109,9 @@ namespace Vesolovsky.Game.Views.Album
         /// </summary>
         public void Show(CardSetDefinition set)
         {
+            // A set switch repopulates every reusable slot. Drop the previous page's pins first
+            // so filling an off-screen page does not briefly request its new textures at mip zero.
+            SetFullResolutionPages(-1);
             _set = set;
             PageCount = Mathf.Max(1, Mathf.CeilToInt(set.CardCount / (float)SlotsPerPage));
 
@@ -225,6 +229,7 @@ namespace Vesolovsky.Game.Views.Album
             if (index < 0 || index >= PageCount)
                 return;
 
+            int previousPage = PageIndex;
             PageIndex = index;
 
             if (_slideTween.isAlive)
@@ -234,12 +239,53 @@ namespace Vesolovsky.Game.Views.Album
             // last turn of the page.
             var target = new Vector2(-index * content.rect.width, content.anchoredPosition.y);
 
-            if (immediately || pageDuration <= 0f)
+            if (immediately || pageDuration <= 0f || content.anchoredPosition == target)
+            {
                 content.anchoredPosition = target;
-            else if (content.anchoredPosition != target)
-                _slideTween = Tween.UIAnchoredPosition(content, target, pageDuration, pageEase);
+                SetFullResolutionPages(index);
+            }
+            else
+            {
+                // Both pages are visible while the strip crosses the viewport. Keep both sharp,
+                // then release the one that has moved behind the mask.
+                SetFullResolutionPages(previousPage, index);
+
+                int destination = index;
+                _slideTween = Tween.UIAnchoredPosition(content, target, pageDuration, pageEase)
+                    .OnComplete(() =>
+                    {
+                        if (PageIndex == destination)
+                            SetFullResolutionPages(destination);
+                    });
+            }
 
             PageChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// The album keeps all pages populated for reliable dragging and paging, but only its
+        /// visible page needs full-size streamed card art. Closing the album releases even that.
+        /// </summary>
+        public void SetFullResolutionEnabled(bool enabled)
+        {
+            if (_fullResolutionEnabled == enabled)
+                return;
+
+            _fullResolutionEnabled = enabled;
+            SetFullResolutionPages(enabled ? PageIndex : -1);
+        }
+
+        private void SetFullResolutionPages(int first, int second = -1)
+        {
+            for (int i = 0; i < _slots.Count; i++)
+            {
+                if (_slots[i] == null)
+                    continue;
+
+                int page = i / SlotsPerPage;
+                bool visible = _fullResolutionEnabled && (page == first || page == second);
+                _slots[i].SetFullResolution(visible);
+            }
         }
 
         private void EnsurePages(int count)
@@ -303,6 +349,8 @@ namespace Vesolovsky.Game.Views.Album
         {
             if (_slideTween.isAlive)
                 _slideTween.Stop();
+
+            SetFullResolutionPages(-1);
         }
     }
 }

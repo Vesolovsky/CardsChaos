@@ -20,7 +20,11 @@ namespace CardsChaos.Cards
 
             _root ??= new GameObject(RootName).transform;
 
-            return Object.Instantiate(prefab, position, rotation, _root);
+            Card instance = Object.Instantiate(prefab, position, rotation, _root);
+            // Card prefabs are deliberately stored in their cheap resting state. A factory spawn
+            // is the exceptional case that begins in the air, so opt it into physics explicitly.
+            instance.BeginFlight();
+            return instance;
         }
     }
 }

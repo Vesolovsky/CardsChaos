@@ -11,14 +11,15 @@ namespace CardsChaos.Cards
         [SerializeField] private int number;
         [SerializeField] private string displayName;
 
-        [Tooltip("The face, as a Sprite, for anywhere the card is drawn flat - the album grid and " +
-                 "the hand pile inside it. Same imported texture the material samples in the " +
-                 "world; a Sprite-type import gives both, so there is only ever one copy.")]
-        [SerializeField] private Sprite artwork;
+        [Tooltip("The face texture shared by the world material and every flat UI view. The UI " +
+                 "gets a lightweight cached Sprite wrapper around this same texture, never a " +
+                 "second texture allocation.")]
+        [SerializeField] private Texture2D artwork;
 
         public string SetId => setId;
         public int Number => number;
         public string DisplayName => displayName;
-        public Sprite Artwork => artwork;
+        public Texture2D ArtworkTexture => artwork;
+        public Sprite Artwork => CardArtworkSprites.Get(artwork);
     }
 }

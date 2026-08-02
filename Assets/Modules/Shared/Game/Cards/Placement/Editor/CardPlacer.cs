@@ -16,9 +16,9 @@ namespace CardsChaos.Cards.CardEditor
     ///
     /// <see cref="CardPlacerWindow"/> adds the one-shot Ctrl+Click that does both at the cursor.
     ///
-    /// The cards already carry a Rigidbody and a BoxCollider tuned for a thin-plate pile (see
-    /// CardSetBuilder.BuildBasePrefab), so this needs no third-party tool - it just steps Unity's
-    /// own PhysX in the editor with <see cref="Physics.Simulate"/>.
+    /// Resting cards carry only a BoxCollider. This adds a tuned Rigidbody to the selected target
+    /// cards for the duration of the drop, steps Unity's own PhysX with
+    /// <see cref="Physics.Simulate"/>, then removes those temporary bodies again.
     /// </summary>
     public static class CardPlacer
     {
@@ -108,7 +108,7 @@ namespace CardsChaos.Cards.CardEditor
         [Shortcut("CardsChaos/Release Selected (Simulate)", KeyCode.H)]
         public static void ReleaseSelectedShortcut()
         {
-            List<Rigidbody> targets = SelectedCardBodies();
+            List<Card> targets = SelectedCards();
             if (targets.Count == 0)
             {
                 Debug.LogWarning("[CardPlacer] Select one or more cards to release.");
@@ -127,9 +127,9 @@ namespace CardsChaos.Cards.CardEditor
             Undo.SetCurrentGroupName("Place Card");
 
             GameObject card = Spawn(groundPoint + Vector3.up * DropHeight, ClickRotation);
-            if (card != null && card.TryGetComponent(out Rigidbody body))
+            if (card != null && card.TryGetComponent(out Card target))
             {
-                Simulate(new[] { body }, "Place Card");
+                Simulate(new[] { target }, "Place Card");
                 Selection.activeGameObject = card;
             }
 
@@ -177,26 +177,44 @@ namespace CardsChaos.Cards.CardEditor
         /// an immovable collider, so a released card settles onto the existing pile without the
         /// pile settling into itself. The move is a single undoable step.
         /// </summary>
-        public static void Simulate(IReadOnlyList<Rigidbody> targets, string undoName)
+        public static void Simulate(IReadOnlyList<Card> targets, string undoName)
         {
             if (targets == null || targets.Count == 0)
                 return;
 
-            var targetSet = new HashSet<Rigidbody>(targets);
+            var targetBodies = new List<Rigidbody>(targets.Count);
+            var targetSet = new HashSet<Rigidbody>();
+            foreach (Card target in targets)
+            {
+                // Inactive bodies do not participate in Physics.Simulate and are excluded from
+                // the scene-body query below. Do not create a temporary component that could not
+                // be configured or removed by this operation.
+                if (target == null || !target.gameObject.activeInHierarchy)
+                    continue;
+
+                Rigidbody body = target.EnsureBody();
+                if (targetSet.Add(body))
+                    targetBodies.Add(body);
+            }
+
+            if (targetBodies.Count == 0)
+                return;
+
             Rigidbody[] all = Object.FindObjectsByType<Rigidbody>(
                 FindObjectsInactive.Exclude, FindObjectsSortMode.None);
 
             var savedKinematic = new Dictionary<Rigidbody, bool>(all.Length);
-            var savedGravity = new Dictionary<Rigidbody, bool>(targets.Count);
+            var savedCollision = new Dictionary<Rigidbody, CollisionDetectionMode>(all.Length);
+            var savedInterpolation = new Dictionary<Rigidbody, RigidbodyInterpolation>(all.Length);
             SimulationMode previousMode = Physics.simulationMode;
 
             // Pre-sim poses of the targets, captured so the whole thing can be turned into one
             // clean undo entry after the fact - Physics.Simulate writes the transforms in native
             // code, outside anything Undo would otherwise notice.
-            var poses = new (Transform Transform, Vector3 Position, Quaternion Rotation)[targets.Count];
-            for (int i = 0; i < targets.Count; i++)
+            var poses = new (Transform Transform, Vector3 Position, Quaternion Rotation)[targetBodies.Count];
+            for (int i = 0; i < targetBodies.Count; i++)
             {
-                Transform t = targets[i].transform;
+                Transform t = targetBodies[i].transform;
                 poses[i] = (t, t.position, t.rotation);
             }
 
@@ -205,11 +223,17 @@ namespace CardsChaos.Cards.CardEditor
                 foreach (Rigidbody body in all)
                 {
                     savedKinematic[body] = body.isKinematic;
+                    savedCollision[body] = body.collisionDetectionMode;
+                    savedInterpolation[body] = body.interpolation;
 
                     if (targetSet.Contains(body))
                     {
-                        savedGravity[body] = body.useGravity;
+                        body.collisionDetectionMode = CollisionDetectionMode.Discrete;
                         body.isKinematic = false;
+                        body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                        // Physics.Simulate advances directly; interpolation is only useful while
+                        // rendering between automatic fixed steps.
+                        body.interpolation = RigidbodyInterpolation.None;
                         body.useGravity = true;
                         body.velocity = Vector3.zero;
                         body.angularVelocity = Vector3.zero;
@@ -217,6 +241,8 @@ namespace CardsChaos.Cards.CardEditor
                     else
                     {
                         // Frozen: still collides with the falling card, but never moves itself.
+                        // A continuous dynamic mode cannot be kept on a kinematic body.
+                        body.collisionDetectionMode = CollisionDetectionMode.Discrete;
                         body.isKinematic = true;
                     }
                 }
@@ -229,7 +255,7 @@ namespace CardsChaos.Cards.CardEditor
                 for (int i = 0; i < MaxSimSteps; i++)
                 {
                     Physics.Simulate(step);
-                    calm = AllCalm(targets) ? calm + 1 : 0;
+                    calm = AllCalm(targetBodies) ? calm + 1 : 0;
                     if (calm >= StableStepsToStop)
                         break;
                 }
@@ -240,19 +266,32 @@ namespace CardsChaos.Cards.CardEditor
 
                 foreach (Rigidbody body in all)
                 {
-                    if (savedGravity.TryGetValue(body, out bool gravity))
-                        body.useGravity = gravity;
-
-                    if (savedKinematic.TryGetValue(body, out bool kinematic))
-                        body.isKinematic = kinematic;
-
-                    // Setting velocity on a kinematic body is an error, so only clear the ones
-                    // that ended up dynamic again.
-                    if (!body.isKinematic)
+                    if (targetSet.Contains(body))
                     {
-                        body.velocity = Vector3.zero;
-                        body.angularVelocity = Vector3.zero;
+                        // Leave the authored result as a static BoxCollider. DestroyImmediate is
+                        // intentional in edit mode: the body is temporary implementation detail,
+                        // while RecordSettledPoses below owns the single useful undo entry.
+                        if (!body.isKinematic)
+                        {
+                            body.velocity = Vector3.zero;
+                            body.angularVelocity = Vector3.zero;
+                        }
+
+                        body.interpolation = RigidbodyInterpolation.None;
+                        body.collisionDetectionMode = CollisionDetectionMode.Discrete;
+                        body.isKinematic = true;
+                        Object.DestroyImmediate(body);
+                        continue;
                     }
+
+                    if (!savedKinematic.TryGetValue(body, out bool kinematic))
+                        continue;
+
+                    // Restore unrelated bodies exactly. If one was dynamic, leave the temporary
+                    // kinematic state before restoring a continuous collision mode.
+                    body.isKinematic = kinematic;
+                    body.collisionDetectionMode = savedCollision[body];
+                    body.interpolation = savedInterpolation[body];
                 }
             }
 
@@ -333,17 +372,17 @@ namespace CardsChaos.Cards.CardEditor
             return present;
         }
 
-        private static List<Rigidbody> SelectedCardBodies()
+        private static List<Card> SelectedCards()
         {
-            var bodies = new List<Rigidbody>();
+            var cards = new List<Card>();
 
             foreach (GameObject go in Selection.gameObjects)
             {
-                if (go != null && go.TryGetComponent(out Card _) && go.TryGetComponent(out Rigidbody body))
-                    bodies.Add(body);
+                if (go != null && go.TryGetComponent(out Card card))
+                    cards.Add(card);
             }
 
-            return bodies;
+            return cards;
         }
 
         private static bool AllCalm(IReadOnlyList<Rigidbody> targets)

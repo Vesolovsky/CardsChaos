@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Circus
   m_EditorClassIdentifier: 
   setId: Circus
-  setName: 
+  setName: Circus
   icon: {fileID: 21300000, guid: c562da6fbd356ba43904c4d793b56269, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 3782f88c24a7a9e47a7f9def4d3a5bd6, type: 3}
-  backArtwork: {fileID: 21300000, guid: 2f4a148d8c56b464b913dfda81dd2d8a, type: 3}
+  backArtwork: {fileID: 2800000, guid: 2f4a148d8c56b464b913dfda81dd2d8a, type: 3}
   cards:
   - {fileID: 6730539192270943065, guid: d35130bf5f5d00a4b87896cc693646c6, type: 3}
   - {fileID: 7212409105426045636, guid: c49e1ce6498783a4891999bf4aea1750, type: 3}

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: UnderwaterWorld
   m_EditorClassIdentifier: 
   setId: UnderwaterWorld
-  setName: 
+  setName: Underwater world
   icon: {fileID: 21300000, guid: e567555957e40b242972b1fc32ad770a, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 04bb3420f2b5f1e47a4683a74128eca9, type: 3}
-  backArtwork: {fileID: 21300000, guid: ddc81f3460189204ca92e4f3ea39d882, type: 3}
+  backArtwork: {fileID: 2800000, guid: ddc81f3460189204ca92e4f3ea39d882, type: 3}
   cards:
   - {fileID: 227620946707543454, guid: 99119781bb88dac4d9c2ce747ba3390f, type: 3}
   - {fileID: 3340905758971349014, guid: 5c66ca068f472f04482020550aef70b2, type: 3}

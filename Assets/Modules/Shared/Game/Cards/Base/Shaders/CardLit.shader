@@ -16,9 +16,6 @@ Shader "CardsChaos/Card Lit"
         _EdgeTint ("Rim Tint", Color) = (1,1,1,1)
         _EdgeDarken ("Rim Darken", Range(0,1)) = 0.18
 
-        [Header(Outline)]
-        _OutlineColor ("Outline Colour", Color) = (1,1,1,1)
-        _OutlineWidth ("Outline Width", Range(0,0.02)) = 0
     }
 
     SubShader
@@ -130,10 +127,37 @@ Shader "CardsChaos/Card Lit"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 half faceMix = saturate(input.color.r);
-                half3 front = SAMPLE_TEXTURE2D(_FrontTex, sampler_FrontTex, input.uvFront).rgb;
-                half3 back = SAMPLE_TEXTURE2D(_BackTex, sampler_BackTex, input.uvBack).rgb;
+                float2 frontDx = ddx(input.uvFront);
+                float2 frontDy = ddy(input.uvFront);
+                float2 backDx = ddx(input.uvBack);
+                float2 backDy = ddy(input.uvBack);
+                half3 albedo;
 
-                half3 albedo = lerp(back, front, faceMix) * _BaseColor.rgb;
+                // Every flat-face triangle carries a constant 0 or 1, so its branch is coherent
+                // across the quad and samples only the texture that can contribute. Rim pixels
+                // retain the exact two-texture blend. Gradients are evaluated before branching so
+                // mip selection stays defined at the face/rim boundary.
+                UNITY_BRANCH
+                if (faceMix >= 1.0h)
+                {
+                    albedo = SAMPLE_TEXTURE2D_GRAD(
+                        _FrontTex, sampler_FrontTex, input.uvFront, frontDx, frontDy).rgb;
+                }
+                else if (faceMix <= 0.0h)
+                {
+                    albedo = SAMPLE_TEXTURE2D_GRAD(
+                        _BackTex, sampler_BackTex, input.uvBack, backDx, backDy).rgb;
+                }
+                else
+                {
+                    half3 front = SAMPLE_TEXTURE2D_GRAD(
+                        _FrontTex, sampler_FrontTex, input.uvFront, frontDx, frontDy).rgb;
+                    half3 back = SAMPLE_TEXTURE2D_GRAD(
+                        _BackTex, sampler_BackTex, input.uvBack, backDx, backDy).rgb;
+                    albedo = lerp(back, front, faceMix);
+                }
+
+                albedo *= _BaseColor.rgb;
 
                 // 0 on the flat faces, 1 at the outermost point of the rim.
                 half rimMask = 1.0h - abs(faceMix * 2.0h - 1.0h);
@@ -170,86 +194,6 @@ Shader "CardsChaos/Card Lit"
                 color.rgb = MixFog(color.rgb, inputData.fogCoord);
                 color.a = 1.0h;
                 return color;
-            }
-            ENDHLSL
-        }
-
-        // Inverted hull. URP picks SRPDefaultUnlit up in the opaque loop, so the outline
-        // costs nothing to enable per card: at width 0 the hull collapses onto the card
-        // and every one of its triangles is culled.
-        Pass
-        {
-            Name "Outline"
-            Tags { "LightMode" = "SRPDefaultUnlit" }
-
-            // Note: an expanded hull cannot survive URP's depth priming, which redraws
-            // opaques with ZTest Equal against a prepass built from unexpanded geometry.
-            // The renderers this project ships with have priming turned off for that reason.
-            Cull Front
-            ZWrite On
-            ZTest LEqual
-
-            HLSLPROGRAM
-            #pragma target 3.0
-            #pragma vertex OutlineVertex
-            #pragma fragment OutlineFragment
-            #pragma multi_compile_instancing
-
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "CardLitInput.hlsl"
-
-            struct OutlineAttributes
-            {
-                float4 positionOS : POSITION;
-                float3 normalOS   : NORMAL;
-                UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct OutlineVaryings
-            {
-                float4 positionCS : SV_POSITION;
-                UNITY_VERTEX_INPUT_INSTANCE_ID
-                UNITY_VERTEX_OUTPUT_STEREO
-            };
-
-            OutlineVaryings OutlineVertex(OutlineAttributes input)
-            {
-                OutlineVaryings output = (OutlineVaryings)0;
-                UNITY_SETUP_INSTANCE_ID(input);
-                UNITY_TRANSFER_INSTANCE_ID(input, output);
-                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-
-                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
-
-                // Pushing straight along the normal buries the ring. A card is a flat slab,
-                // so the half of the hull that Cull Front keeps is the half aimed away from
-                // the camera - and on a card lying face up that half gets pushed down into
-                // the table, where nothing can see it (widening it only digs deeper).
-                // Growing the hull across the view plane instead keeps the ring beside the
-                // card at the card's own depth, so it reads from any angle.
-                float3 viewDirWS = normalize(GetWorldSpaceViewDir(positionWS));
-                float3 lateralWS = normalWS - viewDirWS * dot(normalWS, viewDirWS);
-
-                // Faces aimed straight at or away from the camera have no lateral component
-                // left over. They sit inside the silhouette anyway, so leave them put.
-                float lateral = length(lateralWS);
-                lateralWS = lateral > 1e-5 ? lateralWS / lateral : float3(0, 0, 0);
-
-                output.positionCS = TransformWorldToHClip(positionWS + lateralWS * _OutlineWidth);
-
-                return output;
-            }
-
-            half4 OutlineFragment(OutlineVaryings input) : SV_Target
-            {
-                UNITY_SETUP_INSTANCE_ID(input);
-
-                // At width 0 the hull coincides with the card surface; discard instead
-                // of z-fighting with it.
-                clip(_OutlineWidth - 0.00001);
-
-                return _OutlineColor;
             }
             ENDHLSL
         }

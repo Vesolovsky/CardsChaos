@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Lapland
   m_EditorClassIdentifier: 
   setId: Lapland
-  setName: 
+  setName: Lapland
   icon: {fileID: 21300000, guid: 31595fae68268564990b93a4732fe49d, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: b94390def7cd58e45a21dc56d27502c8, type: 3}
-  backArtwork: {fileID: 21300000, guid: baebb27b1b88b3f4c92a41fad5259c59, type: 3}
+  backArtwork: {fileID: 2800000, guid: baebb27b1b88b3f4c92a41fad5259c59, type: 3}
   cards:
   - {fileID: 7667602853181245904, guid: 0ea61b095009d1c498ef9678daf4f7b8, type: 3}
   - {fileID: 3993522675052598357, guid: f152d2f309f8cab4d9580f035ddbd7b1, type: 3}

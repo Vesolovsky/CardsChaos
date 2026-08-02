@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: ItalianCuisine
   m_EditorClassIdentifier: 
   setId: ItalianCuisine
-  setName: 
+  setName: Italian cuisine
   icon: {fileID: 21300000, guid: 9a30be0be78fa5b489e5f0947e17c36f, type: 3}
   iconInnerShadow: {fileID: 21300000, guid: 76d3cbcca0ecc0e419399a440eadb7da, type: 3}
-  backArtwork: {fileID: 21300000, guid: bff934b3686bb91478cfe4119191c1a2, type: 3}
+  backArtwork: {fileID: 2800000, guid: bff934b3686bb91478cfe4119191c1a2, type: 3}
   cards:
   - {fileID: 5360203491149391344, guid: 420aed008d7d4a244aa4b5a7648cf3b7, type: 3}
   - {fileID: 7194642164296193081, guid: 2fbacbc62b1ed4e49b7f86f2edfd50d2, type: 3}
