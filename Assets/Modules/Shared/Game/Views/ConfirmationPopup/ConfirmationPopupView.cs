@@ -5,7 +5,7 @@ using Vesolovsky.Core.UISystem.UIComponents;
 
 namespace Vesolovsky.Game.Views
 { 
-    public class ConfirmationPopupView : View<IConfirmationPopupViewModel>
+    public class ConfirmationPopupView : View<IConfirmationPopupViewModel>, IPopup
     {
         [SerializeField] private VText titleText;
         [SerializeField] private VText descriptionText;
@@ -14,13 +14,26 @@ namespace Vesolovsky.Game.Views
 
         protected override void InitialViewSetup(IViewInitData viewInitData)
         {
-            titleText.SetText(ViewModel.Title);
-            descriptionText.SetText(ViewModel.Description);
+            if (titleText != null)
+                titleText.SetText(ViewModel.Title);
 
-            declineButton.gameObject.SetActive(ViewModel.Buttons == ConfirmationPopupButtons.Decline);
+            if (descriptionText != null)
+                descriptionText.SetText(ViewModel.Description);
 
-            confirmButton.Bind(OnConfirmButton);
-            declineButton.Bind(OnDeclineButton);
+            bool showConfirm = (ViewModel.Buttons & ConfirmationPopupButtons.Confirm) != 0;
+            bool showDecline = (ViewModel.Buttons & ConfirmationPopupButtons.Decline) != 0;
+
+            if (confirmButton != null)
+            {
+                confirmButton.gameObject.SetActive(showConfirm);
+                confirmButton.Bind(OnConfirmButton);
+            }
+
+            if (declineButton != null)
+            {
+                declineButton.gameObject.SetActive(showDecline);
+                declineButton.Bind(OnDeclineButton);
+            }
 
             base.InitialViewSetup(viewInitData);
         }

@@ -64,6 +64,12 @@ namespace Vesolovsky.Game.Views.GameplayHud
             RefreshLabel();
         }
 
+        public void SetKeyDisplay(string keyDisplay)
+        {
+            _keyDisplay = keyDisplay;
+            RefreshLabel();
+        }
+
         private void Update()
         {
             if (_hand == null)

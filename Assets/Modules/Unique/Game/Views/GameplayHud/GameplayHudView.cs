@@ -84,6 +84,7 @@ namespace Vesolovsky.Game.Views
             }
 
             ViewModel.SkillsChanged += OnSkillsChanged;
+            ViewModel.BindingsChanged += RefreshBindings;
 
             _wired = true;
         }
@@ -133,6 +134,24 @@ namespace Vesolovsky.Game.Views
             }
         }
 
+        private void RefreshBindings()
+        {
+            albumButton?.SetKeyDisplay(
+                ViewModel.GetActionKeyDisplay(GameInputActions.ToggleAlbum));
+            upgradesButton?.SetKeyDisplay(
+                ViewModel.GetActionKeyDisplay(GameInputActions.ToggleUpgrades));
+            handSwitchButton?.SetKeyDisplay(
+                ViewModel.GetActionKeyDisplay(GameInputActions.ToggleHand));
+            throwHint?.SetKeyDisplay(
+                ViewModel.GetActionKeyDisplay(GameInputActions.Throw));
+
+            if (skillButtons == null)
+                return;
+
+            foreach (HudSkillButton skill in skillButtons)
+                skill?.RefreshBinding();
+        }
+
         private void RefreshCounts(bool punch)
         {
             CardHand hand = ViewModel.Hand;
@@ -157,7 +176,10 @@ namespace Vesolovsky.Game.Views
             }
 
             if (ViewModel != null)
+            {
                 ViewModel.SkillsChanged -= OnSkillsChanged;
+                ViewModel.BindingsChanged -= RefreshBindings;
+            }
 
             base.OnDestroy();
         }

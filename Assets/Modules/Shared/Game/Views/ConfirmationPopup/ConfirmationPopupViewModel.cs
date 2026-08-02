@@ -9,13 +9,17 @@ namespace Vesolovsky.Game.Views
     public enum ConfirmationPopupButtons
     {
         None = 0,
-        Decline = 1 << 0,
+        Confirm = 1 << 0,
+        Decline = 1 << 1,
+        ConfirmAndDecline = Confirm | Decline,
     }
 
     public class ConfirmationPopupViewModelInitData : IViewModelInitData
     {
         public LocalizedString Title { get; }
         public LocalizedString Description { get; }
+        public string RawTitle { get; }
+        public string RawDescription { get; }
         public ConfirmationPopupButtons Buttons { get; }
 
         public Action ConfirmAction;
@@ -30,6 +34,24 @@ namespace Vesolovsky.Game.Views
         {
             Title = title;
             Description = description;
+            Buttons = buttons;
+            ConfirmAction = confirmAction;
+            DeclineAction = declineAction;
+        }
+
+        /// <summary>
+        /// Creates a popup from runtime text. Settings rebinding uses this overload because the
+        /// action and control names are assembled dynamically (for example "Rebind Sprint").
+        /// </summary>
+        public ConfirmationPopupViewModelInitData(
+            string title,
+            string description,
+            ConfirmationPopupButtons buttons,
+            Action confirmAction = null,
+            Action declineAction = null)
+        {
+            RawTitle = title;
+            RawDescription = description;
             Buttons = buttons;
             ConfirmAction = confirmAction;
             DeclineAction = declineAction;
@@ -50,8 +72,16 @@ namespace Vesolovsky.Game.Views
         {
             var initData = (ConfirmationPopupViewModelInitData)viewModelInitData;
 
-            Title = await initData.Title.GetLocalizedStringAsync();
-            Description = await initData.Description.GetLocalizedStringAsync();
+            if (initData.RawTitle != null || initData.RawDescription != null)
+            {
+                Title = initData.RawTitle ?? string.Empty;
+                Description = initData.RawDescription ?? string.Empty;
+            }
+            else
+            {
+                Title = await initData.Title.GetLocalizedStringAsync();
+                Description = await initData.Description.GetLocalizedStringAsync();
+            }
             Buttons = initData.Buttons;
 
             _confirmAction = initData.ConfirmAction;

@@ -97,6 +97,12 @@ namespace Vesolovsky.Game.Views.GameplayHud
             RefreshLabel();
         }
 
+        public void RefreshBinding()
+        {
+            if (_viewModel != null && _viewModel.IsSkillReady(skillId))
+                RefreshLabel();
+        }
+
         private void Update()
         {
             if (_viewModel == null)
