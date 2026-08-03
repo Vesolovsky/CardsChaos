@@ -1,8 +1,24 @@
 using System;
+using System.Collections.Generic;
 using Vesolovsky.Game.Upgrades;
 
 namespace Vesolovsky.Game.Services.Skills
 {
+    /// <summary>One skill's running cooldown, as the save reads and writes it.</summary>
+    public readonly struct SkillCooldownSnapshot
+    {
+        public SkillId Id { get; }
+        public float Remaining { get; }
+        public float Total { get; }
+
+        public SkillCooldownSnapshot(SkillId id, float remaining, float total)
+        {
+            Id = id;
+            Remaining = remaining;
+            Total = total;
+        }
+    }
+
     /// <summary>
     /// Fires skills and tracks their cooldowns. Whether a skill exists, is unlocked and off
     /// cooldown all funnel through here, so the keyboard and a future button press take the same
@@ -30,5 +46,11 @@ namespace Vesolovsky.Game.Services.Skills
 
         /// <summary>Cooldown left as 0..1 of its full length, for a radial fill and the like.</summary>
         float GetCooldownNormalized(SkillId id);
+
+        /// <summary>Every skill with time still on its cooldown, for the save to write down.</summary>
+        IReadOnlyList<SkillCooldownSnapshot> GetActiveCooldowns();
+
+        /// <summary>Restores a cooldown from a loaded save. Ignored when nothing is left to run.</summary>
+        void RestoreCooldown(SkillId id, float remaining, float total);
     }
 }

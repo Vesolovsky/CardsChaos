@@ -95,6 +95,31 @@ namespace Vesolovsky.Game.Services.Skills
             return total > 0f ? Mathf.Clamp01(GetCooldownRemaining(id) / total) : 0f;
         }
 
+        public IReadOnlyList<SkillCooldownSnapshot> GetActiveCooldowns()
+        {
+            var snapshots = new List<SkillCooldownSnapshot>();
+
+            foreach (KeyValuePair<SkillId, float> entry in _cooldownRemaining)
+            {
+                if (entry.Value <= 0f)
+                    continue;
+
+                float total = _cooldownTotal.TryGetValue(entry.Key, out float t) ? t : entry.Value;
+                snapshots.Add(new SkillCooldownSnapshot(entry.Key, entry.Value, total));
+            }
+
+            return snapshots;
+        }
+
+        public void RestoreCooldown(SkillId id, float remaining, float total)
+        {
+            if (remaining <= 0f)
+                return;
+
+            _cooldownRemaining[id] = remaining;
+            _cooldownTotal[id] = total > 0f ? total : remaining;
+        }
+
         public void Tick()
         {
             // Cooldowns run on game time, and the pause menu stops the clock - a wait held over the

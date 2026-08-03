@@ -26,7 +26,7 @@ namespace Vesolovsky.Core.Services
     /// The pointer is needed for picking cards, so it is only taken for the length of the drag
     /// and put back exactly where it was let go of.
     /// </summary>
-    public class CameraLookController : IInitializable, ITickable, IDisposable
+    public class CameraLookController : IInitializable, ITickable, IDisposable, ICameraHeading
     {
         private readonly ICameraService _cameraService;
         private readonly IWorldInteractionLock _worldLock;
@@ -111,6 +111,21 @@ namespace Vesolovsky.Core.Services
             _yaw += (_settings.Invert ? -delta : delta) * _settings.Sensitivity;
 
             Apply(camera);
+        }
+
+        public float Heading => _yaw;
+
+        /// <summary>
+        /// Points the camera at a saved heading on load. Pitch keeps the authored tilt captured in
+        /// <see cref="Initialize"/>, so only the yaw is taken from the save.
+        /// </summary>
+        public void SetHeading(float yawDegrees)
+        {
+            _yaw = yawDegrees;
+
+            Camera camera = _cameraService.MainCamera;
+            if (camera != null)
+                Apply(camera);
         }
 
         private void Apply(Camera camera)

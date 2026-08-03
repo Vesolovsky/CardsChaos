@@ -42,6 +42,12 @@ namespace Vesolovsky.Game.Views
         [Tooltip("The sentence under the pause-menu buttons describing the applied save mode.")]
         [SerializeField] private VText autoSaveStatusText;
 
+        [Tooltip("Saves, then (future) returns to the main menu scene.")]
+        [SerializeField] private VButton mainMenuButton;
+
+        [Tooltip("Saves fully, then quits the game.")]
+        [SerializeField] private VButton quitButton;
+
         private IWorldInteractionLock _worldLock;
         private ISkillGate _skillGate;
         private IPauseState _pauseState;
@@ -52,6 +58,7 @@ namespace Vesolovsky.Game.Views
         private IDisposable _worldHandle;
         private bool _isOpen;
         private bool _isOpeningSettings;
+        private bool _isSaving;
 
         // The room was free on the previous frame. Required as well as "free now" so a section that
         // releases the room on this very Escape does not hand the same press straight to the pause.
@@ -82,7 +89,9 @@ namespace Vesolovsky.Game.Views
                 resumeButton.Bind(Close);
 
             settingsButton?.Bind(() => OpenSettings().Forget());
-            saveButton?.Bind(() => _saveCoordinator?.SaveNow().Forget());
+            saveButton?.Bind(() => SaveProgress().Forget());
+            mainMenuButton?.Bind(() => OpenMainMenu().Forget());
+            quitButton?.Bind(QuitGame);
 
             if (_gameSettings != null)
             {
@@ -162,6 +171,62 @@ namespace Vesolovsky.Game.Views
             AudioService.SetState(AudioStateKey.Music_Level);
 
             Hide(destroyCancellationToken).Forget();
+        }
+
+        private void QuitGame()
+        {
+            // Full synchronous save before the process leaves. ApplicationSaveHandler also saves on
+            // OnApplicationQuit, so a window-close from outside the menu is covered as well.
+            _saveCoordinator?.SaveBlocking();
+            Application.Quit();
+        }
+
+        private async UniTask OpenMainMenu()
+        {
+            // The room's save contributors are torn down with the gameplay scene, so the world has
+            // to be captured while they are still alive - before any future scene load.
+            if (_saveCoordinator != null)
+                await _saveCoordinator.SaveNow(force: true);
+
+            // TODO: load the main menu scene here once it exists.
+        }
+
+        private async UniTask SaveProgress()
+        {
+            if (_saveCoordinator == null || _isSaving)
+                return;
+
+            _isSaving = true;
+            try
+            {
+                await _saveCoordinator.SaveNow();
+                await ShowSavedConfirmation();
+            }
+            finally
+            {
+                _isSaving = false;
+            }
+        }
+
+        private async UniTask ShowSavedConfirmation()
+        {
+            if (_dynamicViewsCanvas == null || this == null)
+                return;
+
+            var definition = new ConfirmationPopupViewDefinition
+            {
+                ViewModelInitData = new ConfirmationPopupViewModelInitData(
+                    "Progress saved",
+                    "Your progress has been saved.",
+                    ConfirmationPopupButtons.Confirm)
+            };
+
+            // Lives on the shared DynamicViewsCanvas and unloads itself when its single button is
+            // pressed; HasSettingsOverlay() already treats it as owning Escape while it is up.
+            await SceneViewsService.AddView(
+                definition,
+                _dynamicViewsCanvas.transform,
+                throughQueue: false);
         }
 
         private async UniTask OpenSettings()

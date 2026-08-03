@@ -51,23 +51,44 @@ namespace Vesolovsky.Core.Services.Save
 
         public async UniTask Save()
         {
-            await SaveData();
+            // The live save is mutated in place by gameplay (wallet, album). Take an isolated deep
+            // copy on the main thread first, so serializing it on a background thread cannot read a
+            // half-changed object. Compact formatting keeps a save with hundreds of cards small.
+            var snapshot = (T)_currentSave.Clone();
+
+            string json = await UniTask.RunOnThreadPool(
+                () => JsonConvert.SerializeObject(snapshot, Formatting.None));
+
+            EnsureDirectory();
+            await File.WriteAllTextAsync(SAVED_FILE_PATH, json);
+
+            // The work above may leave us on a thread-pool thread; Saved listeners touch Unity
+            // objects, so hand the continuation back to the main thread before raising it.
+            await UniTask.SwitchToMainThread();
+            Saved?.Invoke();
+        }
+
+        public void SaveBlocking()
+        {
+            // The quit path. Nothing else runs while this blocks, so there is no race to guard
+            // against and no copy is needed - serialize the live save straight to disk.
+            string json = JsonConvert.SerializeObject(_currentSave, Formatting.None);
+
+            EnsureDirectory();
+            File.WriteAllText(SAVED_FILE_PATH, json);
+
             Saved?.Invoke();
         }
 
         public abstract void ClearSave();
 
-        private async UniTask SaveData()
+        private static void EnsureDirectory()
         {
-            string json = JsonConvert.SerializeObject(_currentSave, Formatting.Indented);
-
             var dirName = Path.GetDirectoryName(SAVED_FILE_PATH);
             if (Directory.Exists(dirName) == false)
             {
                 Directory.CreateDirectory(dirName);
             }
-
-            await File.WriteAllTextAsync(SAVED_FILE_PATH, json);
         }
     }
 }

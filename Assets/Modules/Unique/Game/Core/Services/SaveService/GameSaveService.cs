@@ -45,6 +45,66 @@ namespace Vesolovsky.Game.Services.Save
         /// is relaunched. Zero means "not chosen yet".
         /// </summary>
         public int SetOrderSeed { get; set; }
+
+        /// <summary>
+        /// The room as it was left: player pose, cards in hand, cards on the floor. Null on a save
+        /// written before world state existed or on a fresh game, read as "use the authored scene".
+        /// </summary>
+        public WorldState World { get; set; }
+
+        /// <summary>
+        /// Skill cooldowns still running at save time. Skills that are ready are absent. Empty or
+        /// null means every skill is off cooldown.
+        /// </summary>
+        public List<SkillCooldownState> SkillCooldowns { get; set; }
+
+        /// <summary>
+        /// Deep copy for the off-thread write. Every collection is a fresh instance so the writer
+        /// thread never shares one with gameplay code; the elements are safe to share because none
+        /// of them (AlbumPlacement, the saved-card records) is mutated in place after it is created.
+        /// </summary>
+        public IGameSave Clone()
+        {
+            return new GameSave
+            {
+                Currencies = Currencies == null
+                    ? null
+                    : new Dictionary<CurrencyType, long>(Currencies),
+                IsAnalyticsAllowed = IsAnalyticsAllowed,
+                IsFirstLaunch = IsFirstLaunch,
+                BuildVersion = BuildVersion,
+                Album = Album == null ? null : new List<AlbumPlacement>(Album),
+                UpgradeLevels = UpgradeLevels == null
+                    ? null
+                    : new Dictionary<string, int>(UpgradeLevels),
+                UnlockedOneTimeUpgrades = UnlockedOneTimeUpgrades == null
+                    ? null
+                    : new List<string>(UnlockedOneTimeUpgrades),
+                CompletedPages = CompletedPages == null ? null : new List<string>(CompletedPages),
+                SetOrderSeed = SetOrderSeed,
+                World = CloneWorld(World),
+                SkillCooldowns = SkillCooldowns == null
+                    ? null
+                    : new List<SkillCooldownState>(SkillCooldowns),
+            };
+        }
+
+        private static WorldState CloneWorld(WorldState world)
+        {
+            if (world == null)
+                return null;
+
+            return new WorldState
+            {
+                PlayerPosition = world.PlayerPosition,
+                PlayerRotation = world.PlayerRotation,
+                HandLayout = world.HandLayout,
+                HeldCards = world.HeldCards == null ? null : new List<SavedCard>(world.HeldCards),
+                GroundCards = world.GroundCards == null
+                    ? null
+                    : new List<SavedGroundCard>(world.GroundCards),
+            };
+        }
     }
 
     public class GameSaveService : SaveService<GameSave>
@@ -65,6 +125,11 @@ namespace Vesolovsky.Game.Services.Save
                 UnlockedOneTimeUpgrades = new List<string>(),
                 CompletedPages = new List<string>(),
                 SetOrderSeed = 0,
+
+                // Left null on a fresh game so the world apply keeps the authored scene untouched;
+                // it is filled in the first time the room is captured for a save.
+                World = null,
+                SkillCooldowns = new List<SkillCooldownState>(),
             };
         }
 
@@ -90,6 +155,10 @@ namespace Vesolovsky.Game.Services.Save
             // Dropped so the next open picks a fresh shuffle rather than the order the wiped
             // collection was last seen in.
             CurrentSave.SetOrderSeed = 0;
+
+            // Back to the authored scene and no running cooldowns.
+            CurrentSave.World = null;
+            CurrentSave.SkillCooldowns?.Clear();
         }
     }
 }

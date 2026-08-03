@@ -137,6 +137,17 @@ namespace Vesolovsky.Game.Views.Album
             GoToPage(0, immediately: true);
         }
 
+        /// <summary>
+        /// Re-reads every slot of the open set from the album, leaving the page position alone.
+        /// Used when the album opens, so cards filed in a previous session (which only land in the
+        /// save after the async load) show up even though the strip was first built empty.
+        /// </summary>
+        public void RefreshAllSlots()
+        {
+            for (int i = 0; i < _slots.Count; i++)
+                RefreshSlot(i);
+        }
+
         /// <summary>Redraws one slot from what the album says is in it.</summary>
         public void RefreshSlot(int slotIndex)
         {

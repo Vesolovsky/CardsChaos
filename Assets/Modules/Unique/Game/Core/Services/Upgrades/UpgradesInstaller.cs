@@ -2,6 +2,7 @@ using UnityEngine;
 using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Services.Pause;
 using Vesolovsky.Game.Services.Progress;
+using Vesolovsky.Game.Services.Save;
 using Vesolovsky.Game.Services.Skills;
 using Vesolovsky.Game.Upgrades;
 using Zenject;
@@ -56,6 +57,10 @@ namespace Vesolovsky.Game.Services.Upgrades
 
             Container.BindInterfacesAndSelfTo<SkillService>().AsSingle();
             Container.BindInterfacesTo<SkillInputController>().AsSingle();
+
+            // Reads the room back out of the save on load and writes it in before every save.
+            // NonLazy so its load-time apply runs even though nothing resolves it directly.
+            Container.BindInterfacesAndSelfTo<WorldSaveService>().AsSingle().NonLazy();
 
             // Passive-effect appliers. NonLazy so they subscribe to the upgrade service up front and
             // are ready for the startup push the bootstrap sends once the save is in.

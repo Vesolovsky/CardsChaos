@@ -1158,6 +1158,8 @@ MonoBehaviour:
   settingsButton: {fileID: 6315891656103938263}
   saveButton: {fileID: 5881490683304259719}
   autoSaveStatusText: {fileID: 2668494047726238488}
+  mainMenuButton: {fileID: 6316766364102449060}
+  quitButton: {fileID: 5866174329698343880}
 --- !u!114 &6642967485923148752
 MonoBehaviour:
   m_ObjectHideFlags: 0

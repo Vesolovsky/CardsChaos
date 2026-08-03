@@ -357,6 +357,49 @@ namespace CardsChaos.Cards
             Changed?.Invoke();
         }
 
+        /// <summary>
+        /// Rebuilds the hand from a loaded save: these cards, in this order (index 0 is the top),
+        /// under this layout. Unlike <see cref="PickUp"/> this bypasses the slot limit and the
+        /// one-at-a-time selection churn - it is a restore, not a run of pickups.
+        /// </summary>
+        public void Restore(IReadOnlyList<Card> cards, CardHandLayout layout)
+        {
+            _cards.Clear();
+            _selected = null;
+            _layout = layout;
+
+            Transform anchor = ActiveAnchor;
+            if (anchor == null)
+            {
+                Debug.LogError(
+                    $"[{nameof(CardHand)}] No anchor for the {_layout} layout; the hand cannot be restored.",
+                    this);
+
+                return;
+            }
+
+            if (cards != null)
+            {
+                foreach (Card card in cards)
+                {
+                    if (card == null)
+                        continue;
+
+                    card.AttachTo(anchor);
+                    _cards.Add(card);
+                }
+            }
+
+            Claim(_cards.Count > 0 ? _cards[0] : null);
+
+            // Snap each card straight to its slot instead of tweening: a restored hand should
+            // already be arranged, not seen flying in from the anchor on the first frame.
+            for (int i = 0; i < _cards.Count; i++)
+                _cards[i].MoveTo(SlotPosition(i, _cards[i] == _selected), SlotRotation(i), 0f, moveEase);
+
+            Changed?.Invoke();
+        }
+
         /// <summary>Swaps between the corner pile and the spread out fan.</summary>
         public void ToggleLayout()
         {

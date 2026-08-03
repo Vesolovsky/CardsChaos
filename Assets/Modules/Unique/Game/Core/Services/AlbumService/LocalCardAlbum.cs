@@ -35,7 +35,23 @@ namespace Vesolovsky.Game.Services.Album
 
         // Built on first use rather than in the constructor: the save is filled in by an async
         // initialization pass, and the container is free to build this well before that has run.
-        private Dictionary<string, Dictionary<int, CardRef>> Pages => _pages ??= LoadPages();
+        private Dictionary<string, Dictionary<int, CardRef>> Pages
+        {
+            get
+            {
+                if (_pages != null)
+                    return _pages;
+
+                // If the async save load has not run yet, serve an empty view but do NOT cache it:
+                // caching here would freeze the album empty for the whole session even after the
+                // save lands. Rebuild on the next access, once CurrentSave is in.
+                if (_saveService.CurrentSave == null)
+                    return new Dictionary<string, Dictionary<int, CardRef>>();
+
+                _pages = LoadPages();
+                return _pages;
+            }
+        }
 
         public CardRef GetPlacement(string pageSetId, int slotIndex)
         {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Vesolovsky.Core.Services.Settings;
@@ -20,6 +21,8 @@ namespace Vesolovsky.Core.Services.Save
 
         private readonly ISaveService<T> _saveService;
         private readonly IGameSettingsService _gameSettings;
+
+        private readonly List<ISaveContributor> _contributors = new List<ISaveContributor>();
 
         private float _autoSaveIntervalSeconds = DEFAULT_AUTO_SAVE_INTERVAL_SECONDS;
         private float _secondsSinceLastAutoSave;
@@ -94,6 +97,25 @@ namespace Vesolovsky.Core.Services.Save
             HasUnsavedChanges = true;
         }
 
+        public void AddContributor(ISaveContributor contributor)
+        {
+            if (contributor != null && !_contributors.Contains(contributor))
+                _contributors.Add(contributor);
+        }
+
+        public void RemoveContributor(ISaveContributor contributor)
+        {
+            _contributors.Remove(contributor);
+        }
+
+        // Runs on the main thread, right before a write, so live state (the room, the skills) lands
+        // in the save at one moment and off the per-frame path.
+        private void CaptureContributors()
+        {
+            for (int i = 0; i < _contributors.Count; i++)
+                _contributors[i]?.CaptureForSave();
+        }
+
         public async UniTask SaveNow(bool force = false)
         {
             if (!force && !HasUnsavedChanges) return;
@@ -116,6 +138,8 @@ namespace Vesolovsky.Core.Services.Save
 
             try
             {
+                // Capture on the main thread before Save takes its off-thread snapshot.
+                CaptureContributors();
                 await _saveService.Save();
                 Saved?.Invoke();
             }
@@ -127,6 +151,23 @@ namespace Vesolovsky.Core.Services.Save
             finally
             {
                 _isSaving = false;
+            }
+        }
+
+        public void SaveBlocking()
+        {
+            HasUnsavedChanges = false;
+
+            try
+            {
+                CaptureContributors();
+                _saveService.SaveBlocking();
+                Saved?.Invoke();
+            }
+            catch (Exception e)
+            {
+                HasUnsavedChanges = true;
+                Debug.LogError($"Failed to write the save file on quit. Exception: {e}");
             }
         }
 

@@ -323,6 +323,26 @@ namespace Vesolovsky.Game.Views
                 SetCollectionProgress(_openSet.Set, punch: true);
         }
 
+        /// <summary>
+        /// Re-reads the album into the set counters and the open set's slots. Cheap, and only run
+        /// when the album opens, so it fixes the "first built before the save loaded" case without
+        /// resetting which page the player was on.
+        /// </summary>
+        private void RefreshAlbumDisplay()
+        {
+            foreach (AlbumSetButton button in _setButtons)
+            {
+                if (button != null && button.Set != null)
+                    button.SetProgress(ViewModel.CountFiled(button.Set.SetId));
+            }
+
+            if (_openSet != null)
+            {
+                pages.RefreshAllSlots();
+                SetCollectionProgress(_openSet.Set, punch: false);
+            }
+        }
+
         private void RefreshPaging()
         {
             if (nextPageButton != null)
@@ -368,6 +388,10 @@ namespace Vesolovsky.Game.Views
 
             if (isOpen)
             {
+                // Read the album afresh on every open. The view is built once at scene start, which
+                // can be before the async save load finishes, so the slots and counters it showed
+                // then may be stale-empty; opening always happens long after the save is in.
+                RefreshAlbumDisplay();
                 Show(destroyCancellationToken).Forget();
             }
             else

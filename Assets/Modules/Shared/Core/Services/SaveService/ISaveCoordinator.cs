@@ -50,5 +50,20 @@ namespace Vesolovsky.Core.Services.Save
         /// which mutates the save without going through <see cref="MarkDirty"/>.
         /// </param>
         UniTask SaveNow(bool force = false);
+
+        /// <summary>
+        /// Captures contributors and writes synchronously. For the application-quit path, where an
+        /// async write may not finish before the process exits. Always writes, dirty or not.
+        /// </summary>
+        void SaveBlocking();
+
+        /// <summary>
+        /// Registers a source of live runtime state (the room, the skills) to be captured into the
+        /// save just before every write. Scene-scoped contributors register on load and must call
+        /// <see cref="RemoveContributor"/> when their scene tears down.
+        /// </summary>
+        void AddContributor(ISaveContributor contributor);
+
+        void RemoveContributor(ISaveContributor contributor);
     }
 }
