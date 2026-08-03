@@ -28146,7 +28146,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1030985365, guid: abc00000000015365787584801111105, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.13657
+      value: -1.145
       objectReference: {fileID: 0}
     - target: {fileID: 1030985365, guid: abc00000000015365787584801111105, type: 3}
       propertyPath: m_LocalPosition.z
@@ -76106,6 +76106,7 @@ Transform:
   - {fileID: 344422405}
   - {fileID: 1617371364}
   - {fileID: 861292737}
+  - {fileID: 683112045}
   - {fileID: 1656111547}
   - {fileID: 1923539342}
   - {fileID: 228403386}
@@ -76144,7 +76145,6 @@ Transform:
   - {fileID: 1150335533}
   - {fileID: 805775288}
   - {fileID: 838763232}
-  - {fileID: 683112045}
   - {fileID: 1866946779}
   - {fileID: 354306805}
   - {fileID: 1200290427}
@@ -105921,7 +105921,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1030985995, guid: abc00000000000924349604405157972, type: 3}
       propertyPath: m_Name
-      value: Cube17
+      value: FloorCollider
       objectReference: {fileID: 0}
     - target: {fileID: 1030985995, guid: abc00000000000924349604405157972, type: 3}
       propertyPath: m_IsActive
@@ -105974,6 +105974,10 @@ PrefabInstance:
     - target: {fileID: 1030985998, guid: abc00000000000924349604405157972, type: 3}
       propertyPath: m_IsActive
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1030986000, guid: abc00000000000924349604405157972, type: 3}
+      propertyPath: m_Enabled
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
