@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 978336154427587929}
   - component: {fileID: 6718227816494930651}
   - component: {fileID: 7237933312630626091}
+  - component: {fileID: 704201046956923357}
   m_Layer: 5
   m_Name: TabButton
   m_TagString: Untagged
@@ -141,7 +142,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   scaleTarget: {fileID: 5859543466601189569}
-  highlightScale: 1.2
+  highlightScale: 1.08
   inDuration: 0.15
   inEase: 27
   outDuration: 0.12
@@ -151,6 +152,21 @@ MonoBehaviour:
   pressEase: 9
   releaseDuration: 0.12
   releaseEase: 27
+--- !u!114 &704201046956923357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033989422162203626}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e29771c1d47c4a78ae9ee338441b0701, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  button: {fileID: 6718227816494930651}
+  highlight: {fileID: 9056069331061312606}
+  content: {fileID: 4394225268607367967}
 --- !u!1 &4394225268607367967
 GameObject:
   m_ObjectHideFlags: 0
@@ -303,7 +319,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1740402116943104926
 RectTransform:
   m_ObjectHideFlags: 0

@@ -9,6 +9,9 @@ namespace Vesolovsky.Game.Views
         GameSettingsData Draft { get; }
         InputRebindDraft InputDraft { get; }
 
+        /// <summary>True when the draft (settings or bindings) differs from the applied state.</summary>
+        bool HasUnsavedChanges { get; }
+
         void ResetGeneral();
         void ResetVideo();
         void ResetAudio();

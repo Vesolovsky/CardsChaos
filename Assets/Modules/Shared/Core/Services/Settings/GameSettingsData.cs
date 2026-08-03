@@ -60,6 +60,31 @@ namespace Vesolovsky.Core.Services.Settings
             };
         }
 
+        /// <summary>
+        /// Field-by-field value comparison, used by the settings UI to tell whether a draft still
+        /// matches the applied snapshot (i.e. whether there are unsaved changes).
+        /// </summary>
+        public bool ValueEquals(GameSettingsData other)
+        {
+            if (other == null)
+                return false;
+
+            return Mathf.Approximately(MouseSensitivity, other.MouseSensitivity)
+                && InvertMouseX == other.InvertMouseX
+                && AutoSave == other.AutoSave
+                && Mathf.Approximately(AutoSaveIntervalSeconds, other.AutoSaveIntervalSeconds)
+                && QualityLevel == other.QualityLevel
+                && FullScreenMode == other.FullScreenMode
+                && ResolutionWidth == other.ResolutionWidth
+                && ResolutionHeight == other.ResolutionHeight
+                && RefreshRate == other.RefreshRate
+                && VSync == other.VSync
+                && FpsLimit == other.FpsLimit
+                && Mathf.Approximately(MasterVolume, other.MasterVolume)
+                && Mathf.Approximately(MusicVolume, other.MusicVolume)
+                && Mathf.Approximately(SfxVolume, other.SfxVolume);
+        }
+
         public GameSettingsData Clone()
         {
             return new GameSettingsData

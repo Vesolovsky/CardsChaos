@@ -12,6 +12,11 @@ namespace Vesolovsky.Game.Views
         public GameSettingsData Draft { get; private set; }
         public InputRebindDraft InputDraft { get; }
 
+        // Current returns a fresh defensive copy, so comparing the draft against it tells us whether
+        // anything is still waiting to be applied.
+        public bool HasUnsavedChanges =>
+            !Draft.ValueEquals(_settings.Current) || (InputDraft?.IsDirty ?? false);
+
         [Inject]
         public SettingsViewModel(
             IGameSettingsService settings,

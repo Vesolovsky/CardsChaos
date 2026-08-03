@@ -1155,6 +1155,9 @@ MonoBehaviour:
   root: {fileID: 3013298994747686993}
   stayHidden: 1
   resumeButton: {fileID: 3356224881953484629}
+  settingsButton: {fileID: 6315891656103938263}
+  saveButton: {fileID: 5881490683304259719}
+  autoSaveStatusText: {fileID: 2668494047726238488}
 --- !u!114 &6642967485923148752
 MonoBehaviour:
   m_ObjectHideFlags: 0

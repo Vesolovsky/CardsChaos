@@ -28,8 +28,8 @@ namespace Vesolovsky.Game.Views
 
         private static readonly string[] DisplayModeLabels =
         {
-            "Borderless",
-            "Fullscreen",
+            "Fullscreen (Borderless)",
+            "Fullscreen (Exclusive)",
             "Windowed",
         };
 
@@ -40,6 +40,9 @@ namespace Vesolovsky.Game.Views
         [SerializeField] private SettingsTabButton videoTab;
         [SerializeField] private SettingsTabButton inputTab;
         [SerializeField] private SettingsTabButton audioTab;
+
+        [Tooltip("The single ScrollRect wrapping the tab body; its Content follows the active tab.")]
+        [SerializeField] private ScrollRect settingsScrollRect;
 
         [Header("General")]
         [SerializeField] private Slider mouseSensitivitySlider;
@@ -82,7 +85,7 @@ namespace Vesolovsky.Game.Views
         private readonly List<ResolutionOption> _resolutions = new List<ResolutionOption>();
 
         private DynamicViewsCanvas _dynamicViewsCanvas;
-        private IView _activeRebindPopup;
+        private IView _activePopup;
         private KeyBindEntry _pendingRebindEntry;
         private bool _listenersBound;
         private bool _isClosing;
@@ -173,6 +176,34 @@ namespace Vesolovsky.Game.Views
             videoTab?.SetSelected(index == 1);
             inputTab?.SetSelected(index == 2);
             audioTab?.SetSelected(index == 3);
+
+            // All tabs share one ScrollRect and viewport; SetSelected only toggles which group is
+            // visible, so the ScrollRect's Content must be pointed at that group too - otherwise the
+            // scrollbar keeps sizing itself against whichever group it was authored with.
+            SettingsTabButton activeTab =
+                index == 0 ? generalTab :
+                index == 1 ? videoTab :
+                index == 2 ? inputTab :
+                index == 3 ? audioTab : null;
+
+            BindScrollContentToActiveTab(activeTab);
+        }
+
+        private void BindScrollContentToActiveTab(SettingsTabButton tab)
+        {
+            if (settingsScrollRect == null || tab == null)
+                return;
+
+            RectTransform content = tab.ContentRect;
+            if (content == null)
+                return;
+
+            settingsScrollRect.content = content;
+
+            // Rebuild first so the new group's height is current when the ScrollRect sizes the
+            // handle, then start at the top instead of inheriting the previous tab's scroll offset.
+            Canvas.ForceUpdateCanvases();
+            settingsScrollRect.verticalNormalizedPosition = 1f;
         }
 
         #region General
@@ -362,13 +393,13 @@ namespace Vesolovsky.Game.Views
                 ConfirmationPopupButtons.ConfirmAndDecline,
                 confirmAction: () =>
                 {
-                    _activeRebindPopup = null; // The popup unloads itself after this callback.
+                    _activePopup = null; // The popup unloads itself after this callback.
                     ViewModel.InputDraft.CommitCandidate(entry.ActionName, conflict.CandidatePath);
                     _pendingRebindEntry = null;
                 },
                 declineAction: () =>
                 {
-                    _activeRebindPopup = null; // The popup unloads itself after this callback.
+                    _activePopup = null; // The popup unloads itself after this callback.
                     if (resumeCaptureOnCancel)
                         ResumeRebindAfterConflict(entry).Forget();
                     else
@@ -700,9 +731,49 @@ namespace Vesolovsky.Game.Views
             // always shows precisely what the runtime stored.
             BuildResolutionOptions();
             RefreshAllControls();
+
+            ShowAppliedConfirmation().Forget();
+        }
+
+        private async UniTask ShowAppliedConfirmation()
+        {
+            await ShowPopup(
+                "Settings saved",
+                "Your changes have been applied and saved.",
+                ConfirmationPopupButtons.Confirm,
+                confirmAction: () => _activePopup = null); // The popup unloads itself after this.
         }
 
         private void OnClose()
+        {
+            if (_isClosing)
+                return;
+
+            // Closing with pending edits would silently drop them, so make the player confirm first.
+            if (ViewModel.HasUnsavedChanges)
+            {
+                ConfirmDiscardAndClose().Forget();
+                return;
+            }
+
+            CloseImmediately();
+        }
+
+        private async UniTask ConfirmDiscardAndClose()
+        {
+            await ShowPopup(
+                "Unsaved changes",
+                "You have unsaved changes. Are you sure you want to leave without saving them?",
+                ConfirmationPopupButtons.ConfirmAndDecline,
+                confirmAction: () =>
+                {
+                    _activePopup = null; // The popup unloads itself after this callback.
+                    CloseImmediately();
+                },
+                declineAction: () => _activePopup = null); // Stay in settings; only the popup closes.
+        }
+
+        private void CloseImmediately()
         {
             if (_isClosing)
                 return;
@@ -782,7 +853,7 @@ namespace Vesolovsky.Game.Views
                 return null;
             }
 
-            _activeRebindPopup = createdPopup;
+            _activePopup = createdPopup;
             return createdPopup;
         }
 
@@ -797,8 +868,8 @@ namespace Vesolovsky.Game.Views
 
         private async UniTask CloseActivePopup(bool immediately = false)
         {
-            IView popup = _activeRebindPopup;
-            _activeRebindPopup = null;
+            IView popup = _activePopup;
+            _activePopup = null;
 
             if (popup == null)
                 return;
@@ -835,8 +906,8 @@ namespace Vesolovsky.Game.Views
                 sfxVolumeSlider?.onValueChanged.RemoveListener(OnSfxVolumeChanged);
             }
 
-            if (_activeRebindPopup != null)
-                _activeRebindPopup.Unload(immediately: true).Forget();
+            if (_activePopup != null)
+                _activePopup.Unload(immediately: true).Forget();
 
             base.OnDestroy();
         }

@@ -62,6 +62,9 @@ namespace Vesolovsky.Core.Services.Input
             new List<InputRebindDraftEntry>();
         private readonly ReadOnlyCollection<InputRebindDraftEntry> _readOnlyEntries;
 
+        // Snapshot of the paths as of the last applied state; the yardstick for IsDirty.
+        private readonly Dictionary<Guid, string> _baselinePaths = new Dictionary<Guid, string>();
+
         private InputActionRebindingExtensions.RebindingOperation _rebindOperation;
         private InputAction _captureAction;
         private bool _captureActionWasEnabled;
@@ -84,6 +87,39 @@ namespace Vesolovsky.Core.Services.Input
             IReadOnlyList<GameInputBindingInfo> liveBindings = inputActions.RebindableBindings;
             for (int i = 0; i < liveBindings.Count; i++)
                 _entries.Add(new InputRebindDraftEntry(liveBindings[i]));
+
+            CaptureBaseline();
+        }
+
+        /// <summary>
+        /// True when any binding differs from the last applied state. The baseline is the live input
+        /// asset as of construction and is refreshed by <see cref="Apply"/>, so this reads false again
+        /// right after a successful apply.
+        /// </summary>
+        public bool IsDirty
+        {
+            get
+            {
+                for (int i = 0; i < _entries.Count; i++)
+                {
+                    InputRebindDraftEntry entry = _entries[i];
+                    _baselinePaths.TryGetValue(entry.BindingId, out string baseline);
+                    if (!string.Equals(
+                            entry.Path ?? string.Empty,
+                            baseline ?? string.Empty,
+                            StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
+        private void CaptureBaseline()
+        {
+            _baselinePaths.Clear();
+            for (int i = 0; i < _entries.Count; i++)
+                _baselinePaths[_entries[i].BindingId] = _entries[i].Path;
         }
 
         public string GetDisplay(string actionName)
@@ -289,6 +325,9 @@ namespace Vesolovsky.Core.Services.Input
                 paths[_entries[i].BindingId] = _entries[i].Path;
 
             _inputActions.ApplyBindingOverrides(paths);
+
+            // The draft is now the applied state, so move the dirty baseline to match.
+            CaptureBaseline();
         }
 
         public void Dispose()
