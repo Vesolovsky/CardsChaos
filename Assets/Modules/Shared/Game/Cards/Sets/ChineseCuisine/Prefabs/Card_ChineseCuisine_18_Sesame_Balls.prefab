@@ -87,8 +87,7 @@ PrefabInstance:
         type: 3}
       propertyPath: artwork
       value: 
-      objectReference: {fileID: 2800000, guid: 736cb0a609401a947b31c3d4d27babee,
-        type: 3}
+      objectReference: {fileID: 2800000, guid: 736cb0a609401a947b31c3d4d27babee, type: 3}
     - target: {fileID: 3991159474994228441, guid: f8b75973dac7c5643815f055987c5279,
         type: 3}
       propertyPath: displayName
