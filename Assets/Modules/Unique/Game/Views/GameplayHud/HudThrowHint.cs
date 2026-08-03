@@ -36,11 +36,16 @@ namespace Vesolovsky.Game.Views.GameplayHud
         /// <summary>Writes the nudge with the given throw-key text and parks it hidden.</summary>
         public void Initialize(string keyDisplay)
         {
-            if (text != null)
-                text.SetText(string.Format(labelFormat, keyDisplay));
+            SetKeyDisplay(keyDisplay);
 
             if (group != null)
                 group.alpha = 0f;
+        }
+
+        public void SetKeyDisplay(string keyDisplay)
+        {
+            if (text != null)
+                text.SetText(string.Format(labelFormat, keyDisplay));
         }
 
         /// <summary>Plays the nudge once. Every call after the first does nothing.</summary>

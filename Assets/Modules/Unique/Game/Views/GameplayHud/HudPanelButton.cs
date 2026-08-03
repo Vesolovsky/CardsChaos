@@ -22,17 +22,26 @@ namespace Vesolovsky.Game.Views.GameplayHud
         [Tooltip("The hint, with {0} where the trigger key goes. e.g. \"Album [{0}]\".")]
         [SerializeField] private string labelFormat = "Album [{0}]";
 
+        private string _keyDisplay;
+
         /// <summary>
         /// Wires the click and writes the hint with the given trigger-key text. The key display is
         /// passed in rather than resolved here so every HUD hint reads from the one input asset.
         /// </summary>
         public void Initialize(Action onClick, string keyDisplay)
         {
-            if (label != null)
-                label.SetText(string.Format(labelFormat, keyDisplay));
+            SetKeyDisplay(keyDisplay);
 
             if (button != null && onClick != null)
                 button.Bind(onClick);
+        }
+
+        public void SetKeyDisplay(string keyDisplay)
+        {
+            _keyDisplay = keyDisplay;
+
+            if (label != null)
+                label.SetText(string.Format(labelFormat, _keyDisplay));
         }
 
         public void OnPointerEnter(PointerEventData eventData)

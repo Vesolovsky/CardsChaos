@@ -2,7 +2,10 @@ using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.Services;
+using Vesolovsky.Core.Services.Save;
+using Vesolovsky.Core.Services.Settings;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
 using Vesolovsky.Game.Services.Pause;
@@ -30,12 +33,25 @@ namespace Vesolovsky.Game.Views
         [Tooltip("Closes the pause menu. Escape does the same thing.")]
         [SerializeField] private VButton resumeButton;
 
+        [Tooltip("Spawns SettingsView on the DynamicViewsCanvas.")]
+        [SerializeField] private VButton settingsButton;
+
+        [Tooltip("Visible only while the applied Auto Save setting is Off.")]
+        [SerializeField] private VButton saveButton;
+
+        [Tooltip("The sentence under the pause-menu buttons describing the applied save mode.")]
+        [SerializeField] private VText autoSaveStatusText;
+
         private IWorldInteractionLock _worldLock;
         private ISkillGate _skillGate;
         private IPauseState _pauseState;
+        private ISaveCoordinator _saveCoordinator;
+        private IGameSettingsService _gameSettings;
+        private DynamicViewsCanvas _dynamicViewsCanvas;
 
         private IDisposable _worldHandle;
         private bool _isOpen;
+        private bool _isOpeningSettings;
 
         // The room was free on the previous frame. Required as well as "free now" so a section that
         // releases the room on this very Escape does not hand the same press straight to the pause.
@@ -45,11 +61,17 @@ namespace Vesolovsky.Game.Views
         private void InjectPause(
             IWorldInteractionLock worldLock,
             [InjectOptional] ISkillGate skillGate,
-            [InjectOptional] IPauseState pauseState)
+            [InjectOptional] IPauseState pauseState,
+            [InjectOptional] ISaveCoordinator saveCoordinator,
+            [InjectOptional] IGameSettingsService gameSettings,
+            [InjectOptional] DynamicViewsCanvas dynamicViewsCanvas)
         {
             _worldLock = worldLock;
             _skillGate = skillGate;
             _pauseState = pauseState;
+            _saveCoordinator = saveCoordinator;
+            _gameSettings = gameSettings;
+            _dynamicViewsCanvas = dynamicViewsCanvas;
         }
 
         protected override void InitialViewSetup(IViewInitData viewInitData)
@@ -58,6 +80,23 @@ namespace Vesolovsky.Game.Views
 
             if (resumeButton != null)
                 resumeButton.Bind(Close);
+
+            settingsButton?.Bind(() => OpenSettings().Forget());
+            saveButton?.Bind(() => _saveCoordinator?.SaveNow().Forget());
+
+            if (_gameSettings != null)
+            {
+                _gameSettings.Applied += OnSettingsApplied;
+                RefreshSaveUi(_gameSettings.Current.AutoSave);
+            }
+            else
+            {
+                RefreshSaveUi(_saveCoordinator == null || _saveCoordinator.IsAutoSaveEnabled);
+            }
+
+            // GameplayScene currently has one persistent pause view, so it is also the natural
+            // scene-level place to start the configured gameplay music state.
+            AudioService.SetState(AudioStateKey.Music_Level);
         }
 
         private void Update()
@@ -70,6 +109,14 @@ namespace Vesolovsky.Game.Views
 
             if (keyboard.escapeKey.wasPressedThisFrame)
             {
+                // Settings and its rebinding popup own Escape while they are on top of Pause.
+                // In particular, canceling a rebind must not also close the pause menu behind it.
+                if (HasSettingsOverlay())
+                {
+                    _worldFreeLastFrame = worldFree;
+                    return;
+                }
+
                 if (_isOpen)
                     Close();
                 else if (worldFree && _worldFreeLastFrame)
@@ -98,6 +145,8 @@ namespace Vesolovsky.Game.Views
             if (_pauseState != null)
                 _pauseState.IsPaused = true;
 
+            AudioService.SetState(AudioStateKey.Music_Pause);
+
             Show(destroyCancellationToken).Forget();
         }
 
@@ -110,7 +159,59 @@ namespace Vesolovsky.Game.Views
             _isOpen = false;
             ReleaseRoom();
 
+            AudioService.SetState(AudioStateKey.Music_Level);
+
             Hide(destroyCancellationToken).Forget();
+        }
+
+        private async UniTask OpenSettings()
+        {
+            if (_isOpeningSettings || _dynamicViewsCanvas == null || HasSettingsOverlay())
+                return;
+
+            _isOpeningSettings = true;
+            try
+            {
+                await SceneViewsService.AddView(
+                    new SettingsViewDefinition(),
+                    _dynamicViewsCanvas.transform);
+            }
+            finally
+            {
+                _isOpeningSettings = false;
+            }
+        }
+
+        private bool HasSettingsOverlay()
+        {
+            if (_isOpeningSettings)
+                return true;
+
+            if (SceneViewsService == null)
+                return false;
+
+            foreach (IView view in SceneViewsService.LoadedViews)
+            {
+                if (view.IsShown && (view is SettingsView || view is ConfirmationPopupView))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private void OnSettingsApplied(GameSettingsData settings)
+        {
+            RefreshSaveUi(settings.AutoSave);
+        }
+
+        private void RefreshSaveUi(bool autoSaveEnabled)
+        {
+            autoSaveStatusText?.SetText(autoSaveEnabled
+                ? "Your progress is saved automatically."
+                : "Your progress is NOT saved automatically!");
+
+            if (saveButton != null)
+                saveButton.gameObject.SetActive(!autoSaveEnabled);
         }
 
         private void ReleaseRoom()
@@ -127,6 +228,9 @@ namespace Vesolovsky.Game.Views
 
         protected override void OnDestroy()
         {
+            if (_gameSettings != null)
+                _gameSettings.Applied -= OnSettingsApplied;
+
             // A menu torn down while it is up must not leave the room locked, the skills gated or
             // the clock stopped.
             if (_isOpen)

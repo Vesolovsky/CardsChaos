@@ -30,6 +30,7 @@ namespace Vesolovsky.Game.Views
         private readonly IInputActions _input;
 
         public event Action SkillsChanged;
+        public event Action BindingsChanged;
 
         public CardHand Hand => _hand;
 
@@ -50,6 +51,9 @@ namespace Vesolovsky.Game.Views
             _input = input;
 
             _upgrades.Changed += OnUpgradesChanged;
+
+            if (_input != null)
+                _input.BindingsChanged += OnBindingsChanged;
         }
 
         public void ToggleAlbum() => _panels?.ToggleAlbum();
@@ -76,7 +80,11 @@ namespace Vesolovsky.Game.Views
             InputActionReference reference = definition != null ? definition.ActivationAction : null;
             InputAction action = reference != null ? reference.action : null;
 
-            return action != null ? action.GetBindingDisplayString().ToUpperInvariant() : "?";
+            if (action == null)
+                return "?";
+
+            string display = action.GetBindingDisplayString().ToUpperInvariant();
+            return string.IsNullOrWhiteSpace(display) ? "-" : display;
         }
 
         public string GetActionKeyDisplay(string actionName) =>
@@ -88,11 +96,16 @@ namespace Vesolovsky.Game.Views
         {
             _upgrades.Changed -= OnUpgradesChanged;
 
+            if (_input != null)
+                _input.BindingsChanged -= OnBindingsChanged;
+
             base.Dispose();
         }
 
         // The upgrade service reports the definition that changed (or null for "assume all"); the
         // HUD only cares that something moved, so it re-reads every skill's owned state.
         private void OnUpgradesChanged(UpgradeDefinition _) => SkillsChanged?.Invoke();
+
+        private void OnBindingsChanged() => BindingsChanged?.Invoke();
     }
 }

@@ -3576,6 +3576,7 @@ GameObject:
   - component: {fileID: 52278804}
   - component: {fileID: 52278803}
   - component: {fileID: 52278802}
+  - component: {fileID: 52278805}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -3669,6 +3670,18 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &52278805
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 52278800}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbc372ff22676594ea060c5264b3bd5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &52727413
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5981,6 +5994,7 @@ Transform:
   - {fileID: 1681305047}
   - {fileID: 750725009}
   - {fileID: 1776015164}
+  - {fileID: 1826146554}
   m_Father: {fileID: 1887764933}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &90040292
@@ -111384,6 +111398,51 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1825705156}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1826146553
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1826146554}
+  - component: {fileID: 1826146555}
+  m_Layer: 0
+  m_Name: DynamicCanvasViewInstaller
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1826146554
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1826146553}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 89280494}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1826146555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1826146553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c24c06cb81c92e479a84e56ff01d242, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dynamicViewsCanvas: {fileID: 52278805}
 --- !u!1001 &1827293403
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -115233,6 +115292,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _scriptableObjectInstallers: []
   _monoInstallers:
+  - {fileID: 1826146555}
   - {fileID: 750725010}
   - {fileID: 1596444569}
   - {fileID: 1681305048}
@@ -130401,6 +130461,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5366332362833940623, guid: 04ed1dcc0fc0f6d45ae5371147eef21e,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6090816180938438008, guid: 04ed1dcc0fc0f6d45ae5371147eef21e,
         type: 3}

@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.Services;
+using Vesolovsky.Core.Services.Input;
 using Zenject;
 
 namespace CardsChaos.Cards
@@ -26,8 +27,8 @@ namespace CardsChaos.Cards
 
     /// <summary>
     /// Close-up view of the selected card: clicking a card in hand opens it, clicking the card
-    /// itself turns it over, clicking off it leaves, RMB and Escape also leave, the cursor tilts
-    /// it and the wheel swaps to the neighbouring card without stepping out.
+    /// itself turns it over, clicking off it leaves, RMB and Escape also leave, the Flip Card
+    /// action turns it over from the keyboard, and the wheel swaps to the neighbouring card.
     ///
     /// The left button doing two things by where it lands - flip on the card, close off it -
     /// matches the album's close-up, so a card reads the same however the player opened it.
@@ -53,6 +54,7 @@ namespace CardsChaos.Cards
         private readonly IWorldInteractionLock _worldLock;
         private readonly ICardInspectLight _light;
         private readonly CardInspectSettings _settings;
+        private readonly InputAction _flipCard;
 
         private Card _card;
         private bool _showingBack;
@@ -70,6 +72,7 @@ namespace CardsChaos.Cards
             ICameraService cameraService,
             IWorldInteractionLock worldLock,
             CardInspectSettings settings,
+            IInputActions input,
             [InjectOptional] ICardInspectLight light)
         {
             _hand = hand;
@@ -77,6 +80,7 @@ namespace CardsChaos.Cards
             _cameraService = cameraService;
             _worldLock = worldLock;
             _settings = settings;
+            _flipCard = input.Find(GameInputActions.FlipCard);
             _light = light;
         }
 
@@ -129,9 +133,13 @@ namespace CardsChaos.Cards
                 return;
             }
 
-            // Space turns the card over from the keyboard, wherever the cursor is.
-            if (keyboard.spaceKey.wasPressedThisFrame)
+            // The rebindable flip action turns the card over wherever the cursor is.
+            if (_flipCard != null && _flipCard.WasPressedThisFrame())
+            {
                 _showingBack = !_showingBack;
+                Drive(mouse);
+                return;
+            }
 
             // The left button turns the card over when it lands on the card, and leaves when it
             // lands anywhere else - the card is the thing you are looking at, so clicking off it

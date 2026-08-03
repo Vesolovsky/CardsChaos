@@ -1,5 +1,7 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Vesolovsky.Core.Services.Settings;
 using Zenject;
 
 namespace Vesolovsky.Core.Services
@@ -24,11 +26,12 @@ namespace Vesolovsky.Core.Services
     /// The pointer is needed for picking cards, so it is only taken for the length of the drag
     /// and put back exactly where it was let go of.
     /// </summary>
-    public class CameraLookController : IInitializable, ITickable
+    public class CameraLookController : IInitializable, ITickable, IDisposable
     {
         private readonly ICameraService _cameraService;
         private readonly IWorldInteractionLock _worldLock;
         private readonly CameraLookSettings _settings;
+        private readonly IGameSettingsService _gameSettings;
 
         private float _yaw;
         private float _pitch;
@@ -37,11 +40,27 @@ namespace Vesolovsky.Core.Services
 
         [Inject]
         public CameraLookController(
-            ICameraService cameraService, IWorldInteractionLock worldLock, CameraLookSettings settings)
+            ICameraService cameraService,
+            IWorldInteractionLock worldLock,
+            CameraLookSettings settings,
+            [InjectOptional] IGameSettingsService gameSettings = null)
         {
             _cameraService = cameraService;
             _worldLock = worldLock;
             _settings = settings;
+            _gameSettings = gameSettings;
+
+            if (_gameSettings == null)
+                return;
+
+            ApplySettings(_gameSettings.Current);
+            _gameSettings.Applied += ApplySettings;
+        }
+
+        public void Dispose()
+        {
+            if (_gameSettings != null)
+                _gameSettings.Applied -= ApplySettings;
         }
 
         public void Initialize()
@@ -97,6 +116,12 @@ namespace Vesolovsky.Core.Services
         private void Apply(Camera camera)
         {
             camera.transform.rotation = Quaternion.Euler(_pitch, _yaw, 0f);
+        }
+
+        private void ApplySettings(GameSettingsData settings)
+        {
+            _settings.Sensitivity = settings.MouseSensitivity;
+            _settings.Invert = settings.InvertMouseX;
         }
 
         private void BeginDrag(Mouse mouse)

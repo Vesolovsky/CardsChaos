@@ -1,5 +1,6 @@
 using UnityEngine;
 using Vesolovsky.Core.Analytics;
+using Vesolovsky.Core.Services.Settings;
 using Zenject;
 
 namespace Vesolovsky.Game
@@ -10,6 +11,10 @@ namespace Vesolovsky.Game
 
         public override void InstallBindings()
         {
+            Container.BindInterfacesAndSelfTo<GameSettingsService>()
+                .AsSingle()
+                .NonLazy();
+
             Container.BindInterfacesAndSelfTo<SceneTransition>()
                 .FromInstance(sceneTransition)
                 .AsSingle();

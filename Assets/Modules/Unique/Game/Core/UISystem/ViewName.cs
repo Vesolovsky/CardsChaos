@@ -9,5 +9,6 @@ namespace Vesolovsky.Game.UISystem
         Upgrades = 550470,
         GameplayHud = 300508,
         Pause = 444784,
+        Settings = 305290,
     }
 }

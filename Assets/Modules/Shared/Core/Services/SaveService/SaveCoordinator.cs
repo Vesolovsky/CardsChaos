@@ -1,6 +1,7 @@
 using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using Vesolovsky.Core.Services.Settings;
 using Zenject;
 
 namespace Vesolovsky.Core.Services.Save
@@ -10,7 +11,7 @@ namespace Vesolovsky.Core.Services.Save
     /// Core and does not need to reference the game-specific save model; bind the closed
     /// type (e.g. <c>SaveCoordinator&lt;GameSave&gt;</c>) in the game installer.
     /// </summary>
-    public class SaveCoordinator<T> : ISaveCoordinator, ITickable where T : IGameSave
+    public class SaveCoordinator<T> : ISaveCoordinator, ITickable, IDisposable where T : IGameSave
     {
         private const float MIN_AUTO_SAVE_INTERVAL_SECONDS = 1f;
         private const float DEFAULT_AUTO_SAVE_INTERVAL_SECONDS = 300f;
@@ -18,10 +19,11 @@ namespace Vesolovsky.Core.Services.Save
         public event Action Saved;
 
         private readonly ISaveService<T> _saveService;
+        private readonly IGameSettingsService _gameSettings;
 
         private float _autoSaveIntervalSeconds = DEFAULT_AUTO_SAVE_INTERVAL_SECONDS;
         private float _secondsSinceLastAutoSave;
-        private bool _isAutoSaveEnabled;
+        private bool _isAutoSaveEnabled = true;
         private bool _isSaving;
 
         public bool HasUnsavedChanges { get; private set; }
@@ -45,9 +47,24 @@ namespace Vesolovsky.Core.Services.Save
         }
 
         [Inject]
-        public SaveCoordinator(ISaveService<T> saveService)
+        public SaveCoordinator(
+            ISaveService<T> saveService,
+            [InjectOptional] IGameSettingsService gameSettings = null)
         {
             _saveService = saveService;
+            _gameSettings = gameSettings;
+
+            if (_gameSettings == null)
+                return;
+
+            ApplySettings(_gameSettings.Current);
+            _gameSettings.Applied += ApplySettings;
+        }
+
+        public void Dispose()
+        {
+            if (_gameSettings != null)
+                _gameSettings.Applied -= ApplySettings;
         }
 
         /// <summary>
@@ -111,6 +128,12 @@ namespace Vesolovsky.Core.Services.Save
             {
                 _isSaving = false;
             }
+        }
+
+        private void ApplySettings(GameSettingsData settings)
+        {
+            AutoSaveIntervalSeconds = settings.AutoSaveIntervalSeconds;
+            IsAutoSaveEnabled = settings.AutoSave;
         }
     }
 }

@@ -25,7 +25,7 @@ namespace Vesolovsky.Core.Services.Save
         event Action Saved;
 
         /// <summary>
-        /// Enables/disables the auto-save timer. Disabled by default: saving is on demand.
+        /// Enables/disables the auto-save timer. Enabled by default with a five-minute interval.
         /// </summary>
         bool IsAutoSaveEnabled { get; set; }
 

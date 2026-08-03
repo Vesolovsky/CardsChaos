@@ -21,6 +21,9 @@ namespace Vesolovsky.Game.Views
         /// </summary>
         event Action SkillsChanged;
 
+        /// <summary>Raised after an input rebind draft is applied to the live action asset.</summary>
+        event Action BindingsChanged;
+
         void ToggleAlbum();
 
         void ToggleUpgrades();
