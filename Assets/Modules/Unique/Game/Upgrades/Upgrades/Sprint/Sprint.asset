@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Sprint
   m_EditorClassIdentifier: 
   id: Sprint
-  displayName: Sprint
+  displayName: Born to run
   description: Grants you sprint ability
   icon: {fileID: 21300000, guid: e9c6c08f7e0995d44b34a383e023ec9a, type: 3}
   kind: 0

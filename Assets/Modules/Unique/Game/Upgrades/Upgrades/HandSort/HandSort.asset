@@ -26,10 +26,10 @@ MonoBehaviour:
   - cost: 2
     value: 0
     cooldown: 60
-  - cost: 3
+  - cost: 2
     value: 0
     cooldown: 45
-  - cost: 4
+  - cost: 3
     value: 0
     cooldown: 30
   - cost: 5
