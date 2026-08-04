@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ad3f315ce628146a58d2ab75be625ab9
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320404
+  packageName: Background Bokeh Effects VFX for URP
+  packageVersion: 1.0
+  assetPath: Assets/MM Background Bokeh Effects VFX URP/Shaders/EmmisiveBlinkingParticleUnlit.shader
+  uploadId: 759790

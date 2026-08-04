@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: c54c1f9f928234a5ea28d002dad7d3a8
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320404
+  packageName: Background Bokeh Effects VFX for URP
+  packageVersion: 1.0
+  assetPath: Assets/MM Background Bokeh Effects VFX URP/Materials/circle03_blink.mat
+  uploadId: 759790

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1dc9f347b20fd442d9f2c74b4ff698b1
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320404
+  packageName: Background Bokeh Effects VFX for URP
+  packageVersion: 1.0
+  assetPath: Assets/MM Background Bokeh Effects VFX URP/Materials/background_03.mat
+  uploadId: 759790

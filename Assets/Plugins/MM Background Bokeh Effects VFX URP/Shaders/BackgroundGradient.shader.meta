@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 4af6860973c6a4c3a8b66063ce78e3b8
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 320404
+  packageName: Background Bokeh Effects VFX for URP
+  packageVersion: 1.0
+  assetPath: Assets/MM Background Bokeh Effects VFX URP/Shaders/BackgroundGradient.shader
+  uploadId: 759790
