@@ -103,6 +103,15 @@ namespace CardsChaos.Cards
         /// </summary>
         public event System.Action PickUpRejected;
 
+        /// <summary>
+        /// Raised with the card just thrown out of the hand and back onto the floor. Fires only on
+        /// an actual throw, not on the many other ways a card leaves the hand (filed, inspected).
+        /// </summary>
+        public event System.Action<Card> Thrown;
+
+        /// <summary>Raised with a card just taken off the floor into the hand by a successful pickup.</summary>
+        public event System.Action<Card> PickedUp;
+
         public bool IsFull => _cards.Count >= slotCount;
 
         public bool HasRoom => _cards.Count < slotCount;
@@ -173,6 +182,7 @@ namespace CardsChaos.Cards
             Claim(card);
             Relayout();
             Changed?.Invoke();
+            PickedUp?.Invoke(card);
             return true;
         }
 
@@ -234,6 +244,7 @@ namespace CardsChaos.Cards
             if (index < 0)
                 return;
 
+            Card thrown = _cards[index];
             _selected = null;
             ThrowAt(index);
 
@@ -246,6 +257,7 @@ namespace CardsChaos.Cards
 
             Relayout();
             Changed?.Invoke();
+            Thrown?.Invoke(thrown);
         }
 
         /// <summary>

@@ -59,6 +59,13 @@ namespace Vesolovsky.Game.Services.Save
         public List<SkillCooldownState> SkillCooldowns { get; set; }
 
         /// <summary>
+        /// The player's running tally - cards thrown, distance walked, time played, and the like.
+        /// Null on a save written before stats existed, which the stats service reads as "start the
+        /// counters from zero".
+        /// </summary>
+        public PlayerStatsData PlayerStats { get; set; }
+
+        /// <summary>
         /// Deep copy for the off-thread write. Every collection is a fresh instance so the writer
         /// thread never shares one with gameplay code; the elements are safe to share because none
         /// of them (AlbumPlacement, the saved-card records) is mutated in place after it is created.
@@ -86,6 +93,7 @@ namespace Vesolovsky.Game.Services.Save
                 SkillCooldowns = SkillCooldowns == null
                     ? null
                     : new List<SkillCooldownState>(SkillCooldowns),
+                PlayerStats = PlayerStats?.Clone(),
             };
         }
 
@@ -130,6 +138,7 @@ namespace Vesolovsky.Game.Services.Save
                 // it is filled in the first time the room is captured for a save.
                 World = null,
                 SkillCooldowns = new List<SkillCooldownState>(),
+                PlayerStats = new PlayerStatsData(),
             };
         }
 
@@ -159,6 +168,9 @@ namespace Vesolovsky.Game.Services.Save
             // Back to the authored scene and no running cooldowns.
             CurrentSave.World = null;
             CurrentSave.SkillCooldowns?.Clear();
+
+            // A new game starts its tally over, the same as its wallet and album.
+            CurrentSave.PlayerStats = new PlayerStatsData();
         }
     }
 }

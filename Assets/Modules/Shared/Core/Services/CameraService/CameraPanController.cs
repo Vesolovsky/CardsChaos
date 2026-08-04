@@ -63,6 +63,22 @@ namespace Vesolovsky.Core.Services
         /// </summary>
         public bool SprintUnlocked { get; set; }
 
+        /// <summary>
+        /// Horizontal world-space distance the camera actually moved on the last <see cref="Tick"/> -
+        /// what the sweep travelled, so a step stopped short by a wall reports the shorter distance,
+        /// and a locked or idle frame reports zero. This is the mover's own account of the frame,
+        /// which a stat tracker can total without ever mistaking a load-time teleport (which sets the
+        /// position directly, not through here) for walking.
+        /// </summary>
+        public float LastMoveDistance { get; private set; }
+
+        /// <summary>
+        /// True on frames the sprint boost was in effect while the camera was being driven. Lets a
+        /// consumer split <see cref="LastMoveDistance"/> into walked and sprinted without knowing
+        /// anything about the input or the upgrade.
+        /// </summary>
+        public bool IsSprinting { get; private set; }
+
         [Inject]
         public CameraPanController(
             ICameraService cameraService,
@@ -78,6 +94,11 @@ namespace Vesolovsky.Core.Services
 
         public void Tick()
         {
+            // Reset up front so every early return below - locked, no keyboard, no camera - reports
+            // a still frame, and only a real sweep writes a non-zero distance.
+            LastMoveDistance = 0f;
+            IsSprinting = false;
+
             // Dropping the carried velocity matters: without it the camera would resume
             // drifting the moment control came back.
             if (_worldLock.IsLocked)
@@ -96,9 +117,8 @@ namespace Vesolovsky.Core.Services
 
             // Sprint scales the target speed while its action is held, so the ease still carries the
             // camera up to and down from the faster pace rather than snapping between the two.
-            float speed = _settings.Speed;
-            if (SprintUnlocked && _sprint != null && _sprint.IsPressed())
-                speed *= _settings.SprintMultiplier;
+            bool sprinting = SprintUnlocked && _sprint != null && _sprint.IsPressed();
+            float speed = sprinting ? _settings.Speed * _settings.SprintMultiplier : _settings.Speed;
 
             Vector3 target = ReadDirection(keyboard, pivot) * speed;
 
@@ -109,7 +129,18 @@ namespace Vesolovsky.Core.Services
                 : target;
 
             if (_velocity.sqrMagnitude > 0f)
+            {
+                Vector3 before = pivot.position;
                 pivot.position = Sweep(pivot.position, _velocity * Time.deltaTime);
+
+                // Measure what the sweep actually covered on the plane, not what was asked for: a
+                // step into a wall reports the short travel it managed, and the eye-height axis is
+                // dropped so a slide up a ramp is not counted as ground walked.
+                Vector3 moved = pivot.position - before;
+                moved.y = 0f;
+                LastMoveDistance = moved.magnitude;
+                IsSprinting = sprinting && LastMoveDistance > 0f;
+            }
         }
 
         /// <summary>

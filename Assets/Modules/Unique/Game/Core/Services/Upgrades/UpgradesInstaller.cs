@@ -4,6 +4,7 @@ using Vesolovsky.Game.Services.Pause;
 using Vesolovsky.Game.Services.Progress;
 using Vesolovsky.Game.Services.Save;
 using Vesolovsky.Game.Services.Skills;
+using Vesolovsky.Game.Services.Stats;
 using Vesolovsky.Game.Upgrades;
 using Zenject;
 
@@ -19,6 +20,10 @@ namespace Vesolovsky.Game.Services.Upgrades
     public class UpgradesInstaller : MonoInstaller
     {
         [SerializeField] private UpgradeCatalog catalog;
+
+        [Tooltip("Prints the running player-stat tally to the console for validation. " +
+                 "Leave off for release builds.")]
+        [SerializeField] private bool logPlayerStats;
 
         public override void InstallBindings()
         {
@@ -61,6 +66,14 @@ namespace Vesolovsky.Game.Services.Upgrades
             // Reads the room back out of the save on load and writes it in before every save.
             // NonLazy so its load-time apply runs even though nothing resolves it directly.
             Container.BindInterfacesAndSelfTo<WorldSaveService>().AsSingle().NonLazy();
+
+            // Internal progress tally - cards thrown, distance walked, time played, skills used.
+            // NonLazy so it starts its clock and subscribes to the hand, skills and album the moment
+            // the scene loads, rather than only when a stats screen first asks for the numbers.
+            Container.BindInterfacesAndSelfTo<PlayerStatsService>()
+                .AsSingle()
+                .WithArguments(logPlayerStats)
+                .NonLazy();
 
             // Passive-effect appliers. NonLazy so they subscribe to the upgrade service up front and
             // are ready for the startup push the bootstrap sends once the save is in.

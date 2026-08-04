@@ -108061,6 +108061,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   catalog: {fileID: 11400000, guid: 21d41a1f412a0394b8219df7dc739b6c, type: 2}
+  logPlayerStats: 1
 --- !u!4 &1776015164
 Transform:
   m_ObjectHideFlags: 0
