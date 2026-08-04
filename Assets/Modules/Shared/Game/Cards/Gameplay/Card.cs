@@ -69,6 +69,13 @@ namespace CardsChaos.Cards
 
         public bool IsInspected { get; private set; }
 
+        /// <summary>
+        /// The house of cards this card was placed into, if any. Set by <see cref="CardHouse"/> and
+        /// read by the hand on pickup, so lifting one card off a standing house brings the rest of
+        /// it down. Runtime-only - never serialized - and cleared once the house has come down.
+        /// </summary>
+        public CardHouse House { get; set; }
+
         public float FaceLuminance => faceLuminance;
 
         public Mesh OutlineMesh => _meshFilter != null ? _meshFilter.sharedMesh : null;
@@ -251,6 +258,44 @@ namespace CardsChaos.Cards
         {
             StopSettleWatch();
             EnterResting();
+        }
+
+        /// <summary>
+        /// Forces the card back to the plain resting state - no body, solid non-trigger collider,
+        /// not held or inspected, no leftover physics material - from whatever state it is in.
+        /// Used to rebuild a collapsed house of cards for testing; unlike <see cref="FreezeInPlace"/>
+        /// it also releases a held card and clears the slick material a collapse left behind.
+        /// </summary>
+        public void ResetToFrozen()
+        {
+            StopTweens();
+            StopSettleWatch();
+
+            if (_restingBodyRemoval != null)
+            {
+                StopCoroutine(_restingBodyRemoval);
+                _restingBodyRemoval = null;
+            }
+
+            IsHeld = false;
+            IsInspected = false;
+            ApplyMaterialOverrides();
+
+            if (_collider != null)
+            {
+                _collider.isTrigger = false;
+                _collider.sharedMaterial = null;
+            }
+
+            if (_body != null)
+            {
+                if (Application.isPlaying)
+                    Destroy(_body);
+                else
+                    DestroyImmediate(_body);
+
+                _body = null;
+            }
         }
 
         /// <summary>

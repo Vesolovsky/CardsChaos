@@ -25,6 +25,10 @@ namespace CardsChaos.Cards.CardEditor
             SetClickToPlace(false);
         }
 
+        // The house section reports the live selection count, which the window would otherwise not
+        // notice changing.
+        private void OnSelectionChange() => Repaint();
+
         private void OnGUI()
         {
             EditorGUILayout.Space();
@@ -33,6 +37,8 @@ namespace CardsChaos.Cards.CardEditor
             DrawSettings();
             EditorGUILayout.Space();
             DrawClickToPlace();
+            EditorGUILayout.Space();
+            DrawHouse();
             EditorGUILayout.Space();
             DrawHelp();
         }
@@ -113,6 +119,36 @@ namespace CardsChaos.Cards.CardEditor
                     "Normal Ctrl+Click selection is off until you turn this back off.",
                     MessageType.None);
             }
+        }
+
+        private static void DrawHouse()
+        {
+            EditorGUILayout.LabelField("Card House", EditorStyles.boldLabel);
+
+            CardHouseBuilder.LeanDegrees = EditorGUILayout.Slider(
+                new GUIContent("Lean", "How far each tent card leans off vertical, in degrees."),
+                CardHouseBuilder.LeanDegrees, 5f, 40f);
+
+            int selected = CardHouseBuilder.SelectedCardCount();
+            bool valid = CardHouseBuilder.TryLevelsFor(selected, out int levels);
+
+            using (new EditorGUI.DisabledScope(!valid))
+            {
+                if (GUILayout.Button(valid
+                        ? $"Build {levels}-level house from {selected} cards"
+                        : "Build house from selection"))
+                {
+                    CardHouseBuilder.BuildFromSelection();
+                }
+            }
+
+            EditorGUILayout.HelpBox(
+                valid
+                    ? $"{selected} cards selected - arranges into a {levels}-level house on the floor " +
+                      "beneath them. Pull any card in play and the rest come down."
+                    : $"Select cards, then build. A house needs one of: " +
+                      $"{CardHouseBuilder.ValidCountsString(6)} cards (selected now: {selected}).",
+                valid ? MessageType.Info : MessageType.None);
         }
 
         private static void DrawHelp()

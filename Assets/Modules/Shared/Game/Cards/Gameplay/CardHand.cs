@@ -158,6 +158,11 @@ namespace CardsChaos.Cards
                 return false;
             }
 
+            // Lifting a card out of a standing house of cards brings the rest of it down. Fired
+            // before the card is reparented into the hand, while it is still sitting in the house
+            // at its authored pose so the house can tell it is being taken from a whole structure.
+            card.House?.OnMemberPickedUp(card);
+
             card.AttachTo(anchor);
             _cards.Insert(0, card);
 
