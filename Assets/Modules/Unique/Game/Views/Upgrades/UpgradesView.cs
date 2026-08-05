@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using PrimeTween;
 using UniRx;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -34,6 +35,14 @@ namespace Vesolovsky.Game.Views
         [SerializeField] private UpgradeSkillItem skillItemPrefab;
         [SerializeField] private UpgradeTaskItem taskItemPrefab;
 
+        [Header("Not-enough-points flinch")]
+        [Tooltip("The same small wrong-slot shake the album gives a card put down where it does " +
+                 "not belong. Played on the skill-point count when an unaffordable upgrade is clicked.")]
+        [SerializeField] private Vector3 insufficientShakeStrength = new Vector3(5f, 5f, 0f);
+
+        [SerializeField] private float insufficientShakeDuration = 0.18f;
+        [SerializeField] private float insufficientShakeFrequency = 22f;
+
         private readonly List<UpgradeSkillItem> _skillItems = new List<UpgradeSkillItem>();
         private readonly List<UpgradeTaskItem> _taskItems = new List<UpgradeTaskItem>();
 
@@ -41,6 +50,10 @@ namespace Vesolovsky.Game.Views
         private IGameplayPanels _panels;
         private IInputActions _input;
         private InputAction _toggleAction;
+
+        private Tween _skillPointsShake;
+        private Vector3 _skillPointsShakeRest;
+        private bool _skillPointsShakeRestCaptured;
 
         [Inject]
         private void InjectContainer(
@@ -82,7 +95,38 @@ namespace Vesolovsky.Game.Views
             if (_panels != null)
                 _panels.UpgradesToggleRequested -= Toggle;
 
+            if (_skillPointsShake.isAlive)
+                _skillPointsShake.Stop();
+
             base.OnDestroy();
+        }
+
+        /// <summary>
+        /// Flinches the skill-point count - the album's wrong-slot shake - to say a clicked upgrade
+        /// costs more than the player has. The rest is captured while still and restored before a
+        /// re-triggered shake, so a run of denied clicks never walks the label off its spot.
+        /// </summary>
+        private void PlayInsufficientPointsShake()
+        {
+            if (skillPointsText == null)
+                return;
+
+            Transform target = skillPointsText.transform;
+
+            if (!_skillPointsShakeRestCaptured)
+            {
+                _skillPointsShakeRest = target.localPosition;
+                _skillPointsShakeRestCaptured = true;
+            }
+
+            if (_skillPointsShake.isAlive)
+            {
+                _skillPointsShake.Stop();
+                target.localPosition = _skillPointsShakeRest;
+            }
+
+            _skillPointsShake = Tween.ShakeLocalPosition(
+                target, insufficientShakeStrength, insufficientShakeDuration, insufficientShakeFrequency);
         }
 
         private void Update()
@@ -131,7 +175,7 @@ namespace Vesolovsky.Game.Views
                 UpgradeSkillItem item = _container.InstantiatePrefabForComponent<UpgradeSkillItem>(
                     skillItemPrefab, contentLayoutGroup);
 
-                item.Bind(ViewModel, permanent, isPermanent: true);
+                item.Bind(ViewModel, permanent, isPermanent: true, PlayInsufficientPointsShake);
                 _skillItems.Add(item);
             }
 
@@ -143,7 +187,7 @@ namespace Vesolovsky.Game.Views
                 UpgradeSkillItem item = _container.InstantiatePrefabForComponent<UpgradeSkillItem>(
                     skillItemPrefab, contentLayoutGroup);
 
-                item.Bind(ViewModel, skill, isPermanent: false);
+                item.Bind(ViewModel, skill, isPermanent: false, PlayInsufficientPointsShake);
                 _skillItems.Add(item);
             }
 

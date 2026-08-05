@@ -110,6 +110,9 @@ namespace Vesolovsky.Game.Views
         public bool IsMaxed(LeveledUpgradeDefinition definition) =>
             definition != null && _upgrades.GetLevel(definition) >= definition.MaxLevel;
 
+        public bool CanAfford(LeveledUpgradeDefinition definition) =>
+            definition != null && !IsMaxed(definition) && _skillPoints.Value >= GetNextCost(definition);
+
         public bool TryLevelUp(LeveledUpgradeDefinition definition) => _upgrades.TryLevelUp(definition);
 
         public bool IsUnlocked(OneTimeUpgradeDefinition definition) => _upgrades.IsUnlocked(definition);

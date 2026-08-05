@@ -2,6 +2,7 @@ using CardsChaos.Cards;
 using UnityEngine;
 using Vesolovsky.Core.Services.Input;
 using Vesolovsky.Core.UISystem;
+using Vesolovsky.Game.Upgrades;
 using Vesolovsky.Game.Views.GameplayHud;
 
 namespace Vesolovsky.Game.Views
@@ -13,7 +14,9 @@ namespace Vesolovsky.Game.Views
     ///
     /// Each button is its own little component (see the Hud* behaviours); the view's job is only to
     /// hand each one what it needs and to translate the hand's comings and goings into the counter's
-    /// kick, its flinch, and the one-time throw hint.
+    /// kick, its flinch, and the hints it raises on the shared <see cref="HudHint"/> queue - camera
+    /// rotation at the start, throwing on the first pickup, the wheel once the hand holds more than
+    /// one, and each skill as it becomes ready.
     /// </summary>
     public class GameplayHudView : View<IGameplayHudViewModel>
     {
@@ -27,18 +30,27 @@ namespace Vesolovsky.Game.Views
         [Header("Hand switch")]
         [SerializeField] private HudHandSwitchButton handSwitchButton;
 
-        [Header("Throw hint")]
-        [SerializeField] private HudThrowHint throwHint;
-
-        [Header("Rotate-camera hint")]
-        [SerializeField] private HudRotateCameraHint rotateCameraHint;
+        [Header("Hints")]
+        [SerializeField] private HudHint hint;
 
         [Header("Skills")]
         [SerializeField] private HudSkillButton[] skillButtons;
 
+        // The skills that can announce themselves ready, and the hint each raises. A skill's ready
+        // state is polled; each time it turns ready - unlocked, or a cooldown just ended - its hint
+        // is raised. The state a skill loads in is seeded without a hint, so an already-ready skill
+        // does not announce itself the instant the scene opens.
+        private static readonly (SkillId Skill, HintId Hint)[] SkillHints =
+        {
+            (SkillId.CardMagnet, HintId.CardMagnetReady),
+            (SkillId.SmartAlbumOpen, HintId.SmartAlbumOpenReady),
+            (SkillId.HandSort, HintId.HandSortReady),
+        };
+
+        private readonly bool[] _skillReady = new bool[SkillHints.Length];
+
         private int _shownCount = -1;
         private int _shownMax = -1;
-        private bool _throwHintPlayed;
         private bool _wired;
 
         protected override void InitialViewSetup(IViewInitData viewInitData)
@@ -58,12 +70,20 @@ namespace Vesolovsky.Game.Views
                     ViewModel.Hand, ViewModel.ToggleHandLayout,
                     ViewModel.GetActionKeyDisplay(GameInputActions.ToggleHand));
 
-            if (throwHint != null)
-                throwHint.Initialize(ViewModel.GetActionKeyDisplay(GameInputActions.Throw));
+            if (hint != null)
+            {
+                hint.Initialize(ViewModel.GetActionKeyDisplay);
 
-            // Its own 3-second wait starts here, at the top of the session.
-            if (rotateCameraHint != null)
-                rotateCameraHint.Play();
+                // Honour the "Show hints" setting before anything is raised, so a player who has it
+                // off never sees even the first nudge.
+                hint.SetEnabled(ViewModel.HintsEnabled);
+
+                // First nudge of the session: how to turn the camera. Its own start delay (authored
+                // on the hint) lets the scene settle before it drops in, so this only queues it.
+                hint.Show(HintId.RotateCamera);
+            }
+
+            SeedSkillReady();
 
             if (skillButtons != null)
             {
@@ -85,16 +105,26 @@ namespace Vesolovsky.Game.Views
 
             ViewModel.SkillsChanged += OnSkillsChanged;
             ViewModel.BindingsChanged += RefreshBindings;
+            ViewModel.HintsEnabledChanged += OnHintsEnabledChanged;
 
             _wired = true;
         }
 
+        private void OnHintsEnabledChanged() => hint?.SetEnabled(ViewModel.HintsEnabled);
+
         private void Update()
         {
+            if (!_wired)
+                return;
+
             // The max is the only count with no event behind it - the Extra Card Slot upgrade just
             // sets it - so it is polled. It moves seldom, and the check is a single int compare.
-            if (_wired && ViewModel.Hand != null && ViewModel.Hand.SlotCount != _shownMax)
+            if (ViewModel.Hand != null && ViewModel.Hand.SlotCount != _shownMax)
                 RefreshCounts(punch: false);
+
+            // Skill readiness has no event either - a cooldown simply runs out - so the transition
+            // to ready is watched here and turned into the skill's "ready" hint.
+            PollSkillReady();
         }
 
         private void OnHandChanged()
@@ -112,12 +142,15 @@ namespace Vesolovsky.Game.Views
 
             RefreshCounts(punch: countMoved);
 
-            // The very first card off the floor earns the throw hint, once for the scene's life.
-            if (gained && !_throwHintPlayed)
-            {
-                _throwHintPlayed = true;
-                throwHint?.Play();
-            }
+            // The very first card off the floor earns the throw hint. The presenter only shows it
+            // once, so raising it on every gain is harmless.
+            if (gained)
+                hint?.Show(HintId.ThrowCard);
+
+            // The first time there is more than one card to choose between, teach the wheel. Same
+            // deal - the presenter shows it once, so raising it whenever the hand is deep is fine.
+            if (count > 1)
+                hint?.Show(HintId.CycleCards);
         }
 
         private void OnPickUpRejected() => handCounter?.PlayShake();
@@ -134,6 +167,36 @@ namespace Vesolovsky.Game.Views
             }
         }
 
+        /// <summary>
+        /// Records each skill's ready state as the scene loads, so a skill that is already ready
+        /// then does not raise its hint on the first frame - only a fresh turn to ready does.
+        /// </summary>
+        private void SeedSkillReady()
+        {
+            for (int i = 0; i < SkillHints.Length; i++)
+                _skillReady[i] = ViewModel.IsSkillReady(SkillHints[i].Skill);
+        }
+
+        /// <summary>
+        /// Raises a skill's "ready" hint on the frame it turns ready - whether that is its unlock or
+        /// a cooldown ending. The hint is a recurring one, so it plays each time round.
+        /// </summary>
+        private void PollSkillReady()
+        {
+            if (hint == null)
+                return;
+
+            for (int i = 0; i < SkillHints.Length; i++)
+            {
+                bool ready = ViewModel.IsSkillReady(SkillHints[i].Skill);
+
+                if (ready && !_skillReady[i])
+                    hint.Show(SkillHints[i].Hint);
+
+                _skillReady[i] = ready;
+            }
+        }
+
         private void RefreshBindings()
         {
             albumButton?.SetKeyDisplay(
@@ -142,8 +205,6 @@ namespace Vesolovsky.Game.Views
                 ViewModel.GetActionKeyDisplay(GameInputActions.ToggleUpgrades));
             handSwitchButton?.SetKeyDisplay(
                 ViewModel.GetActionKeyDisplay(GameInputActions.ToggleHand));
-            throwHint?.SetKeyDisplay(
-                ViewModel.GetActionKeyDisplay(GameInputActions.Throw));
 
             if (skillButtons == null)
                 return;
@@ -179,6 +240,7 @@ namespace Vesolovsky.Game.Views
             {
                 ViewModel.SkillsChanged -= OnSkillsChanged;
                 ViewModel.BindingsChanged -= RefreshBindings;
+                ViewModel.HintsEnabledChanged -= OnHintsEnabledChanged;
             }
 
             base.OnDestroy();

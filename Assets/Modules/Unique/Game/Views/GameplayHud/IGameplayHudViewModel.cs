@@ -24,6 +24,12 @@ namespace Vesolovsky.Game.Views
         /// <summary>Raised after an input rebind draft is applied to the live action asset.</summary>
         event Action BindingsChanged;
 
+        /// <summary>Whether the "Show hints" setting is on. Defaults to true when there is no settings service.</summary>
+        bool HintsEnabled { get; }
+
+        /// <summary>Raised after settings are applied, so the HUD can re-read <see cref="HintsEnabled"/>.</summary>
+        event Action HintsEnabledChanged;
+
         void ToggleAlbum();
 
         void ToggleUpgrades();

@@ -51,6 +51,8 @@ namespace Vesolovsky.Game.Views
         [SerializeField] private VText invertMouseXValueText;
         [SerializeField] private Toggle autoSaveToggle;
         [SerializeField] private VText autoSaveValueText;
+        [SerializeField] private Toggle showHintsToggle;
+        [SerializeField] private VText showHintsValueText;
         [SerializeField] private VButton generalResetButton;
 
         [Header("Input")]
@@ -124,6 +126,7 @@ namespace Vesolovsky.Game.Views
 
             invertMouseXToggle?.onValueChanged.AddListener(OnInvertMouseXChanged);
             autoSaveToggle?.onValueChanged.AddListener(OnAutoSaveChanged);
+            showHintsToggle?.onValueChanged.AddListener(OnShowHintsChanged);
 
             generalResetButton?.Bind(OnResetGeneral);
 
@@ -229,6 +232,12 @@ namespace Vesolovsky.Game.Views
             SetToggleText(autoSaveValueText, value);
         }
 
+        private void OnShowHintsChanged(bool value)
+        {
+            ViewModel.Draft.ShowHints = value;
+            SetToggleText(showHintsValueText, value);
+        }
+
         private void OnResetGeneral()
         {
             ViewModel.ResetGeneral();
@@ -242,10 +251,12 @@ namespace Vesolovsky.Game.Views
             mouseSensitivitySlider?.SetValueWithoutNotify(draft.MouseSensitivity);
             invertMouseXToggle?.SetIsOnWithoutNotify(draft.InvertMouseX);
             autoSaveToggle?.SetIsOnWithoutNotify(draft.AutoSave);
+            showHintsToggle?.SetIsOnWithoutNotify(draft.ShowHints);
 
             RefreshSensitivityText();
             SetToggleText(invertMouseXValueText, draft.InvertMouseX);
             SetToggleText(autoSaveValueText, draft.AutoSave);
+            SetToggleText(showHintsValueText, draft.ShowHints);
         }
 
         private void RefreshSensitivityText()
@@ -896,6 +907,7 @@ namespace Vesolovsky.Game.Views
                 mouseSensitivitySlider?.onValueChanged.RemoveListener(OnMouseSensitivityChanged);
                 invertMouseXToggle?.onValueChanged.RemoveListener(OnInvertMouseXChanged);
                 autoSaveToggle?.onValueChanged.RemoveListener(OnAutoSaveChanged);
+                showHintsToggle?.onValueChanged.RemoveListener(OnShowHintsChanged);
                 qualityDropdown?.onValueChanged.RemoveListener(OnQualityChanged);
                 displayModeDropdown?.onValueChanged.RemoveListener(OnDisplayModeChanged);
                 resolutionDropdown?.onValueChanged.RemoveListener(OnResolutionChanged);

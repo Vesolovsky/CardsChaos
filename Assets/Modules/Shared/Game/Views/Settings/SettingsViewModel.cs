@@ -34,6 +34,7 @@ namespace Vesolovsky.Game.Views
             Draft.InvertMouseX = defaults.InvertMouseX;
             Draft.AutoSave = defaults.AutoSave;
             Draft.AutoSaveIntervalSeconds = defaults.AutoSaveIntervalSeconds;
+            Draft.ShowHints = defaults.ShowHints;
         }
 
         public void ResetVideo()

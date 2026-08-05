@@ -10,6 +10,7 @@ using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
 using Vesolovsky.Game.Services.Pause;
 using Vesolovsky.Game.Services.Skills;
+using Vesolovsky.Game.Services.Stats;
 using Zenject;
 
 namespace Vesolovsky.Game.Views
@@ -42,6 +43,10 @@ namespace Vesolovsky.Game.Views
         [Tooltip("The sentence under the pause-menu buttons describing the applied save mode.")]
         [SerializeField] private VText autoSaveStatusText;
 
+        [Tooltip("Reads \"Collection progress: X / Y\" - cards correctly filed over the whole deck. " +
+                 "Filled in each time the menu opens from the saved collection snapshot.")]
+        [SerializeField] private VText collectionProgressText;
+
         [Tooltip("Saves, then (future) returns to the main menu scene.")]
         [SerializeField] private VButton mainMenuButton;
 
@@ -54,6 +59,7 @@ namespace Vesolovsky.Game.Views
         private ISaveCoordinator _saveCoordinator;
         private IGameSettingsService _gameSettings;
         private DynamicViewsCanvas _dynamicViewsCanvas;
+        private IPlayerStats _playerStats;
 
         private IDisposable _worldHandle;
         private bool _isOpen;
@@ -71,7 +77,8 @@ namespace Vesolovsky.Game.Views
             [InjectOptional] IPauseState pauseState,
             [InjectOptional] ISaveCoordinator saveCoordinator,
             [InjectOptional] IGameSettingsService gameSettings,
-            [InjectOptional] DynamicViewsCanvas dynamicViewsCanvas)
+            [InjectOptional] DynamicViewsCanvas dynamicViewsCanvas,
+            [InjectOptional] IPlayerStats playerStats)
         {
             _worldLock = worldLock;
             _skillGate = skillGate;
@@ -79,6 +86,7 @@ namespace Vesolovsky.Game.Views
             _saveCoordinator = saveCoordinator;
             _gameSettings = gameSettings;
             _dynamicViewsCanvas = dynamicViewsCanvas;
+            _playerStats = playerStats;
         }
 
         protected override void InitialViewSetup(IViewInitData viewInitData)
@@ -154,6 +162,10 @@ namespace Vesolovsky.Game.Views
             if (_pauseState != null)
                 _pauseState.IsPaused = true;
 
+            // The collection snapshot is kept in step with the album while the room is loaded, so
+            // by the time the menu can come up it is current; reading it on open is enough.
+            RefreshCollectionProgress();
+
             AudioService.SetState(AudioStateKey.Music_Pause);
 
             Show(destroyCancellationToken).Forget();
@@ -171,6 +183,15 @@ namespace Vesolovsky.Game.Views
             AudioService.SetState(AudioStateKey.Music_Level);
 
             Hide(destroyCancellationToken).Forget();
+        }
+
+        private void RefreshCollectionProgress()
+        {
+            if (collectionProgressText == null || _playerStats == null)
+                return;
+
+            collectionProgressText.SetText(
+                $"Collection progress: {_playerStats.CorrectlyPlacedCards} / {_playerStats.TotalCards}");
         }
 
         private void QuitGame()

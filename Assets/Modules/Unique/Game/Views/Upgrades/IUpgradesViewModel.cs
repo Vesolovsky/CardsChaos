@@ -40,6 +40,9 @@ namespace Vesolovsky.Game.Views
 
         bool IsMaxed(LeveledUpgradeDefinition definition);
 
+        /// <summary>Whether the current balance covers the definition's next level - false when maxed.</summary>
+        bool CanAfford(LeveledUpgradeDefinition definition);
+
         /// <summary>Buys the next level; returns whether it happened.</summary>
         bool TryLevelUp(LeveledUpgradeDefinition definition);
 

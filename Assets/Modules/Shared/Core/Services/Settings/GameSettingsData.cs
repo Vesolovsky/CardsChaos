@@ -19,6 +19,7 @@ namespace Vesolovsky.Core.Services.Settings
         public bool InvertMouseX;
         public bool AutoSave;
         public float AutoSaveIntervalSeconds;
+        public bool ShowHints;
 
         public int QualityLevel;
         public FullScreenMode FullScreenMode;
@@ -45,6 +46,7 @@ namespace Vesolovsky.Core.Services.Settings
                 InvertMouseX = false,
                 AutoSave = true,
                 AutoSaveIntervalSeconds = DEFAULT_AUTO_SAVE_INTERVAL_SECONDS,
+                ShowHints = true,
 
                 QualityLevel = Mathf.Max(0, QualitySettings.names.Length - 1),
                 FullScreenMode = UnityEngine.FullScreenMode.FullScreenWindow,
@@ -73,6 +75,7 @@ namespace Vesolovsky.Core.Services.Settings
                 && InvertMouseX == other.InvertMouseX
                 && AutoSave == other.AutoSave
                 && Mathf.Approximately(AutoSaveIntervalSeconds, other.AutoSaveIntervalSeconds)
+                && ShowHints == other.ShowHints
                 && QualityLevel == other.QualityLevel
                 && FullScreenMode == other.FullScreenMode
                 && ResolutionWidth == other.ResolutionWidth
@@ -93,6 +96,7 @@ namespace Vesolovsky.Core.Services.Settings
                 InvertMouseX = InvertMouseX,
                 AutoSave = AutoSave,
                 AutoSaveIntervalSeconds = AutoSaveIntervalSeconds,
+                ShowHints = ShowHints,
 
                 QualityLevel = QualityLevel,
                 FullScreenMode = FullScreenMode,

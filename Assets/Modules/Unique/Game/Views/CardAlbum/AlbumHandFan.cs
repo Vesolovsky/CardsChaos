@@ -23,7 +23,7 @@ namespace Vesolovsky.Game.Views.Album
     /// belongs to the hand, and anything done only here would be undone by the next refresh.
     /// </summary>
     [AddComponentMenu("CardsChaos/Album/Hand Pile")]
-    public class AlbumHandFan : MonoBehaviour, IDropHandler, IScrollHandler
+    public class AlbumHandFan : MonoBehaviour, IDropHandler
     {
         [Tooltip("What the cards are parented to. The fan is centred on this rect, so it stays " +
                  "put as cards come and go rather than growing off to one side.")]
@@ -59,9 +59,6 @@ namespace Vesolovsky.Game.Views.Album
         [SerializeField] private float travelArc = 60f;
 
         [SerializeField, SearchableEnum] private Ease travelEase = Ease.InOutQuad;
-
-        // Matches the room's table, so the wheel has the same dead spot everywhere.
-        private const float ScrollDeadzone = 0.01f;
 
         private readonly List<AlbumHandCard> _cards = new List<AlbumHandCard>();
 
@@ -110,29 +107,6 @@ namespace Vesolovsky.Game.Views.Album
         /// pile's own rect, transparent if need be.
         /// </summary>
         public void OnDrop(PointerEventData eventData) => _drag.TryDropOnPile();
-
-        /// <summary>
-        /// One notch of the wheel carries the card at one end of the fan round to the other.
-        ///
-        /// Read the way a stack of paper is thumbed through, and the same way round as the room's
-        /// table: pushing the wheel away sends the leftmost card to the far right. Cards are
-        /// reached this way rather than by hovering, because a hand of cards is read by fanning
-        /// it, not by pointing at it.
-        ///
-        /// Fires from anywhere over the hand, cards included - they handle no scroll of their
-        /// own, so the event walks up to here.
-        /// </summary>
-        public void OnScroll(PointerEventData eventData)
-        {
-            float scroll = eventData.scrollDelta.y;
-
-            if (_hand == null || Mathf.Abs(scroll) < ScrollDeadzone)
-                return;
-
-            // Turns the real hand, not this copy of it. The refresh that follows is what
-            // rearranges the fan.
-            _hand.Cycle(scroll > 0f ? 1 : -1);
-        }
 
         /// <summary>
         /// Brings the pile back in line with the hand.

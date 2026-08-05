@@ -11,9 +11,11 @@ namespace CardsChaos.Cards
     /// picks a card up off the floor or opens the one in hand, Throw discards the selected card,
     /// Toggle Hand spreads the hand out and the wheel walks through it.
     ///
-    /// A card in hand can be chosen two ways - pointed at, or reached with the wheel - and the
+    /// A fanned-out card can be chosen two ways - pointed at, or reached with the wheel - and the
     /// choice sticks either way, so the cursor is free to wander off without the hand forgetting
-    /// what was picked.
+    /// what was picked. A pile is different: its top card is always the one in play, so the cursor
+    /// cannot pick a card out of it at all - only the wheel, turning the stack over, can. Either
+    /// way clicking a held card opens the close-up on whatever the selection is.
     /// </summary>
     public class CardInputController : ITickable
     {
@@ -148,10 +150,11 @@ namespace CardsChaos.Cards
                 _outline.Clear();
             }
 
-            // Pointing at a card in hand claims the selection. Pointing away deliberately does
+            // Pointing at a fanned-out card claims the selection. Pointing away deliberately does
             // not give it back, so a card reached with the wheel survives the cursor drifting off
-            // it on the way to pressing F.
-            if (card != null && card.IsHeld)
+            // it on the way to pressing F. In the pile the cursor has no say at all - the top card
+            // is always the selected one, and only the wheel changes which card that is.
+            if (card != null && card.IsHeld && _hand.Layout == CardHandLayout.Fan)
                 _hand.Select(card);
         }
     }

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 using Vesolovsky.Core.UISystem.UIComponents;
@@ -24,6 +26,10 @@ namespace Vesolovsky.Game.Views.Upgrades
         // The dimmed alpha the buy label drops to once the upgrade is maxed - 64 of 255.
         private const float DimLabelAlpha = 64f / 255f;
 
+        // The alpha the buy label drops to while the upgrade is affordable-but-not-yet - half, so
+        // the button reads as out of reach without being switched fully off.
+        private const float UnaffordableLabelAlpha = 0.5f;
+
         [Header("Info")]
         [SerializeField] private Image icon;
         [SerializeField] private VText typeLabel;
@@ -48,11 +54,14 @@ namespace Vesolovsky.Game.Views.Upgrades
         private IUpgradesViewModel _viewModel;
         private LeveledUpgradeDefinition _definition;
         private float _defaultLabelAlpha = 1f;
+        private Action _onInsufficientPoints;
 
-        public void Bind(IUpgradesViewModel viewModel, LeveledUpgradeDefinition definition, bool isPermanent)
+        public void Bind(IUpgradesViewModel viewModel, LeveledUpgradeDefinition definition,
+            bool isPermanent, Action onInsufficientPoints)
         {
             _viewModel = viewModel;
             _definition = definition;
+            _onInsufficientPoints = onInsufficientPoints;
 
             ApplyIcon(icon, definition.Icon);
 
@@ -72,6 +81,12 @@ namespace Vesolovsky.Game.Views.Upgrades
 
             if (upgradeButton != null)
                 upgradeButton.Bind(OnUpgradeClicked);
+
+            // Re-checks affordability whenever the balance moves - buying one upgrade can put
+            // another out of reach, and its button has to dim without the screen being reopened.
+            _viewModel.SkillPoints
+                .Subscribe(_ => RefreshButtonState())
+                .AddTo(this);
 
             Refresh(animate: false);
         }
@@ -102,14 +117,45 @@ namespace Vesolovsky.Game.Views.Upgrades
             if (costText != null)
                 costText.SetText(maxed ? CompletedLabel : $"Cost: {_viewModel.GetNextCost(_definition)} skill points");
 
+            RefreshButtonState();
+        }
+
+        /// <summary>
+        /// Draws the buy button for the balance right now: inert once the upgrade is maxed, dimmed
+        /// to half while it cannot yet be afforded - though still clickable, so the click can flinch
+        /// the header - and full when it can be bought.
+        /// </summary>
+        private void RefreshButtonState()
+        {
+            if (_viewModel == null || _definition == null)
+                return;
+
+            bool maxed = _viewModel.IsMaxed(_definition);
+            bool affordable = _viewModel.CanAfford(_definition);
+
             if (upgradeButton != null)
                 upgradeButton.interactable = !maxed;
 
-            SetLabelAlpha(maxed ? DimLabelAlpha : _defaultLabelAlpha);
+            float alpha = maxed
+                ? DimLabelAlpha
+                : (affordable ? _defaultLabelAlpha : UnaffordableLabelAlpha);
+
+            SetLabelAlpha(alpha);
         }
 
         private void OnUpgradeClicked()
         {
+            if (_viewModel == null || _definition == null || _viewModel.IsMaxed(_definition))
+                return;
+
+            // Clicking while short of points buys nothing; it flinches the header's count instead,
+            // so the shortfall is felt rather than silently ignored.
+            if (!_viewModel.CanAfford(_definition))
+            {
+                _onInsufficientPoints?.Invoke();
+                return;
+            }
+
             if (_viewModel.TryLevelUp(_definition))
                 Refresh(animate: true);
         }

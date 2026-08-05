@@ -25,6 +25,5 @@ namespace Vesolovsky.Game.Upgrades
     public enum OneTimeUpgradeKind
     {
         Sprint,
-        AlphabeticalSets,
     }
 }

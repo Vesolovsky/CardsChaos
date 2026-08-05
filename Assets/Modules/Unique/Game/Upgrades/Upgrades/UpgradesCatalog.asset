@@ -20,5 +20,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ce11e6571cda2ce41be11428160e0eb5, type: 2}
   - {fileID: 11400000, guid: 7ab877493ba263147ae5fa10be58339e, type: 2}
   oneTimes:
-  - {fileID: 11400000, guid: 630e0fbadec93534cb67dc439795d32c, type: 2}
   - {fileID: 11400000, guid: 47e4bac0e46e6d64694ff21ae548add6, type: 2}

@@ -493,6 +493,7 @@ MonoBehaviour:
   icon: {fileID: 5225505301314937147}
   taskItemsGroup: {fileID: 2185531574210660028}
   skillItemsGroup: {fileID: 8323570919711547357}
+  unlockTitle: {fileID: 6498803401745664741}
   unlockTaskDescription: {fileID: 5432779787262794734}
   remainingText: {fileID: 8353571445125766509}
   fill: {fileID: 2096075723411886936}
@@ -1525,7 +1526,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 0
   m_fontSizeMax: 0
-  m_fontStyle: 18
+  m_fontStyle: 2
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 256
   m_textAlignment: 65535

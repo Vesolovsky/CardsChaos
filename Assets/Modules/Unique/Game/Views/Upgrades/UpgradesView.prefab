@@ -1258,7 +1258,9 @@ MonoBehaviour:
     type: 3}
   taskItemPrefab: {fileID: 8583673807248704612, guid: c19cd7b17ba40fe4eb07420abed2b613,
     type: 3}
-  toggleKey: 35
+  insufficientShakeStrength: {x: 5, y: 5, z: 0}
+  insufficientShakeDuration: 0.18
+  insufficientShakeFrequency: 22
 --- !u!114 &6548489604028863222
 MonoBehaviour:
   m_ObjectHideFlags: 0

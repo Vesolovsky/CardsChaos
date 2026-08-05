@@ -70,6 +70,9 @@ namespace Vesolovsky.Game.Views
                  "than a buzz. This is the vibrato.")]
         [SerializeField] private float progressPunchFrequency = 3f;
 
+        // Matches the room's table and the fan, so the wheel has the same dead spot everywhere.
+        private const float ScrollDeadzone = 0.01f;
+
         private readonly List<AlbumSetButton> _setButtons = new List<AlbumSetButton>();
 
         private DiContainer _container;
@@ -162,10 +165,38 @@ namespace Vesolovsky.Game.Views
                 return;
             }
 
-            // Escape only ever closes. Bound the other way round it would fight every other panel
-            // that wants the same key to back out of itself.
-            if (ViewModel.IsOpen.Value && keyboard.escapeKey.wasPressedThisFrame)
-                ViewModel.Close();
+            if (ViewModel.IsOpen.Value)
+            {
+                // The wheel reorders the hand from anywhere on the album, not only while the cursor
+                // rests on the fan - the order is the whole point of the screen, so it stays to
+                // hand however far the cursor has wandered. The room owns the wheel only while the
+                // album is shut (this view holds the world lock while it is open), so the two never
+                // both act on one notch.
+                HandleHandScroll();
+
+                // Escape only ever closes. Bound the other way round it would fight every other
+                // panel that wants the same key to back out of itself.
+                if (keyboard.escapeKey.wasPressedThisFrame)
+                    ViewModel.Close();
+            }
+        }
+
+        /// <summary>
+        /// Turns one notch of the wheel into one card carried across the fan, read straight off the
+        /// mouse rather than from a pointer-over event so it works with the cursor anywhere on the
+        /// screen.
+        /// </summary>
+        private void HandleHandScroll()
+        {
+            Mouse mouse = Mouse.current;
+            if (mouse == null || ViewModel.Hand == null)
+                return;
+
+            float scroll = mouse.scroll.ReadValue().y;
+            if (Mathf.Abs(scroll) < ScrollDeadzone)
+                return;
+
+            ViewModel.Hand.Cycle(scroll > 0f ? 1 : -1);
         }
 
         /// <summary>Opens the album if it is shut and shuts it if it is open - the B key and the

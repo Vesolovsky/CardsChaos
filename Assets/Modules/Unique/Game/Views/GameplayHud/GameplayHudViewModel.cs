@@ -2,6 +2,7 @@ using System;
 using CardsChaos.Cards;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.Services.Input;
+using Vesolovsky.Core.Services.Settings;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Services.Skills;
@@ -28,11 +29,17 @@ namespace Vesolovsky.Game.Views
         private readonly UpgradeCatalog _catalog;
         private readonly IGameplayPanels _panels;
         private readonly IInputActions _input;
+        private readonly IGameSettingsService _settings;
 
         public event Action SkillsChanged;
         public event Action BindingsChanged;
+        public event Action HintsEnabledChanged;
 
         public CardHand Hand => _hand;
+
+        // No settings service (a bare test scene, say) means hints are on - the same default the
+        // settings themselves carry.
+        public bool HintsEnabled => _settings == null || _settings.Current.ShowHints;
 
         [Inject]
         public GameplayHudViewModel(
@@ -41,7 +48,8 @@ namespace Vesolovsky.Game.Views
             IUpgradeService upgrades,
             UpgradeCatalog catalog,
             [InjectOptional] IGameplayPanels panels,
-            [InjectOptional] IInputActions input)
+            [InjectOptional] IInputActions input,
+            [InjectOptional] IGameSettingsService settings)
         {
             _hand = hand;
             _skills = skills;
@@ -49,11 +57,15 @@ namespace Vesolovsky.Game.Views
             _catalog = catalog;
             _panels = panels;
             _input = input;
+            _settings = settings;
 
             _upgrades.Changed += OnUpgradesChanged;
 
             if (_input != null)
                 _input.BindingsChanged += OnBindingsChanged;
+
+            if (_settings != null)
+                _settings.Applied += OnSettingsApplied;
         }
 
         public void ToggleAlbum() => _panels?.ToggleAlbum();
@@ -99,6 +111,9 @@ namespace Vesolovsky.Game.Views
             if (_input != null)
                 _input.BindingsChanged -= OnBindingsChanged;
 
+            if (_settings != null)
+                _settings.Applied -= OnSettingsApplied;
+
             base.Dispose();
         }
 
@@ -107,5 +122,7 @@ namespace Vesolovsky.Game.Views
         private void OnUpgradesChanged(UpgradeDefinition _) => SkillsChanged?.Invoke();
 
         private void OnBindingsChanged() => BindingsChanged?.Invoke();
+
+        private void OnSettingsApplied(GameSettingsData _) => HintsEnabledChanged?.Invoke();
     }
 }

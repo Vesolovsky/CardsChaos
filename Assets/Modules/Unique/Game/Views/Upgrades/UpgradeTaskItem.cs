@@ -29,6 +29,10 @@ namespace Vesolovsky.Game.Views.Upgrades
         [SerializeField] private CanvasGroup skillItemsGroup;
 
         [Header("Task")]
+        [Tooltip("The task face's heading. Was a fixed \"HOW TO UNLOCK\" label; now names the " +
+                 "ability the task grants, taken from the upgrade's Display Name.")]
+        [SerializeField] private VText unlockTitle;
+
         [SerializeField] private VText unlockTaskDescription;
         [SerializeField] private VText remainingText;
 
@@ -60,6 +64,11 @@ namespace Vesolovsky.Game.Views.Upgrades
 
             if (fill != null)
                 _fullFillWidth = fill.sizeDelta.x;
+
+            // Both faces name the ability: the task heading tells the player what finishing the
+            // task earns, and the skill face names it again once claimed.
+            if (unlockTitle != null)
+                unlockTitle.SetText(definition.DisplayName);
 
             if (abilityName != null)
                 abilityName.SetText(definition.DisplayName);
