@@ -4,7 +4,9 @@ using Cysharp.Threading.Tasks;
 using PrimeTween;
 using UniRx;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using Vesolovsky.Core.Services.Input;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
@@ -74,6 +76,10 @@ namespace Vesolovsky.Game.Views
         private const float ScrollDeadzone = 0.01f;
 
         private readonly List<AlbumSetButton> _setButtons = new List<AlbumSetButton>();
+
+        // Reused each scroll to find what the cursor is over, so a wheel notch over a scrolling
+        // list is not also spent cycling the hand.
+        private readonly List<RaycastResult> _scrollRaycast = new List<RaycastResult>();
 
         private DiContainer _container;
         private IAlbumFocusRequest _albumFocus;
@@ -196,7 +202,39 @@ namespace Vesolovsky.Game.Views
             if (Mathf.Abs(scroll) < ScrollDeadzone)
                 return;
 
+            // A wheel notch over a list that scrolls itself - the set list down the side - belongs
+            // to that list. Cycling the hand as well would have the wheel doing two things at once,
+            // which is the irritating part, so when the cursor is over any ScrollRect the hand
+            // keeps still and the list scrolls alone.
+            if (IsPointerOverScrollRect(mouse.position.ReadValue()))
+                return;
+
             ViewModel.Hand.Cycle(scroll > 0f ? 1 : -1);
+        }
+
+        /// <summary>
+        /// Whether the cursor is over a <see cref="ScrollRect"/> - the set list, or anything else
+        /// that scrolls. Read off the same UI raycast the EventSystem uses to deliver the scroll,
+        /// so the hand stands aside exactly when a list would take the wheel.
+        /// </summary>
+        private bool IsPointerOverScrollRect(Vector2 screenPosition)
+        {
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null)
+                return false;
+
+            var pointer = new PointerEventData(eventSystem) { position = screenPosition };
+            _scrollRaycast.Clear();
+            eventSystem.RaycastAll(pointer, _scrollRaycast);
+
+            foreach (RaycastResult result in _scrollRaycast)
+            {
+                if (result.gameObject != null &&
+                    result.gameObject.GetComponentInParent<ScrollRect>() != null)
+                    return true;
+            }
+
+            return false;
         }
 
         /// <summary>Opens the album if it is shut and shuts it if it is open - the B key and the

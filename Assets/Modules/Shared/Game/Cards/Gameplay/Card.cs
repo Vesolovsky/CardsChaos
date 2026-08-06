@@ -35,6 +35,11 @@ namespace CardsChaos.Cards
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
         private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
 
+        // Held (and piled) cards ride right in front of the camera and would otherwise clip into the
+        // furniture. When a layer of this name exists they are moved onto it so an overlay camera can
+        // draw them over the world; if the layer is absent the move is skipped and nothing changes.
+        private const string HeldLayerName = "HeldCard";
+
         // A thrown card is thin and moving fast at a table of other thin cards - exactly the case
         // speculative contacts were found to tunnel through (see CardSetBuilder). Continuous
         // Dynamic sweeps instead, and it costs next to nothing here: only the handful of cards in
@@ -57,6 +62,9 @@ namespace CardsChaos.Cards
         private MeshFilter _meshFilter;
         private MeshRenderer _renderer;
         private MaterialPropertyBlock _propertyBlock;
+
+        // The layer the card was authored on, restored whenever it leaves the hand.
+        private int _defaultLayer;
 
         private Tween _positionTween;
         private Tween _rotationTween;
@@ -99,6 +107,7 @@ namespace CardsChaos.Cards
             _meshFilter = GetComponent<MeshFilter>();
             _renderer = GetComponent<MeshRenderer>();
             Identity = GetComponent<CardIdentity>();
+            _defaultLayer = gameObject.layer;
         }
 
         private void Start()
@@ -454,8 +463,29 @@ namespace CardsChaos.Cards
                 EnterResting();
         }
 
+        /// <summary>
+        /// Puts held (and piled) cards on the <see cref="HeldLayerName"/> layer and every other card
+        /// back on the layer it was authored with. Paired with an overlay camera that renders only
+        /// that layer with the depth buffer cleared, this is what draws a card in hand over the room
+        /// instead of letting the furniture clip through it. Held state is the trigger, so it rides
+        /// along with the material overrides and cannot drift from them. Purely a rendering move that
+        /// does nothing while the layer is absent, so the game plays identically until it is set up.
+        /// </summary>
+        private void ApplyRenderLayer()
+        {
+            int heldLayer = LayerMask.NameToLayer(HeldLayerName);
+            if (heldLayer < 0)
+                return;
+
+            int target = IsHeld ? heldLayer : _defaultLayer;
+            if (gameObject.layer != target)
+                gameObject.layer = target;
+        }
+
         private void ApplyMaterialOverrides()
         {
+            ApplyRenderLayer();
+
             // Clearing the block rather than zeroing values returns resting cards to the SRP
             // Batcher. Only the handful currently held or inspected carry per-renderer state.
             if (!IsHeld && !IsInspected)
