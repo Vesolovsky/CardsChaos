@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.Services;
 using Vesolovsky.Core.Services.Input;
@@ -82,7 +83,12 @@ namespace CardsChaos.Cards
                 return;
             }
 
-            Aim(FindCardUnderCursor(mouse));
+            // A HUD button (a skill icon, say) can sit right over a floor card. When the pointer
+            // rests on an interactable UI element the click belongs to the button, so aim at nothing:
+            // that stops the pickup below - it needs a target - and hides the card's hover outline,
+            // while Throw, Toggle Hand and the wheel still work off the keyboard as before.
+            bool pointerOverUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+            Aim(pointerOverUi ? null : FindCardUnderCursor(mouse));
 
             if (_interact != null && _interact.WasPressedThisFrame() && _target != null)
             {

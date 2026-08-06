@@ -23,6 +23,7 @@ namespace Vesolovsky.Game.Services.Skills
         private readonly UpgradeCatalog _catalog;
         private readonly IUpgradeService _upgrades;
         private readonly IPauseState _pauseState;
+        private readonly ISkillCooldownModifiers _cooldownModifiers;
         private readonly Dictionary<SkillId, ISkillHandler> _handlers = new Dictionary<SkillId, ISkillHandler>();
 
         private readonly Dictionary<SkillId, float> _cooldownRemaining = new Dictionary<SkillId, float>();
@@ -31,11 +32,12 @@ namespace Vesolovsky.Game.Services.Skills
         [Inject]
         public SkillService(
             UpgradeCatalog catalog, IUpgradeService upgrades, List<ISkillHandler> handlers,
-            IPauseState pauseState)
+            IPauseState pauseState, ISkillCooldownModifiers cooldownModifiers)
         {
             _catalog = catalog;
             _upgrades = upgrades;
             _pauseState = pauseState;
+            _cooldownModifiers = cooldownModifiers;
 
             foreach (ISkillHandler handler in handlers)
             {
@@ -56,7 +58,7 @@ namespace Vesolovsky.Game.Services.Skills
                 return false;
             }
 
-            int level = _upgrades.GetLevel(definition);
+            int level = EffectiveLevel(definition);
             if (level <= 0)
                 return false;
 
@@ -72,7 +74,7 @@ namespace Vesolovsky.Game.Services.Skills
             if (!handler.CanActivate() || !handler.Activate(definition, level))
                 return false;
 
-            float cooldown = definition.GetCooldown(level);
+            float cooldown = definition.GetCooldown(level) * _cooldownModifiers.GetMultiplier(id);
             _cooldownRemaining[id] = cooldown;
             _cooldownTotal[id] = cooldown;
 
@@ -80,10 +82,28 @@ namespace Vesolovsky.Game.Services.Skills
             return true;
         }
 
-        public bool IsReady(SkillId id)
+        public bool IsUnlocked(SkillId id)
         {
             SkillDefinition definition = _catalog.FindSkill(id);
-            return definition != null && _upgrades.GetLevel(definition) > 0 && GetCooldownRemaining(id) <= 0f;
+            return definition != null && EffectiveLevel(definition) > 0;
+        }
+
+        public bool IsReady(SkillId id) => IsUnlocked(id) && GetCooldownRemaining(id) <= 0f;
+
+        /// <summary>
+        /// The level a skill is "at" for firing it: its bought level normally, or, for a
+        /// task-unlocked skill, level 1 exactly while its task is claimed and 0 before. This is the
+        /// one place the two ways a skill can be owned are folded into a single number.
+        /// </summary>
+        private int EffectiveLevel(SkillDefinition definition)
+        {
+            if (definition == null)
+                return 0;
+
+            if (definition.IsTaskUnlocked)
+                return _upgrades.IsUnlocked(definition.UnlockedBy) ? 1 : 0;
+
+            return _upgrades.GetLevel(definition);
         }
 
         public float GetCooldownRemaining(SkillId id) =>
@@ -118,6 +138,14 @@ namespace Vesolovsky.Game.Services.Skills
 
             _cooldownRemaining[id] = remaining;
             _cooldownTotal[id] = total > 0f ? total : remaining;
+        }
+
+        public void DebugResetCooldowns()
+        {
+            // Drop every running cooldown; a missing entry reads as ready, so clearing is enough and
+            // the HUD's per-frame poll picks the change up on its own.
+            _cooldownRemaining.Clear();
+            _cooldownTotal.Clear();
         }
 
         public void Tick()

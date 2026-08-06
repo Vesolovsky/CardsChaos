@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Vesolovsky.Core.UISystem.UIComponents;
 using Vesolovsky.Game.Upgrades;
+using VInspector;
 
 namespace Vesolovsky.Game.Views.Upgrades
 {
@@ -127,6 +128,21 @@ namespace Vesolovsky.Game.Views.Upgrades
         private void OnUnlockClicked()
         {
             if (_viewModel.TryClaim(_definition))
+                PlayUnlockAnimation();
+        }
+
+        /// <summary>
+        /// Testing button: claims this row's task with its sets unfinished, so its reward can be
+        /// tried without building them. Only works in Play mode, once the row is bound to a task;
+        /// it grants the reward and plays the same unlock animation a real claim does.
+        /// </summary>
+        [Button]
+        private void DebugForceUnlock()
+        {
+            if (_viewModel == null || _definition == null)
+                return;
+
+            if (_viewModel.DebugForceClaim(_definition))
                 PlayUnlockAnimation();
         }
 

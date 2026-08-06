@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 785ef1c32e4e03d4da4fae0f8f181010, type: 3}
+  m_Name: TheySenseMore
+  m_EditorClassIdentifier: 
+  id: TheySenseMore
+  displayName: They sense more...
+  description: Levitate's button glows whenever cards it could raise are near you
+  icon: {fileID: 21300000, guid: ee724feb444298745825b1f6e275ccfb, type: 3}
+  kind: 6
+  objective:
+    kind: 0
+    sets:
+    - {fileID: 11400000, guid: 298c39993749a1b449488d17d976788b, type: 2}
+    - {fileID: 11400000, guid: 1174aab67a170644c96daed9794ab7ea, type: 2}
+    count: 0
+  value: 0

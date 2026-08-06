@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 785ef1c32e4e03d4da4fae0f8f181010, type: 3}
+  m_Name: Traveler
+  m_EditorClassIdentifier: 
+  id: Traveler
+  displayName: Traveler
+  description: Every skill recharges 20% faster
+  icon: {fileID: 21300000, guid: e0d41e64101a5bd49a9d51ae602ad196, type: 3}
+  kind: 4
+  objective:
+    kind: 0
+    sets:
+    - {fileID: 11400000, guid: decb43479d1c9704ead6e0bda3559243, type: 2}
+    - {fileID: 11400000, guid: de32601325083524f88e1b4476bfb9f2, type: 2}
+    - {fileID: 11400000, guid: 51913739e1bda0644b9660e6bb049920, type: 2}
+    - {fileID: 11400000, guid: c6f02a054131320438b2062feac4f8a5, type: 2}
+    - {fileID: 11400000, guid: 15d87cf0e17fd924ab4c7484cacc5360, type: 2}
+    count: 0
+  value: 0.2

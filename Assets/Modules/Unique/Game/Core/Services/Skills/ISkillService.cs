@@ -38,6 +38,12 @@ namespace Vesolovsky.Game.Services.Skills
         /// </summary>
         bool TryActivate(SkillId id);
 
+        /// <summary>
+        /// Whether the player has the skill at all - bought to level one, or, for a task-unlocked
+        /// skill, its unlocking task claimed. Says nothing about the cooldown.
+        /// </summary>
+        bool IsUnlocked(SkillId id);
+
         /// <summary>Whether the skill is unlocked and off cooldown right now.</summary>
         bool IsReady(SkillId id);
 
@@ -52,5 +58,8 @@ namespace Vesolovsky.Game.Services.Skills
 
         /// <summary>Restores a cooldown from a loaded save. Ignored when nothing is left to run.</summary>
         void RestoreCooldown(SkillId id, float remaining, float total);
+
+        /// <summary>Testing aid: clears every running cooldown so all skills read ready at once.</summary>
+        void DebugResetCooldowns();
     }
 }

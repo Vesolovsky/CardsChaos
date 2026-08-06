@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12f9e396e272e3940bf20bc587781eed, type: 3}
+  m_Name: Levitate
+  m_EditorClassIdentifier: 
+  id: Levitate
+  displayName: Levitate
+  description: Raise up to 8 selected card's set-mates off the ground
+  icon: {fileID: 21300000, guid: b999d67d6f8b5114f886ad6f67cf8af9, type: 3}
+  skillId: 3
+  activationAction: {fileID: 445771091431983633, guid: 8cff13d2b1c787347bf206f8968e49ed,
+    type: 3}
+  unlockedBy: {fileID: 11400000, guid: 5a953ab09261df06dcfbed1ed12882be, type: 2}
+  levels:
+  - cost: 0
+    value: 0
+    cooldown: 120

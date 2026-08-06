@@ -53,6 +53,19 @@ namespace Vesolovsky.Game.Views.GameplayHud
         [SerializeField] private float notReadyShakeDuration = 0.18f;
         [SerializeField] private float notReadyShakeFrequency = 22f;
 
+        [Header("Attention pulse")]
+        [Tooltip("What the attention pulse scales while it plays - best a dedicated glow or icon, so " +
+                 "it does not tug the cooldown ring or fight the button's hover scale. Leave empty " +
+                 "to switch the pulse off; its logic still runs, it just shows nothing. The pulse " +
+                 "only ever plays for a skill whose 'sense nearby' reward is owned.")]
+        [SerializeField] private RectTransform pulseTarget;
+
+        [Tooltip("Peak scale of the attention pulse.")]
+        [SerializeField] private Vector3 pulseScale = new Vector3(1.12f, 1.12f, 1f);
+
+        [Tooltip("Seconds for one full pulse in-and-out.")]
+        [SerializeField] private float pulsePeriod = 0.9f;
+
         private IGameplayHudViewModel _viewModel;
         private bool _hovered;
         private bool _wasReady;
@@ -61,6 +74,9 @@ namespace Vesolovsky.Game.Views.GameplayHud
         private Tween _punch;
         private Tween _shake;
         private Vector3 _shakeRest;
+
+        private Tween _pulse;
+        private bool _pulsing;
 
         private RectTransform PunchTarget =>
             readyPunchTarget != null ? readyPunchTarget
@@ -86,7 +102,11 @@ namespace Vesolovsky.Game.Views.GameplayHud
                 gameObject.SetActive(owned);
 
             if (!owned)
+            {
+                // A skill that just went un-owned (a cleared save, say) must not be left mid-pulse.
+                StopPulse();
                 return;
+            }
 
             _wasReady = _viewModel.IsSkillReady(skillId);
 
@@ -130,6 +150,51 @@ namespace Vesolovsky.Game.Views.GameplayHud
             // The countdown only has to keep up while the player is watching it.
             if (!ready && _hovered)
                 UpdateCountdown();
+
+            UpdatePulse();
+        }
+
+        /// <summary>
+        /// Runs the attention pulse exactly while the view model says this skill wants noticing - the
+        /// "They sense more..." reward, a ready Levitate and set-mates nearby - and stops it the
+        /// moment any of that stops being true.
+        /// </summary>
+        private void UpdatePulse()
+        {
+            bool shouldPulse = _viewModel != null && _viewModel.ShouldPulseSkill(skillId);
+
+            if (shouldPulse)
+                StartPulse();
+            else
+                StopPulse();
+        }
+
+        private void StartPulse()
+        {
+            if (_pulsing || pulseTarget == null)
+                return;
+
+            _pulsing = true;
+
+            // A gentle, endless in-and-out. Unscaled so it keeps breathing even if something ever
+            // slows the game clock; the pulse is pure feedback and does not ride game time.
+            _pulse = Tween.Scale(
+                pulseTarget, pulseScale, Mathf.Max(0.05f, pulsePeriod * 0.5f), Ease.InOutSine,
+                cycles: -1, cycleMode: CycleMode.Yoyo, useUnscaledTime: true);
+        }
+
+        private void StopPulse()
+        {
+            if (!_pulsing)
+                return;
+
+            _pulsing = false;
+
+            if (_pulse.isAlive)
+                _pulse.Stop();
+
+            if (pulseTarget != null)
+                pulseTarget.localScale = Vector3.one;
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -258,6 +323,9 @@ namespace Vesolovsky.Game.Views.GameplayHud
 
             if (_shake.isAlive)
                 _shake.Stop();
+
+            if (_pulse.isAlive)
+                _pulse.Stop();
         }
     }
 }

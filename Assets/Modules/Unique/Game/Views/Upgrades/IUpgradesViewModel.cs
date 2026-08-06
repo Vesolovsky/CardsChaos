@@ -51,6 +51,14 @@ namespace Vesolovsky.Game.Views
         /// <summary>Claims a finished one-time upgrade; returns whether it happened.</summary>
         bool TryClaim(OneTimeUpgradeDefinition definition);
 
+        /// <summary>
+        /// Testing hook behind the task row's editor button: claims a one-time upgrade even with its
+        /// task unmet, so its reward can be tried without building the sets. Returns whether it went
+        /// from locked to claimed (false when it was already claimed), which the row uses to decide
+        /// whether to play its unlock animation.
+        /// </summary>
+        bool DebugForceClaim(OneTimeUpgradeDefinition definition);
+
         /// <summary>The unlock task's state, recomputed on demand (the view reads it on open).</summary>
         UpgradeTaskProgress GetTaskProgress(OneTimeUpgradeDefinition definition);
     }

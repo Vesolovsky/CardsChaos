@@ -21,6 +21,9 @@ namespace Vesolovsky.Game.Services.Upgrades
     {
         [SerializeField] private UpgradeCatalog catalog;
 
+        [Tooltip("Tuning for the Levitate skill - reach, rise, hover time, the pulse's poll rate.")]
+        [SerializeField] private LevitateSettings levitateSettings;
+
         [Tooltip("Prints the running player-stat tally to the console for validation. " +
                  "Leave off for release builds.")]
         [SerializeField] private bool logPlayerStats;
@@ -30,7 +33,11 @@ namespace Vesolovsky.Game.Services.Upgrades
             if (catalog == null)
                 Debug.LogError($"[{nameof(UpgradesInstaller)}] No {nameof(UpgradeCatalog)} assigned.", this);
 
+            if (levitateSettings == null)
+                Debug.LogError($"[{nameof(UpgradesInstaller)}] No {nameof(LevitateSettings)} assigned.", this);
+
             Container.Bind<UpgradeCatalog>().FromInstance(catalog).AsSingle();
+            Container.Bind<LevitateSettings>().FromInstance(levitateSettings).AsSingle();
 
             // Collection progress before the service that reads it - and NonLazy, because it has to
             // be listening to the album from the start rather than waiting for something to ask.
@@ -51,6 +58,11 @@ namespace Vesolovsky.Game.Services.Upgrades
             // Read by the skill input, set by the upgrades view while it is open.
             Container.Bind<ISkillGate>().To<SkillGate>().AsSingle();
 
+            // How the cooldown-reduction rewards shorten a skill's cooldown, and who can be levitated
+            // for the skill and its HUD pulse. Both are read live where they matter.
+            Container.Bind<ISkillCooldownModifiers>().To<SkillCooldownModifiers>().AsSingle();
+            Container.Bind<ILevitateTargeting>().To<LevitateTargeting>().AsSingle();
+
             // "Is the clock stopped" - set by the pause menu, read by anything that runs on game
             // time (currently the skill cooldowns).
             Container.Bind<IPauseState>().To<PauseState>().AsSingle();
@@ -59,6 +71,7 @@ namespace Vesolovsky.Game.Services.Upgrades
             Container.BindInterfacesAndSelfTo<CardMagnetSkill>().AsSingle();
             Container.BindInterfacesAndSelfTo<SmartAlbumOpenSkill>().AsSingle();
             Container.BindInterfacesAndSelfTo<HandSortSkill>().AsSingle();
+            Container.BindInterfacesAndSelfTo<LevitateSkill>().AsSingle();
 
             Container.BindInterfacesAndSelfTo<SkillService>().AsSingle();
             Container.BindInterfacesTo<SkillInputController>().AsSingle();
@@ -79,6 +92,11 @@ namespace Vesolovsky.Game.Services.Upgrades
             // are ready for the startup push the bootstrap sends once the save is in.
             Container.BindInterfacesTo<CardSlotUpgradeApplier>().AsSingle().NonLazy();
             Container.BindInterfacesTo<SprintUpgradeApplier>().AsSingle().NonLazy();
+
+            // The one reward that acts rather than is read: it pays out skill points on claim, so it
+            // must be listening for that claim from the start.
+            Container.BindInterfacesTo<SkillPointGrantApplier>().AsSingle().NonLazy();
+
             Container.BindInterfacesTo<UpgradeEffectsBootstrap>().AsSingle().NonLazy();
         }
     }

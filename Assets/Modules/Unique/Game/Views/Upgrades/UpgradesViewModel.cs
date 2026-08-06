@@ -34,6 +34,11 @@ namespace Vesolovsky.Game.Views
         private readonly ReactiveProperty<bool> _isOpen = new ReactiveProperty<bool>(false);
         private readonly ReactiveProperty<long> _skillPoints = new ReactiveProperty<long>(0);
 
+        // Built once from the catalog: only the buyable skills. A task-unlocked skill (Levitate)
+        // has no price and no shop row - it is earned through its task, which shows in the OneTimes
+        // list like every other one-time reward.
+        private readonly List<SkillDefinition> _buyableSkills = new List<SkillDefinition>();
+
         private IDisposable _worldHandle;
 
         public IReadOnlyReactiveProperty<bool> IsOpen => _isOpen;
@@ -42,7 +47,7 @@ namespace Vesolovsky.Game.Views
 
         public IReadOnlyList<PermanentUpgradeDefinition> Permanents => _catalog.Permanents;
 
-        public IReadOnlyList<SkillDefinition> Skills => _catalog.Skills;
+        public IReadOnlyList<SkillDefinition> Skills => _buyableSkills;
 
         public IReadOnlyList<OneTimeUpgradeDefinition> OneTimes => _catalog.OneTimes;
 
@@ -61,6 +66,12 @@ namespace Vesolovsky.Game.Views
             _worldLock = worldLock;
             _skillGate = skillGate;
             _catalog = catalog;
+
+            foreach (SkillDefinition skill in _catalog.Skills)
+            {
+                if (skill != null && !skill.IsTaskUnlocked)
+                    _buyableSkills.Add(skill);
+            }
 
             // Tracked live so a purchase, a page reward or a cheat is reflected in the header at
             // once. The balance itself is read fresh on each open (see Open).
@@ -118,6 +129,15 @@ namespace Vesolovsky.Game.Views
         public bool IsUnlocked(OneTimeUpgradeDefinition definition) => _upgrades.IsUnlocked(definition);
 
         public bool TryClaim(OneTimeUpgradeDefinition definition) => _upgrades.TryClaim(definition);
+
+        public bool DebugForceClaim(OneTimeUpgradeDefinition definition)
+        {
+            if (definition == null || _upgrades.IsUnlocked(definition))
+                return false;
+
+            _upgrades.DebugForceUnlock(definition);
+            return true;
+        }
 
         public UpgradeTaskProgress GetTaskProgress(OneTimeUpgradeDefinition definition)
         {

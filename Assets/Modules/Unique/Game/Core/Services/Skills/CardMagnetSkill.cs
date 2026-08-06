@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using CardsChaos.Cards;
 using UnityEngine;
 using Vesolovsky.Core.Services;
+using Vesolovsky.Game.Services.Upgrades;
 using Vesolovsky.Game.Upgrades;
 using Zenject;
 
@@ -13,21 +14,26 @@ namespace Vesolovsky.Game.Services.Skills
     /// It takes the nearest ones first and never more than the hand has room for - asked for three
     /// with one slot free, it brings one. Picking a card up already flies it in from wherever it
     /// lay, so the pull needs no animation of its own; it just claims the cards and lets the hand
-    /// draw them in.
+    /// draw them in. The "Helping Hands" task, once claimed, lets it reach for one card more.
     /// </summary>
     public class CardMagnetSkill : ISkillHandler
     {
         private readonly CardHand _hand;
         private readonly ICameraService _cameraService;
         private readonly IWorldInteractionLock _worldLock;
+        private readonly IUpgradeService _upgrades;
+        private readonly OneTimeUpgradeDefinition _bonus;
 
         [Inject]
         public CardMagnetSkill(
-            CardHand hand, ICameraService cameraService, IWorldInteractionLock worldLock)
+            CardHand hand, ICameraService cameraService, IWorldInteractionLock worldLock,
+            IUpgradeService upgrades, UpgradeCatalog catalog)
         {
             _hand = hand;
             _cameraService = cameraService;
             _worldLock = worldLock;
+            _upgrades = upgrades;
+            _bonus = catalog.FindOneTime(OneTimeUpgradeKind.CardMagnetBonus);
         }
 
         public SkillId Id => SkillId.CardMagnet;
@@ -46,7 +52,7 @@ namespace Vesolovsky.Game.Services.Skills
                 return false;
 
             string setId = selected.Identity.SetId;
-            int want = Mathf.RoundToInt(definition.GetValue(level));
+            int want = Mathf.RoundToInt(definition.GetValue(level)) + BonusCards();
             int pull = Mathf.Min(want, _hand.FreeSlots);
             if (pull <= 0)
                 return false;
@@ -61,6 +67,18 @@ namespace Vesolovsky.Game.Services.Skills
             }
 
             return pulled > 0;
+        }
+
+        /// <summary>
+        /// Extra cards the "Helping Hands" reward adds to the pull once claimed - its authored value,
+        /// or none while it is not owned. Read live so claiming it takes effect on the next magnet.
+        /// </summary>
+        private int BonusCards()
+        {
+            if (_bonus == null || !_upgrades.IsUnlocked(_bonus))
+                return 0;
+
+            return Mathf.Max(0, Mathf.RoundToInt(_bonus.Value));
         }
 
         /// <summary>

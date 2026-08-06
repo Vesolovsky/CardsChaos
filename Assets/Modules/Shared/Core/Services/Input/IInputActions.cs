@@ -45,6 +45,7 @@ namespace Vesolovsky.Core.Services.Input
         public const string CardMagnet = "CardMagnet";
         public const string HandSort = "HandSort";
         public const string SmartAlbumOpen = "SmartAlbumOpen";
+        public const string Levitate = "Levitate";
 
         private static readonly string[] RebindableActionNamesInternal =
         {
@@ -58,6 +59,7 @@ namespace Vesolovsky.Core.Services.Input
             CardMagnet,
             HandSort,
             SmartAlbumOpen,
+            Levitate,
         };
 
         public static IReadOnlyList<string> RebindableActionNames { get; } =

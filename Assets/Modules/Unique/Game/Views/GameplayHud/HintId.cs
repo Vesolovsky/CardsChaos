@@ -24,5 +24,8 @@ namespace Vesolovsky.Game.Views.GameplayHud
 
         /// <summary>Shown when the Hand Sort skill is first unlocked.</summary>
         HandSortReady,
+
+        /// <summary>Shown when the Levitate skill is first unlocked (its "Is this magic?..." task claimed).</summary>
+        LevitateReady,
     }
 }

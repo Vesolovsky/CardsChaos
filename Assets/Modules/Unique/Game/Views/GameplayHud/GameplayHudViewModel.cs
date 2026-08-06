@@ -30,6 +30,8 @@ namespace Vesolovsky.Game.Views
         private readonly IGameplayPanels _panels;
         private readonly IInputActions _input;
         private readonly IGameSettingsService _settings;
+        private readonly ILevitateTargeting _levitateTargeting;
+        private readonly OneTimeUpgradeDefinition _levitatePulse;
 
         public event Action SkillsChanged;
         public event Action BindingsChanged;
@@ -49,7 +51,8 @@ namespace Vesolovsky.Game.Views
             UpgradeCatalog catalog,
             [InjectOptional] IGameplayPanels panels,
             [InjectOptional] IInputActions input,
-            [InjectOptional] IGameSettingsService settings)
+            [InjectOptional] IGameSettingsService settings,
+            [InjectOptional] ILevitateTargeting levitateTargeting)
         {
             _hand = hand;
             _skills = skills;
@@ -58,6 +61,8 @@ namespace Vesolovsky.Game.Views
             _panels = panels;
             _input = input;
             _settings = settings;
+            _levitateTargeting = levitateTargeting;
+            _levitatePulse = catalog != null ? catalog.FindOneTime(OneTimeUpgradeKind.LevitatePulse) : null;
 
             _upgrades.Changed += OnUpgradesChanged;
 
@@ -74,13 +79,24 @@ namespace Vesolovsky.Game.Views
 
         public void ToggleHandLayout() => _hand.ToggleLayout();
 
-        public bool IsSkillOwned(SkillId id)
-        {
-            SkillDefinition definition = _catalog.FindSkill(id);
-            return definition != null && _upgrades.GetLevel(definition) > 0;
-        }
+        // Owned means unlocked either way it can be: bought, or - for Levitate - its task claimed.
+        // The skill service is the one place that folds those two together, so ask it rather than
+        // read the level here, which would miss a task-unlocked skill.
+        public bool IsSkillOwned(SkillId id) => _skills.IsUnlocked(id);
 
         public bool IsSkillReady(SkillId id) => _skills.IsReady(id);
+
+        public bool ShouldPulseSkill(SkillId id)
+        {
+            // Only Levitate pulses, only once the "They sense more..." reward is owned, only while
+            // the skill is actually ready to fire, and only when there is something near to raise.
+            if (id != SkillId.Levitate || _levitatePulse == null || _levitateTargeting == null)
+                return false;
+
+            return _upgrades.IsUnlocked(_levitatePulse)
+                   && _skills.IsReady(id)
+                   && _levitateTargeting.HasTargets();
+        }
 
         public float GetSkillCooldownRemaining(SkillId id) => _skills.GetCooldownRemaining(id);
 

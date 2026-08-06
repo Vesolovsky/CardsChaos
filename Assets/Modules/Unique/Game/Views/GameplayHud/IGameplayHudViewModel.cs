@@ -51,6 +51,14 @@ namespace Vesolovsky.Game.Views
         /// <summary>The skill's trigger key as display text, for the bracketed part of its hint.</summary>
         string GetSkillKeyDisplay(SkillId id);
 
+        /// <summary>
+        /// Whether the skill's HUD button should pulse to say now is a good moment to use it. Only
+        /// the "They sense more..." reward drives this, and only for Levitate: it returns true while
+        /// that reward is owned, the skill is ready, and set-mates of the selected card are nearby.
+        /// Cheap to poll every frame.
+        /// </summary>
+        bool ShouldPulseSkill(SkillId id);
+
         /// <summary>A gameplay action's key as display text, for a HUD hint. Names in GameInputActions.</summary>
         string GetActionKeyDisplay(string actionName);
 

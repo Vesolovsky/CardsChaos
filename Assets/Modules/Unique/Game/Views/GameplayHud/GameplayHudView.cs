@@ -45,6 +45,7 @@ namespace Vesolovsky.Game.Views
             (SkillId.CardMagnet, HintId.CardMagnetReady),
             (SkillId.SmartAlbumOpen, HintId.SmartAlbumOpenReady),
             (SkillId.HandSort, HintId.HandSortReady),
+            (SkillId.Levitate, HintId.LevitateReady),
         };
 
         private readonly bool[] _skillReady = new bool[SkillHints.Length];

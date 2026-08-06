@@ -261,6 +261,36 @@ namespace CardsChaos.Cards
         }
 
         /// <summary>
+        /// Lifts the card into the hovering state the Levitate skill drives: a kinematic body with
+        /// no gravity, its settle watch stopped so it will not freeze itself while it floats, and a
+        /// still-solid (non-trigger) collider so the ordinary floor pickup can take it out of the
+        /// air. The caller owns the transform from here - the rise and the turn to the camera - the
+        /// same way the hand drives a held card. Picking the card up (<see cref="AttachTo"/>) or
+        /// letting it drop (<see cref="BeginFlight"/>) both take it back out of this state.
+        /// </summary>
+        public void BeginLevitate()
+        {
+            StopTweens();
+            StopSettleWatch();
+
+            Rigidbody body = EnsureBody();
+
+            // Same order AttachTo uses: step off any continuous mode before going kinematic, since a
+            // continuous mode is illegal on a kinematic body and Unity warns if one is left on it.
+            body.collisionDetectionMode = CollisionDetectionMode.Discrete;
+            body.isKinematic = true;
+            body.useGravity = false;
+            body.detectCollisions = true;
+            // The transform is driven straight from Update (see LevitatingCard); interpolation would
+            // fight that by writing its own one-step-old pose over it, the same twitch AttachTo avoids.
+            body.interpolation = RigidbodyInterpolation.None;
+
+            // Unlike a held card this stays a solid collider, not a trigger: it is still a card lying
+            // in the room that the cursor picks up in the ordinary way, only raised off the table.
+            _collider.isTrigger = false;
+        }
+
+        /// <summary>
         /// Forces the card back to the plain resting state - no body, solid non-trigger collider,
         /// not held or inspected, no leftover physics material - from whatever state it is in.
         /// Used to rebuild a collapsed house of cards for testing; unlike <see cref="FreezeInPlace"/>

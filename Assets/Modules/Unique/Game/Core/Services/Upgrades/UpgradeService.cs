@@ -112,6 +112,22 @@ namespace Vesolovsky.Game.Services.Upgrades
 
         public void Refresh() => Changed?.Invoke(null);
 
+        /// <summary>
+        /// Testing hook (see <see cref="IUpgradeService.DebugForceUnlock"/>): claims a one-time
+        /// upgrade regardless of whether its task is done. Announces it like a real claim - so the
+        /// skill-point payout and every read-live reward take effect - and does nothing when it is
+        /// already claimed, so calling it twice never pays twice.
+        /// </summary>
+        public void DebugForceUnlock(OneTimeUpgradeDefinition definition)
+        {
+            if (definition == null || IsUnlocked(definition))
+                return;
+
+            Unlocked.Add(definition.Id);
+            _saveCoordinator.MarkDirty();
+            Changed?.Invoke(definition);
+        }
+
         // Created lazily the same way the album builds its pages: the container assembles this
         // before the async save load, so the save's collections cannot be touched until something
         // actually reads or writes state, which only happens once the player is in the room.

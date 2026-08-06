@@ -51,5 +51,13 @@ namespace Vesolovsky.Game.Services.Upgrades
         /// wanted.
         /// </summary>
         void Refresh();
+
+        /// <summary>
+        /// Testing hook: claims a one-time upgrade regardless of whether its task is done, so its
+        /// reward can be exercised without grinding out the sets. Announces it like a real claim - so
+        /// the skill-point payout and every read-live reward take effect - and does nothing when it is
+        /// already claimed. Reached from the cheats and the task row's editor button, never from play.
+        /// </summary>
+        void DebugForceUnlock(OneTimeUpgradeDefinition definition);
     }
 }
