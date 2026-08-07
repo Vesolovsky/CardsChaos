@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.UISystem.UIComponents;
 using Vesolovsky.Game.Upgrades;
+using Zenject;
 
 namespace Vesolovsky.Game.Views.Upgrades
 {
@@ -55,6 +57,13 @@ namespace Vesolovsky.Game.Views.Upgrades
         private LeveledUpgradeDefinition _definition;
         private float _defaultLabelAlpha = 1f;
         private Action _onInsufficientPoints;
+        private IAudioService _audioService;
+
+        [Inject]
+        private void Inject(IAudioService audioService)
+        {
+            _audioService = audioService;
+        }
 
         public void Bind(IUpgradesViewModel viewModel, LeveledUpgradeDefinition definition,
             bool isPermanent, Action onInsufficientPoints)
@@ -157,7 +166,10 @@ namespace Vesolovsky.Game.Views.Upgrades
             }
 
             if (_viewModel.TryLevelUp(_definition))
+            {
+                _audioService?.Play(AudioSFXKey.RewardUnlock);
                 Refresh(animate: true);
+            }
         }
 
         private void BuildLevels(int count)

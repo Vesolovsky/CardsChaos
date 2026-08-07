@@ -16,16 +16,12 @@ namespace Vesolovsky.Core.UISystem.UIComponents
             _audioService = audioService;
         }
 
-        public override void OnPointerUp(PointerEventData eventData)
-        {
-            base.OnPointerUp(eventData);
-            _audioService.Play(AudioSFXKey.ClickButtonUp);
-        }
-
         public override void OnPointerDown(PointerEventData eventData)
         {
             base.OnPointerDown(eventData);
-            _audioService.Play(AudioSFXKey.ClickButtonDown);
+
+            // One click sound, on press rather than release, for a more responsive feel.
+            _audioService.Play(AudioSFXKey.ButtonClick);
         }
     }
 }

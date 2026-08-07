@@ -1,6 +1,8 @@
 using System.Collections;
 using PrimeTween;
 using UnityEngine;
+using Vesolovsky.Core.Audio;
+using Zenject;
 
 namespace CardsChaos.Cards
 {
@@ -57,6 +59,14 @@ namespace CardsChaos.Cards
         private const int BodySolverVelocityIterations = 4;
         private const float BodyMaxDepenetrationVelocity = 1f;
 
+        // A card in flight touches down, then bounces and slides through a few more contacts before
+        // it settles. Only the first contact hard enough to be heard gets a sound, so one throw is
+        // one thwack rather than a rattle of every scrape on the way to rest. Tuned to the light,
+        // slow thrown card; smaller taps (a card nudging another as it beds in) stay silent.
+        private const float LandImpactSpeed = 0.25f;
+
+        private IAudioService _audioService;
+
         private Rigidbody _body;
         private BoxCollider _collider;
         private MeshFilter _meshFilter;
@@ -72,6 +82,10 @@ namespace CardsChaos.Cards
         // waits for the body to fall asleep and then freezes it out of the simulation for good.
         private Coroutine _settleWatch;
         private Coroutine _restingBodyRemoval;
+
+        // Cleared each time the card enters flight and set once the landing sound has played, so a
+        // single flight only ever produces one impact sound however many contacts it bounces through.
+        private bool _landSoundPlayed;
 
         public bool IsHeld { get; private set; }
 
@@ -108,6 +122,15 @@ namespace CardsChaos.Cards
             _renderer = GetComponent<MeshRenderer>();
             Identity = GetComponent<CardIdentity>();
             _defaultLayer = gameObject.layer;
+        }
+
+        // Optional: scene-placed cards are injected by the SceneContext and factory-spawned cards by
+        // the container. A card that somehow misses injection simply plays no landing sound rather
+        // than erroring - the sound is a flourish, never load-bearing.
+        [Inject]
+        private void Inject([InjectOptional] IAudioService audioService)
+        {
+            _audioService = audioService;
         }
 
         private void Start()
@@ -245,6 +268,9 @@ namespace CardsChaos.Cards
         public void BeginFlight()
         {
             Rigidbody body = EnsureBody();
+
+            // A fresh flight is allowed one landing sound again.
+            _landSoundPlayed = false;
 
             body.detectCollisions = true;
             body.useGravity = true;
@@ -525,6 +551,25 @@ namespace CardsChaos.Cards
 
             if (_rotationTween.isAlive)
                 _rotationTween.Stop();
+        }
+
+        /// <summary>
+        /// Plays the impact sound the first time a card in flight hits something hard enough to be
+        /// heard. Only dynamic (in-flight) cards report collisions at all - held cards are kinematic
+        /// triggers and resting cards have no body - so this cannot fire off a card sitting on the
+        /// table; the flag then keeps the rest of the bounce quiet.
+        /// </summary>
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (_landSoundPlayed || _audioService == null || IsHeld ||
+                _body == null || _body.isKinematic)
+                return;
+
+            if (collision.relativeVelocity.magnitude < LandImpactSpeed)
+                return;
+
+            _landSoundPlayed = true;
+            _audioService.Play(AudioSFXKey.CardLand);
         }
 
         private void OnDestroy()

@@ -126,11 +126,6 @@ namespace Vesolovsky.Core.UISystem
         {
             if (_isShown) return;
 
-            if(this is IPopup)
-            {
-                AudioService.Play(AudioSFXKey.PopupShow);
-            }
-
             if (!immediately && _viewAnimation == null)
             {
                 Debug.Log(
@@ -148,11 +143,6 @@ namespace Vesolovsky.Core.UISystem
         public virtual async UniTask Hide(CancellationToken ct, bool immediately = false)
         {
             if(_isShown == false) return;
-
-            if (this is IPopup)
-            {
-                AudioService.Play(AudioSFXKey.PopupHide);
-            }
 
             if (!immediately && _viewAnimation == null)
             {

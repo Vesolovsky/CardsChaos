@@ -3,6 +3,8 @@ using PrimeTween;
 using RoboRyanTron.SearchableEnum;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Vesolovsky.Core.Audio;
+using Zenject;
 
 namespace CardsChaos.Cards
 {
@@ -83,6 +85,14 @@ namespace CardsChaos.Cards
         private readonly List<Card> _cards = new List<Card>();
         private Card _selected;
         private CardHandLayout _layout = CardHandLayout.Pile;
+
+        private IAudioService _audioService;
+
+        [Inject]
+        private void Inject(IAudioService audioService)
+        {
+            _audioService = audioService;
+        }
 
         /// <summary>
         /// Raised whenever the hand gains, loses or reorders a card. The album mirrors the pile
@@ -183,6 +193,7 @@ namespace CardsChaos.Cards
             Relayout();
             Changed?.Invoke();
             PickedUp?.Invoke(card);
+            _audioService?.Play(AudioSFXKey.CardPickUp);
             return true;
         }
 
@@ -258,6 +269,7 @@ namespace CardsChaos.Cards
             Relayout();
             Changed?.Invoke();
             Thrown?.Invoke(thrown);
+            _audioService?.Play(AudioSFXKey.CardThrow);
         }
 
         /// <summary>
@@ -421,6 +433,10 @@ namespace CardsChaos.Cards
         public void ToggleLayout()
         {
             _layout = _layout == CardHandLayout.Pile ? CardHandLayout.Fan : CardHandLayout.Pile;
+
+            _audioService?.Play(_layout == CardHandLayout.Fan
+                ? AudioSFXKey.HandToFan
+                : AudioSFXKey.HandToPile);
 
             Transform anchor = ActiveAnchor;
             if (anchor == null)

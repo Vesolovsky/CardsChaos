@@ -63,6 +63,7 @@ namespace Vesolovsky.Core.UISystem.UIComponents
             base.OnPointerEnter(eventData);
             if(interactable)
             {
+                _audioService.Play(AudioSFXKey.ButtonHover);
                 PointerEnter?.Invoke();
             }
         }
@@ -76,21 +77,14 @@ namespace Vesolovsky.Core.UISystem.UIComponents
             }
         }
 
-        public override void OnPointerUp(PointerEventData eventData)
-        {
-            base.OnPointerUp(eventData);
-            if (interactable)
-            {
-                _audioService.Play(AudioSFXKey.ClickButtonUp);
-            }
-        }
-
         public override void OnPointerDown(PointerEventData eventData)
         {
             base.OnPointerDown(eventData);
-            if(interactable)
+            if (interactable)
             {
-                _audioService.Play(AudioSFXKey.ClickButtonDown);
+                // One click sound, on press rather than release - the button answers the instant it
+                // is pushed, which reads as more responsive than waiting for the finger to lift.
+                _audioService.Play(AudioSFXKey.ButtonClick);
             }
         }
 

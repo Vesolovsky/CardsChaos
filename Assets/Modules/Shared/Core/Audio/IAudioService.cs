@@ -8,15 +8,16 @@ namespace Vesolovsky.Core.Audio
         void Stop(uint playingId, int fadeMs = 0);
 
         /// <summary>
-        /// Sets an RTPC value normalized to the 0..1 range. Volume RTPCs are global;
-        /// the emitter argument is reserved for emitter-scoped RTPC implementations.
-        /// </summary>
-        void SetRtpc(AudioRTPCKey rtpcKey, float normalizedValue, GameObject emitter = null);
-
-        /// <summary>
         /// Set a global State (e.g., Music/Gameplay snapshot). Use for coarse, mode-like changes
-        /// such as Paused/Playing, Combat/Exploration, Carrying/Idle.
+        /// such as MainMenu vs Level.
         /// </summary>
         void SetState(AudioStateKey stateKey);
+
+        /// <summary>
+        /// Smoothly muffles or un-muffles the current music by sweeping a low-pass filter over it,
+        /// without changing the track. Used by the pause menu to drop the music "behind glass"
+        /// while it is up and bring it back when it closes.
+        /// </summary>
+        void SetMusicMuffled(bool muffled);
     }
 }

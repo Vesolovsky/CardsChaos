@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using CardsChaos.Cards;
 using UnityEngine;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.Services;
 using Vesolovsky.Game.Services.Upgrades;
 using Vesolovsky.Game.Upgrades;
@@ -22,17 +23,19 @@ namespace Vesolovsky.Game.Services.Skills
         private readonly ICameraService _cameraService;
         private readonly IWorldInteractionLock _worldLock;
         private readonly IUpgradeService _upgrades;
+        private readonly IAudioService _audioService;
         private readonly OneTimeUpgradeDefinition _bonus;
 
         [Inject]
         public CardMagnetSkill(
             CardHand hand, ICameraService cameraService, IWorldInteractionLock worldLock,
-            IUpgradeService upgrades, UpgradeCatalog catalog)
+            IUpgradeService upgrades, UpgradeCatalog catalog, IAudioService audioService)
         {
             _hand = hand;
             _cameraService = cameraService;
             _worldLock = worldLock;
             _upgrades = upgrades;
+            _audioService = audioService;
             _bonus = catalog.FindOneTime(OneTimeUpgradeKind.CardMagnetBonus);
         }
 
@@ -65,6 +68,9 @@ namespace Vesolovsky.Game.Services.Skills
                 if (_hand.PickUp(card))
                     pulled++;
             }
+
+            if (pulled > 0)
+                _audioService?.Play(AudioSFXKey.SkillCardMagnet);
 
             return pulled > 0;
         }

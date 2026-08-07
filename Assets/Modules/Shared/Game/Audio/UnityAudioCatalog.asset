@@ -12,6 +12,127 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16ff468fe7e742fbbaece133fe48c0f0, type: 3}
   m_Name: UnityAudioCatalog
   m_EditorClassIdentifier: 
-  sfx: []
-  music: []
-  musicStates: []
+  sfx:
+  - key: 517063
+    clips:
+    - {fileID: 8300000, guid: 9a10401910102354ea7d08b27914f228, type: 3}
+    - {fileID: 8300000, guid: f4ca22cf86cb63c47a7f89e45fbb0405, type: 3}
+    - {fileID: 8300000, guid: e4ccf4f2d24c0c1408a51905013e1e31, type: 3}
+    - {fileID: 8300000, guid: 85107a6d2c17e8a46a883930db53ddab, type: 3}
+    - {fileID: 8300000, guid: 828221fefa388594f9708c211bacaa38, type: 3}
+    - {fileID: 8300000, guid: 4acc6393ab8baa4428ce91dd888a1d3a, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 158360
+    clips:
+    - {fileID: 8300000, guid: bcb1d40fca95bad4691f0606c8f3507f, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 741529
+    clips:
+    - {fileID: 8300000, guid: 3756b8d10c505b94c873b9f344cb8108, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 319688
+    clips:
+    - {fileID: 8300000, guid: 35ee592d9a3d1a34dbf8d9a68e324ba4, type: 3}
+    - {fileID: 8300000, guid: b11aa86c7f7ffb74ca2f31a285c8e953, type: 3}
+    - {fileID: 8300000, guid: 1fbe1113f981c2243bfe83b4a3ce186b, type: 3}
+    - {fileID: 8300000, guid: 707d594fa2bc6164bbbe0bec3edc367e, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 210447
+    clips:
+    - {fileID: 8300000, guid: 4acc6393ab8baa4428ce91dd888a1d3a, type: 3}
+    - {fileID: 8300000, guid: 9a10401910102354ea7d08b27914f228, type: 3}
+    - {fileID: 8300000, guid: f4ca22cf86cb63c47a7f89e45fbb0405, type: 3}
+    - {fileID: 8300000, guid: e4ccf4f2d24c0c1408a51905013e1e31, type: 3}
+    - {fileID: 8300000, guid: 85107a6d2c17e8a46a883930db53ddab, type: 3}
+    - {fileID: 8300000, guid: 828221fefa388594f9708c211bacaa38, type: 3}
+    volume: 0.604
+    pitchRange: {x: 1, y: 1}
+  - key: 728394
+    clips:
+    - {fileID: 8300000, guid: 46155b58747225545a3b32ef96537764, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 574210
+    clips:
+    - {fileID: 8300000, guid: 381900db18850e543856392c1220ad01, type: 3}
+    - {fileID: 8300000, guid: 01d1d3efb11858d4cb6afb1f8ef288f6, type: 3}
+    - {fileID: 8300000, guid: a8b46f8f52fe33448a0d15adcefd57c7, type: 3}
+    - {fileID: 8300000, guid: 325d3f4c7fc2e6443af9b3de6fd5d03c, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 668931
+    clips:
+    - {fileID: 8300000, guid: 67541c43a1dc88e4098b88d36969d0b0, type: 3}
+    - {fileID: 8300000, guid: 07547e3123643934c9f757893632d496, type: 3}
+    - {fileID: 8300000, guid: e49d79f8f8a085542816bb4856a51fa4, type: 3}
+    - {fileID: 8300000, guid: f320aeb7a6d500941a247c6276cff989, type: 3}
+    volume: 0.447
+    pitchRange: {x: 1, y: 1}
+  - key: 293815
+    clips:
+    - {fileID: 8300000, guid: 20de417832683554a93a9999fb19fe94, type: 3}
+    - {fileID: 8300000, guid: 8c2537b96b964d5428753e2477027675, type: 3}
+    - {fileID: 8300000, guid: 8ed29a6478551a54b8758c389771cb25, type: 3}
+    - {fileID: 8300000, guid: 9750f8a071bd87b4892312f32adfd0d7, type: 3}
+    - {fileID: 8300000, guid: 73d86db8f37b0a646a7a7a228f688964, type: 3}
+    - {fileID: 8300000, guid: 07d3f24fdba4c57449c745f6134a0bff, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 482612
+    clips:
+    - {fileID: 8300000, guid: af776ce2219434d46802112e68517c01, type: 3}
+    - {fileID: 8300000, guid: b9a475c8e0731d64a973e4e0df8ea754, type: 3}
+    - {fileID: 8300000, guid: 99f61b2a40900a948ae37df2fa23349d, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 862051
+    clips:
+    - {fileID: 8300000, guid: 1c9af730edc588442ba31f5dd967a734, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 862051
+    clips:
+    - {fileID: 8300000, guid: 0620763a2f7a1914c91e50019b27f915, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 634829
+    clips:
+    - {fileID: 8300000, guid: 69ebc4b8dcdda3e4f96a7f93886cba8e, type: 3}
+    - {fileID: 8300000, guid: 32c0af8a2986fe149967fcebae8cff72, type: 3}
+    - {fileID: 8300000, guid: c834512e885bca64581978fce316a6f3, type: 3}
+    - {fileID: 8300000, guid: ea59d7ca24dc2d949862719ff97d3d4e, type: 3}
+    - {fileID: 8300000, guid: 06150127df68f3444892a1639e2e3c8d, type: 3}
+    - {fileID: 8300000, guid: 17767ac467f9fc74ca4c29d95157800b, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 903472
+    clips:
+    - {fileID: 8300000, guid: 1a8969b23632bea468fc8cd73b178b99, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 833517
+    clips:
+    - {fileID: 8300000, guid: 3756b8d10c505b94c873b9f344cb8108, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  - key: 611240
+    clips:
+    - {fileID: 8300000, guid: 69ebc4b8dcdda3e4f96a7f93886cba8e, type: 3}
+    - {fileID: 8300000, guid: 32c0af8a2986fe149967fcebae8cff72, type: 3}
+    - {fileID: 8300000, guid: c834512e885bca64581978fce316a6f3, type: 3}
+    - {fileID: 8300000, guid: ea59d7ca24dc2d949862719ff97d3d4e, type: 3}
+    - {fileID: 8300000, guid: 06150127df68f3444892a1639e2e3c8d, type: 3}
+    - {fileID: 8300000, guid: 17767ac467f9fc74ca4c29d95157800b, type: 3}
+    volume: 1
+    pitchRange: {x: 1, y: 1}
+  music:
+  - key: 697484
+    clip: {fileID: 8300000, guid: f7a19659295347946a490bd8a65321e1, type: 3}
+    volume: 1
+  musicStates:
+  - state: 315060
+    music: 697484

@@ -31,6 +31,9 @@ namespace Vesolovsky.Game.UISystem
                 case SettingsView:
                     return new SettingsViewDefinition();
 
+                case LetterView:
+                    return new LetterViewDefinition();
+
                 default:
                     Debug.Log($"Can't create default View Definition. View of type: '{view.GetType()}' not handled.");
                     return null;
@@ -64,6 +67,9 @@ namespace Vesolovsky.Game.UISystem
 
                 case ViewName.Settings:
                     return new SettingsViewDefinition();
+
+                case ViewName.Letter:
+                    return new LetterViewDefinition();
 
                 default:
                     Debug.Log($"Can't create default View Definition. ViewName: '{viewName}' not handled.");

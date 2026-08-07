@@ -66,6 +66,13 @@ namespace Vesolovsky.Game.Services.Save
         public PlayerStatsData PlayerStats { get; set; }
 
         /// <summary>
+        /// The ids of every letter the player has read. A letter is either read or not - once read it
+        /// stays read and its object no longer appears in the room. Null on a save written before
+        /// letters existed, which the letter collection reads as "nothing read yet".
+        /// </summary>
+        public List<string> CollectedLetters { get; set; }
+
+        /// <summary>
         /// Deep copy for the off-thread write. Every collection is a fresh instance so the writer
         /// thread never shares one with gameplay code; the elements are safe to share because none
         /// of them (AlbumPlacement, the saved-card records) is mutated in place after it is created.
@@ -94,6 +101,9 @@ namespace Vesolovsky.Game.Services.Save
                     ? null
                     : new List<SkillCooldownState>(SkillCooldowns),
                 PlayerStats = PlayerStats?.Clone(),
+                CollectedLetters = CollectedLetters == null
+                    ? null
+                    : new List<string>(CollectedLetters),
             };
         }
 
@@ -139,6 +149,7 @@ namespace Vesolovsky.Game.Services.Save
                 World = null,
                 SkillCooldowns = new List<SkillCooldownState>(),
                 PlayerStats = new PlayerStatsData(),
+                CollectedLetters = new List<string>(),
             };
         }
 
@@ -171,6 +182,9 @@ namespace Vesolovsky.Game.Services.Save
 
             // A new game starts its tally over, the same as its wallet and album.
             CurrentSave.PlayerStats = new PlayerStatsData();
+
+            // Every letter is unread again, so they all come back to the room on a fresh game.
+            CurrentSave.CollectedLetters?.Clear();
         }
     }
 }

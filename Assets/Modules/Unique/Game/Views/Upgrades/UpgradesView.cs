@@ -4,6 +4,7 @@ using PrimeTween;
 using UniRx;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.Services.Input;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
@@ -208,6 +209,7 @@ namespace Vesolovsky.Game.Views
         {
             if (isOpen)
             {
+                AudioService.Play(AudioSFXKey.UpgradesOpen);
                 RefreshItems();
                 Show(destroyCancellationToken).Forget();
             }

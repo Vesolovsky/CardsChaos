@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.Services.Input;
 using Vesolovsky.Core.Services.Settings;
 using Vesolovsky.Core.UISystem;
@@ -156,10 +157,62 @@ namespace Vesolovsky.Game.Views
             applyButton?.Bind(OnApply);
             closeButton?.Bind(OnClose);
 
+            // Sliders and dropdowns are plain Unity controls with no sound of their own; give them
+            // the same hover/click feedback VButton has built in. The buttons above already carry it.
+            // Sliders hover off the handle only, so sweeping the cursor along the track stays quiet;
+            // dropdowns sound off the whole control.
+            AddSliderAudio(mouseSensitivitySlider);
+            AddSliderAudio(masterVolumeSlider);
+            AddSliderAudio(musicVolumeSlider);
+            AddSliderAudio(sfxVolumeSlider);
+            AddControlAudio(qualityDropdown);
+            AddControlAudio(displayModeDropdown);
+            AddControlAudio(resolutionDropdown);
+            AddControlAudio(fpsLimitDropdown);
+
             if (ViewModel.InputDraft != null)
                 ViewModel.InputDraft.BindingChanged += OnDraftBindingChanged;
 
             _listenersBound = true;
+        }
+
+        /// <summary>
+        /// Attaches the shared pointer hover/click sound to a control at runtime, so the settings
+        /// prefab does not have to carry the component on every slider and dropdown by hand.
+        /// </summary>
+        /// <summary>Hover + click sound on the whole control - fine for compact controls like dropdowns.</summary>
+        private void AddControlAudio(Component control)
+        {
+            if (control == null)
+                return;
+
+            control.gameObject.AddComponent<PointerHoverAudio>().Initialize(AudioService);
+            control.gameObject.AddComponent<PointerClickAudio>().Initialize(AudioService);
+        }
+
+        /// <summary>
+        /// Sounds a slider without the whole track answering the cursor: the hover lives on the
+        /// grabbable handle alone, while the click sits on the slider root - next to the Slider
+        /// itself, where both pointer-down handlers run - rather than on the handle, where it would
+        /// swallow the press the Slider needs to start a drag.
+        /// </summary>
+        private void AddSliderAudio(Slider slider)
+        {
+            if (slider == null)
+                return;
+
+            RectTransform handle = slider.handleRect;
+            if (handle != null)
+            {
+                // The handle must be a raycast target to receive the hover; a handle you can grab
+                // normally already is, but assert it so the hover cannot silently miss.
+                if (handle.TryGetComponent(out Graphic handleGraphic))
+                    handleGraphic.raycastTarget = true;
+
+                handle.gameObject.AddComponent<PointerHoverAudio>().Initialize(AudioService);
+            }
+
+            slider.gameObject.AddComponent<PointerClickAudio>().Initialize(AudioService);
         }
 
         private static void PrepareVolumeSlider(Slider slider, UnityEngine.Events.UnityAction<float> listener)
@@ -555,6 +608,8 @@ namespace Vesolovsky.Game.Views
 
         private void OnQualityChanged(int index)
         {
+            AudioService.Play(AudioSFXKey.ButtonClick);
+
             if (QualitySettings.names.Length == 0)
                 return;
 
@@ -563,6 +618,8 @@ namespace Vesolovsky.Game.Views
 
         private void OnDisplayModeChanged(int index)
         {
+            AudioService.Play(AudioSFXKey.ButtonClick);
+
             if (index < 0 || index >= DisplayModes.Length)
                 return;
 
@@ -582,6 +639,8 @@ namespace Vesolovsky.Game.Views
 
         private void OnResolutionChanged(int index)
         {
+            AudioService.Play(AudioSFXKey.ButtonClick);
+
             if (index < 0 || index >= _resolutions.Count)
                 return;
 
@@ -600,6 +659,8 @@ namespace Vesolovsky.Game.Views
 
         private void OnFpsLimitChanged(int index)
         {
+            AudioService.Play(AudioSFXKey.ButtonClick);
+
             if (index >= 0 && index < FpsLimits.Length)
                 ViewModel.Draft.FpsLimit = FpsLimits[index];
         }

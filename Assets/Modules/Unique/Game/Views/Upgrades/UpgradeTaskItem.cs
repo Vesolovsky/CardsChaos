@@ -1,9 +1,11 @@
 using PrimeTween;
 using UnityEngine;
 using UnityEngine.UI;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.UISystem.UIComponents;
 using Vesolovsky.Game.Upgrades;
 using VInspector;
+using Zenject;
 
 namespace Vesolovsky.Game.Views.Upgrades
 {
@@ -54,6 +56,13 @@ namespace Vesolovsky.Game.Views.Upgrades
         private OneTimeUpgradeDefinition _definition;
         private float _fullFillWidth;
         private Tween _claimTween;
+        private IAudioService _audioService;
+
+        [Inject]
+        private void Inject(IAudioService audioService)
+        {
+            _audioService = audioService;
+        }
 
         public void Bind(IUpgradesViewModel viewModel, OneTimeUpgradeDefinition definition)
         {
@@ -153,6 +162,8 @@ namespace Vesolovsky.Game.Views.Upgrades
         private void PlayUnlockAnimation()
         {
             StopClaimTween();
+
+            _audioService?.Play(AudioSFXKey.RewardUnlock);
 
             if (unlockButton != null)
                 unlockButton.interactable = false;

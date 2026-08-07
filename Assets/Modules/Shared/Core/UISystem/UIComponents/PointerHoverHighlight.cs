@@ -3,10 +3,13 @@ using RoboRyanTron.SearchableEnum;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Vesolovsky.Core.Audio;
+using Zenject;
 
 namespace Vesolovsky.Core.UISystem.UIComponents
 {
-    public class PointerHoverHighlight : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+    public class PointerHoverHighlight : MonoBehaviour,
+        IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler
     {
         [Tooltip("The image that lights up. Its starting alpha is the lit alpha; it is dimmed to " +
                  "zero at start.")]
@@ -19,6 +22,13 @@ namespace Vesolovsky.Core.UISystem.UIComponents
 
         private float _litAlpha;
         private Tween _tween;
+        private IAudioService _audioService;
+
+        [Inject]
+        private void Inject(IAudioService audioService)
+        {
+            _audioService = audioService;
+        }
 
         private void Awake()
         {
@@ -34,12 +44,20 @@ namespace Vesolovsky.Core.UISystem.UIComponents
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            _audioService?.Play(AudioSFXKey.ButtonHover);
             FadeTo(_litAlpha, fadeInDuration);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
             FadeTo(0f, fadeOutDuration);
+        }
+
+        // These highlights sit on things the player can click but that are not VButtons, so they
+        // owe the same click sound a button gives - on press, to match the buttons' responsiveness.
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            _audioService?.Play(AudioSFXKey.ButtonClick);
         }
 
         private void OnDisable()

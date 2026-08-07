@@ -15,6 +15,15 @@ namespace Vesolovsky.Core.Audio
         private const float DefaultMinDistance = 1f;
         private const float DefaultMaxDistance = 30f;
 
+        // The music low-pass sweeps between "off" (well above hearing, so it colours nothing) and a
+        // muffled cutoff that reads as the music dropping behind glass while the pause menu is up.
+        private const float MusicLowPassOpen = 22000f;
+        private const float MusicLowPassMuffled = 700f;
+
+        // Framerate-independent exponential approach for the muffle sweep, run on unscaled time so it
+        // still animates while the pause menu has the game clock stopped.
+        private const float MusicLowPassSmoothing = 9f;
+
         private sealed class SfxPlayback
         {
             public AudioSource Source;
@@ -31,8 +40,14 @@ namespace Vesolovsky.Core.Audio
         private readonly Stack<AudioSource> _sfxPool = new Stack<AudioSource>();
         private readonly List<uint> _finishedSfx = new List<uint>();
 
+        // Keys already reported as having no clip, so a sound that fires often - a footstep, a card
+        // landing - complains once and then stays quiet rather than filling the console every frame.
+        private readonly HashSet<AudioSFXKey> _missingSfxReported = new HashSet<AudioSFXKey>();
+
         private GameObject _root;
         private AudioSource _musicSource;
+        private AudioLowPassFilter _musicLowPass;
+        private float _musicLowPassTarget = MusicLowPassOpen;
         private AudioMusicKey _currentMusicKey;
         private float _musicBaseVolume = 1f;
         private float _masterVolume = 1f;
@@ -70,14 +85,26 @@ namespace Vesolovsky.Core.Audio
 
         public uint Play(AudioSFXKey sfxKey, GameObject emitter = null)
         {
-            if (_disposed || sfxKey == AudioSFXKey.None || _catalog == null ||
-                !_catalog.TryGetSfx(sfxKey, out var clip, out var baseVolume))
+            if (_disposed || sfxKey == AudioSFXKey.None)
                 return 0;
+
+            if (_catalog == null || !_catalog.TryGetSfx(sfxKey, out var clip, out var baseVolume, out var pitch))
+            {
+                // The game carries on silently for this key; the error just flags the gap so the
+                // clip can be wired in later. Reported once per key so it never floods the console.
+                if (_missingSfxReported.Add(sfxKey))
+                    Debug.LogError(
+                        $"[{nameof(UnityAudioService)}] No audio clip for SFX key '{sfxKey}'. " +
+                        $"Add it to the {nameof(UnityAudioCatalog)}.");
+
+                return 0;
+            }
 
             EnsureInitialized();
 
             var source = AcquireSfxSource(emitter);
             source.clip = clip;
+            source.pitch = pitch;
             source.volume = CalculateSfxVolume(baseVolume, 1f);
 
             var playingId = NextPlayingId();
@@ -107,25 +134,16 @@ namespace Vesolovsky.Core.Audio
             playback.FadeStartFactor = playback.FadeFactor;
         }
 
-        public void SetRtpc(AudioRTPCKey rtpcKey, float normalizedValue, GameObject emitter = null)
+        public void SetMusicMuffled(bool muffled)
         {
-            var value = Mathf.Clamp01(normalizedValue);
+            if (_disposed)
+                return;
 
-            switch (rtpcKey)
-            {
-                case AudioRTPCKey.MasterVolume:
-                    _masterVolume = value;
-                    RefreshAllVolumes();
-                    break;
-                case AudioRTPCKey.MusicVolume:
-                    _musicVolume = value;
-                    RefreshMusicVolume();
-                    break;
-                case AudioRTPCKey.SfxVolume:
-                    _sfxVolume = value;
-                    RefreshSfxVolumes();
-                    break;
-            }
+            EnsureInitialized();
+
+            // Only the target moves here; Tick sweeps the actual cutoff toward it, so the muffle
+            // eases in and out rather than snapping the moment the menu opens or closes.
+            _musicLowPassTarget = muffled ? MusicLowPassMuffled : MusicLowPassOpen;
         }
 
         public void SetState(AudioStateKey stateKey)
@@ -161,7 +179,12 @@ namespace Vesolovsky.Core.Audio
 
         public void Tick()
         {
-            if (_disposed || _activeSfx.Count == 0)
+            if (_disposed)
+                return;
+
+            UpdateMusicLowPass();
+
+            if (_activeSfx.Count == 0)
                 return;
 
             _finishedSfx.Clear();
@@ -222,6 +245,7 @@ namespace Vesolovsky.Core.Audio
 
             _root = null;
             _musicSource = null;
+            _musicLowPass = null;
         }
 
         private void EnsureInitialized()
@@ -239,6 +263,12 @@ namespace Vesolovsky.Core.Audio
             ConfigureCommonSource(_musicSource);
             _musicSource.loop = true;
             _musicSource.spatialBlend = 0f;
+
+            // Sits idle above hearing so it colours nothing until the pause menu sweeps it down.
+            _musicLowPass = musicObject.AddComponent<AudioLowPassFilter>();
+            _musicLowPass.cutoffFrequency = MusicLowPassOpen;
+            _musicLowPass.lowpassResonanceQ = 1f;
+            _musicLowPassTarget = MusicLowPassOpen;
         }
 
         private AudioSource AcquireSfxSource(GameObject emitter)
@@ -320,11 +350,32 @@ namespace Vesolovsky.Core.Audio
             return Mathf.Clamp01(baseVolume * _sfxVolume * _masterVolume * fadeFactor);
         }
 
+        private void UpdateMusicLowPass()
+        {
+            if (_musicLowPass == null)
+                return;
+
+            float current = _musicLowPass.cutoffFrequency;
+            if (Mathf.Approximately(current, _musicLowPassTarget))
+                return;
+
+            float step = 1f - Mathf.Exp(-MusicLowPassSmoothing * Time.unscaledDeltaTime);
+            float next = Mathf.Lerp(current, _musicLowPassTarget, step);
+
+            // Snap the last sliver so the cutoff actually lands on the target and Tick can leave it
+            // alone rather than chasing it forever a fraction of a hertz short.
+            if (Mathf.Abs(next - _musicLowPassTarget) < 1f)
+                next = _musicLowPassTarget;
+
+            _musicLowPass.cutoffFrequency = next;
+        }
+
         private void ApplySettings(GameSettingsData settings)
         {
-            SetRtpc(AudioRTPCKey.MasterVolume, settings.MasterVolume);
-            SetRtpc(AudioRTPCKey.MusicVolume, settings.MusicVolume);
-            SetRtpc(AudioRTPCKey.SfxVolume, settings.SfxVolume);
+            _masterVolume = Mathf.Clamp01(settings.MasterVolume);
+            _musicVolume = Mathf.Clamp01(settings.MusicVolume);
+            _sfxVolume = Mathf.Clamp01(settings.SfxVolume);
+            RefreshAllVolumes();
         }
 
         private uint NextPlayingId()

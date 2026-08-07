@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using CardsChaos.Cards;
 using UnityEngine;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.Services;
 using Vesolovsky.Game.Upgrades;
 using Zenject;
@@ -26,6 +27,7 @@ namespace Vesolovsky.Game.Services.Skills
         private readonly IWorldInteractionLock _worldLock;
         private readonly ILevitateTargeting _targeting;
         private readonly LevitateSettings _settings;
+        private readonly IAudioService _audioService;
 
         [Inject]
         public LevitateSkill(
@@ -33,13 +35,15 @@ namespace Vesolovsky.Game.Services.Skills
             ICameraService cameraService,
             IWorldInteractionLock worldLock,
             ILevitateTargeting targeting,
-            LevitateSettings settings)
+            LevitateSettings settings,
+            IAudioService audioService)
         {
             _hand = hand;
             _cameraService = cameraService;
             _worldLock = worldLock;
             _targeting = targeting;
             _settings = settings;
+            _audioService = audioService;
         }
 
         public SkillId Id => SkillId.Levitate;
@@ -80,6 +84,9 @@ namespace Vesolovsky.Game.Services.Skills
                 driver.Begin(card, camera, _settings, hoverHeight);
                 raised++;
             }
+
+            if (raised > 0)
+                _audioService?.Play(AudioSFXKey.SkillLevitate);
 
             return raised > 0;
         }

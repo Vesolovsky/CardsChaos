@@ -10,5 +10,6 @@ namespace Vesolovsky.Game.UISystem
         GameplayHud = 300508,
         Pause = 444784,
         Settings = 305290,
+        Letter = 643611,
     }
 }

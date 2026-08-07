@@ -10,7 +10,7 @@ namespace Vesolovsky.Core.Audio
     {
         public uint Play(AudioSFXKey sfxKey, GameObject emitter = null) => 0;
         public void Stop(uint playingId, int fadeMs = 0) { }
-        public void SetRtpc(AudioRTPCKey rtpcKey, float normalizedValue, GameObject emitter = null) { }
         public void SetState(AudioStateKey stateKey) { }
+        public void SetMusicMuffled(bool muffled) { }
     }
 }

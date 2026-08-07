@@ -6,6 +6,7 @@ using PrimeTween;
 using RoboRyanTron.SearchableEnum;
 using UnityEngine;
 using UnityEngine.UI;
+using Vesolovsky.Core.Audio;
 using VInspector;
 using Zenject;
 
@@ -65,6 +66,7 @@ namespace Vesolovsky.Game.Views.Album
         private readonly List<AlbumCardSlot> _slots = new List<AlbumCardSlot>();
 
         private DiContainer _container;
+        private IAudioService _audioService;
         private AlbumDragController _drag;
         private IAlbumCardInspector _inspector;
         private ICardAlbum _album;
@@ -88,7 +90,11 @@ namespace Vesolovsky.Game.Views.Album
         private int SlotsPerPage => Mathf.Max(1, slotsPerPage);
 
         [Inject]
-        private void Inject(DiContainer container) => _container = container;
+        private void Inject(DiContainer container, IAudioService audioService)
+        {
+            _container = container;
+            _audioService = audioService;
+        }
 
         public void Initialize(
             AlbumDragController drag, IAlbumCardInspector inspector, ICardAlbum album,
@@ -178,6 +184,11 @@ namespace Vesolovsky.Game.Views.Album
             int page = slot.SlotIndex / SlotsPerPage;
             if (IsPageComplete(page))
                 PlayCompletion(page);
+
+            // Finishing the last card of a whole set is the bigger moment, and rides on top of the
+            // page-completion above when that same card also closed its page.
+            if (IsSetComplete())
+                _audioService?.Play(AudioSFXKey.AlbumSetComplete);
         }
 
         /// <summary>Whether every usable slot on a page holds the card that belongs in it.</summary>
@@ -195,6 +206,18 @@ namespace Vesolovsky.Game.Views.Album
             return true;
         }
 
+        /// <summary>Whether every usable slot in the open set - across all its pages - is filled correctly.</summary>
+        private bool IsSetComplete()
+        {
+            for (int i = 0; i < _slots.Count; i++)
+            {
+                if (_slots[i] != null && _slots[i].IsUsable && !_slots[i].HoldsCorrectCard)
+                    return false;
+            }
+
+            return true;
+        }
+
         /// <summary>
         /// The reward for finishing a page: each slot swells and settles in turn, and each one, as
         /// it lands back, gives the album a very light knock - a ripple of little breaths running
@@ -202,6 +225,8 @@ namespace Vesolovsky.Game.Views.Album
         /// </summary>
         private void PlayCompletion(int page)
         {
+            _audioService?.Play(AudioSFXKey.AlbumPageComplete);
+
             int start = page * SlotsPerPage;
             int end = Mathf.Min(start + SlotsPerPage, _slots.Count);
 
@@ -242,6 +267,11 @@ namespace Vesolovsky.Game.Views.Album
 
             int previousPage = PageIndex;
             PageIndex = index;
+
+            // Only a real turn is heard: the immediate jumps - opening a set, Smart Album Open
+            // landing on a page - are not the player flicking through, so they stay silent.
+            if (!immediately && previousPage != index)
+                _audioService?.Play(AudioSFXKey.AlbumPageChange);
 
             if (_slideTween.isAlive)
                 _slideTween.Stop();

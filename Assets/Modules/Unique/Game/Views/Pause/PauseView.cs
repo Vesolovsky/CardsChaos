@@ -166,7 +166,11 @@ namespace Vesolovsky.Game.Views
             // by the time the menu can come up it is current; reading it on open is enough.
             RefreshCollectionProgress();
 
-            AudioService.SetState(AudioStateKey.Music_Pause);
+            AudioService.Play(AudioSFXKey.PauseOpen);
+
+            // The level music keeps playing behind the menu, only muffled - a low-pass filter eased
+            // shut, which reads as the room going quiet while the game is held.
+            AudioService.SetMusicMuffled(true);
 
             Show(destroyCancellationToken).Forget();
         }
@@ -180,7 +184,8 @@ namespace Vesolovsky.Game.Views
             _isOpen = false;
             ReleaseRoom();
 
-            AudioService.SetState(AudioStateKey.Music_Level);
+            // Open the filter back up, so the music swells back to full behind the closing menu.
+            AudioService.SetMusicMuffled(false);
 
             Hide(destroyCancellationToken).Forget();
         }
@@ -317,10 +322,13 @@ namespace Vesolovsky.Game.Views
             if (_gameSettings != null)
                 _gameSettings.Applied -= OnSettingsApplied;
 
-            // A menu torn down while it is up must not leave the room locked, the skills gated or
-            // the clock stopped.
+            // A menu torn down while it is up must not leave the room locked, the skills gated, the
+            // clock stopped or the music stuck behind its muffle filter.
             if (_isOpen)
+            {
                 ReleaseRoom();
+                AudioService.SetMusicMuffled(false);
+            }
 
             base.OnDestroy();
         }

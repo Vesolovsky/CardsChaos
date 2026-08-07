@@ -5,6 +5,7 @@ using RoboRyanTron.SearchableEnum;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Vesolovsky.Core.Audio;
 using Zenject;
 
 namespace Vesolovsky.Game.Views.Album
@@ -119,6 +120,7 @@ namespace Vesolovsky.Game.Views.Album
         public event System.Action<AlbumCardSlot> CardFiledCorrectly;
 
         private DiContainer _container;
+        private IAudioService _audioService;
         private IAlbumMoves _moves;
         private CardArtworkResolver _artwork;
         private Canvas _canvas;
@@ -140,7 +142,11 @@ namespace Vesolovsky.Game.Views.Album
         public bool IsDragging => _source != null;
 
         [Inject]
-        private void Inject(DiContainer container) => _container = container;
+        private void Inject(DiContainer container, IAudioService audioService)
+        {
+            _container = container;
+            _audioService = audioService;
+        }
 
         public void Initialize(IAlbumMoves moves, CardArtworkResolver artwork)
         {
@@ -347,11 +353,13 @@ namespace Vesolovsky.Game.Views.Album
             // that one slot flinch, which reads as "that is not where this goes".
             if (card.BelongsAt(slot.PageSetId, slot.SlotIndex))
             {
+                _audioService.Play(AudioSFXKey.AlbumCardCorrect);
                 PlayImpactShake();
                 CardFiledCorrectly?.Invoke(slot);
             }
             else
             {
+                _audioService.Play(AudioSFXKey.AlbumCardWrong);
                 slot.PlayShake();
             }
         }

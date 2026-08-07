@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.Services.Input;
 using Zenject;
 
@@ -32,6 +33,12 @@ namespace Vesolovsky.Core.Services
         [Tooltip("Gap kept between the sphere and whatever it lands on, so the next sweep never " +
                  "starts flush against the surface.")]
         public float SkinWidth = 0.005f;
+
+        [Header("Footsteps")]
+        [Tooltip("World distance walked between footstep sounds. The room is small - a card is " +
+                 "0.063 wide - so this is a fraction of a metre; sprinting covers it faster, so " +
+                 "the cadence quickens on its own. 0 turns footstep sounds off.")]
+        public float FootstepStride = 0.6f;
     }
 
     /// <summary>
@@ -52,9 +59,14 @@ namespace Vesolovsky.Core.Services
         private readonly ICameraService _cameraService;
         private readonly IWorldInteractionLock _worldLock;
         private readonly CameraPanSettings _settings;
+        private readonly IAudioService _audioService;
         private readonly InputAction _sprint;
 
         private Vector3 _velocity;
+
+        // Distance walked since the last footstep sound, reset whenever the camera stops so the
+        // next step after a pause lands on a fresh stride rather than one begun before the stop.
+        private float _footstepDistance;
 
         /// <summary>
         /// Whether sprinting is available. Off until the game's Sprint upgrade is claimed and an
@@ -84,11 +96,13 @@ namespace Vesolovsky.Core.Services
             ICameraService cameraService,
             IWorldInteractionLock worldLock,
             CameraPanSettings settings,
-            IInputActions input)
+            IInputActions input,
+            IAudioService audioService)
         {
             _cameraService = cameraService;
             _worldLock = worldLock;
             _settings = settings;
+            _audioService = audioService;
             _sprint = input.Find(GameInputActions.Sprint);
         }
 
@@ -104,6 +118,7 @@ namespace Vesolovsky.Core.Services
             if (_worldLock.IsLocked)
             {
                 _velocity = Vector3.zero;
+                _footstepDistance = 0f;
                 return;
             }
 
@@ -111,7 +126,10 @@ namespace Vesolovsky.Core.Services
             Camera camera = _cameraService.MainCamera;
 
             if (keyboard == null || camera == null)
+            {
+                _footstepDistance = 0f;
                 return;
+            }
 
             Transform pivot = camera.transform;
 
@@ -141,6 +159,36 @@ namespace Vesolovsky.Core.Services
                 LastMoveDistance = moved.magnitude;
                 IsSprinting = sprinting && LastMoveDistance > 0f;
             }
+
+            AccumulateFootsteps();
+        }
+
+        /// <summary>
+        /// Totals the ground covered this frame and fires a footstep each time a full stride has
+        /// been walked. Sprinting eats the stride faster, so the steps quicken without any special
+        /// case here. A frame that covered nothing - stopped, or pressed into a wall - resets the
+        /// count so the cadence never resumes mid-stride after a pause.
+        /// </summary>
+        private void AccumulateFootsteps()
+        {
+            float stride = _settings.FootstepStride;
+
+            if (stride <= 0f || LastMoveDistance <= 0f)
+            {
+                _footstepDistance = 0f;
+                return;
+            }
+
+            _footstepDistance += LastMoveDistance;
+
+            if (_footstepDistance < stride)
+                return;
+
+            // One step per frame is plenty: at the room's scale a single frame never spans a whole
+            // stride, so carrying the remainder forward keeps the spacing even without a loop that
+            // could burst if the stride were ever set very small.
+            _footstepDistance -= stride;
+            _audioService?.Play(AudioSFXKey.Footstep);
         }
 
         /// <summary>

@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.Services.Input;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
@@ -457,6 +458,8 @@ namespace Vesolovsky.Game.Views
 
             if (isOpen)
             {
+                AudioService.Play(AudioSFXKey.AlbumOpen);
+
                 // Read the album afresh on every open. The view is built once at scene start, which
                 // can be before the async save load finishes, so the slots and counters it showed
                 // then may be stale-empty; opening always happens long after the save is in.
