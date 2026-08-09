@@ -83,12 +83,24 @@ namespace Vesolovsky.Game.Letters
             // Take the room, so the camera and the card table fall quiet behind the open letter.
             _worldHandle = _worldLock.Acquire(this);
 
-            // Resolve who left it: their name signs the note, their handwriting is the font.
-            LetterAuthorInfo authorInfo = _settings?.GetAuthor(letter.Author);
-            string signature = authorInfo != null ? authorInfo.DisplayName : string.Empty;
-            TMP_FontAsset font = authorInfo != null ? authorInfo.Font : null;
+            // The certificate carries a fixed message in the view, so it needs no author or body.
+            // A normal letter resolves who left it: their name signs the note, their hand is the font.
+            LetterViewModelInitData initData;
+            if (letter.IsCertificate)
+            {
+                initData = new LetterViewModelInitData(
+                    string.Empty, string.Empty, null, isCertificate: true, RequestClose);
+            }
+            else
+            {
+                LetterAuthorInfo authorInfo = _settings?.GetAuthor(letter.Author);
+                string signature = authorInfo != null ? authorInfo.DisplayName : string.Empty;
+                TMP_FontAsset font = authorInfo != null ? authorInfo.Font : null;
 
-            var initData = new LetterViewModelInitData(letter.Body, signature, font, RequestClose);
+                initData = new LetterViewModelInitData(
+                    letter.Body, signature, font, isCertificate: false, RequestClose);
+            }
+
             OpenViewAsync(++_generation, initData).Forget();
 
             return true;

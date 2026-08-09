@@ -55,6 +55,10 @@ namespace Vesolovsky.Game.Services.Upgrades
             // a screen that lives in its own context.
             Container.Bind<IGameplayPanels>().To<GameplayPanels>().AsSingle();
 
+            // The reverse line: a scene service raising a HUD hint (e.g. the letter-arrival service
+            // announcing "New letter arrived"). Bound beside the panels channel for the same reason.
+            Container.Bind<IHudHints>().To<HudHints>().AsSingle();
+
             // Read by the skill input, set by the upgrades view while it is open.
             Container.Bind<ISkillGate>().To<SkillGate>().AsSingle();
 

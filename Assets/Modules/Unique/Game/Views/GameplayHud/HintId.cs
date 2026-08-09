@@ -27,5 +27,11 @@ namespace Vesolovsky.Game.Views.GameplayHud
 
         /// <summary>Shown when the Levitate skill is first unlocked (its "Is this magic?..." task claimed).</summary>
         LevitateReady,
+
+        /// <summary>Shown when a letter slides into the room. Always-on (not silenced by "Show hints").</summary>
+        NewLetterArrived,
+
+        /// <summary>Shown when the endgame card slides out, once the collection is complete. Always-on.</summary>
+        FinalCardArrived,
     }
 }

@@ -14,16 +14,18 @@ namespace Vesolovsky.Game.Views
         public string Body { get; }
         public string Signature { get; }
         public TMP_FontAsset Font { get; }
+        public bool IsCertificate { get; }
 
         /// <summary>Invoked when the view asks to be closed - clicking the dimmed backdrop.</summary>
         public Action CloseRequested { get; }
 
         public LetterViewModelInitData(string body, string signature, TMP_FontAsset font,
-            Action closeRequested)
+            bool isCertificate, Action closeRequested)
         {
             Body = body;
             Signature = signature;
             Font = font;
+            IsCertificate = isCertificate;
             CloseRequested = closeRequested;
         }
     }
@@ -33,6 +35,7 @@ namespace Vesolovsky.Game.Views
         public string Body { get; private set; }
         public string Signature { get; private set; }
         public TMP_FontAsset Font { get; private set; }
+        public bool IsCertificate { get; private set; }
 
         private Action _closeRequested;
 
@@ -43,6 +46,7 @@ namespace Vesolovsky.Game.Views
                 Body = data.Body ?? string.Empty;
                 Signature = data.Signature ?? string.Empty;
                 Font = data.Font;
+                IsCertificate = data.IsCertificate;
                 _closeRequested = data.CloseRequested;
             }
 

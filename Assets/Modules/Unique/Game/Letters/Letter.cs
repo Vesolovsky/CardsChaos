@@ -32,6 +32,11 @@ namespace Vesolovsky.Game.Letters
         [Tooltip("The environmental story printed on the letter.")]
         [SerializeField] private string body;
 
+        [Tooltip("The endgame certificate. When on, opening this letter shows the certificate state " +
+                 "of the letter view (the Certificate object) instead of the note text, and Author/" +
+                 "Body above are ignored - the certificate's message is fixed in the view.")]
+        [SerializeField] private bool certificate;
+
         // One renderer for a plain prop, or one per LOD level. An LOD Group leaves only the current
         // level's renderer enabled, so the outline has to trace whichever that is.
         private MeshRenderer[] _renderers;
@@ -42,6 +47,9 @@ namespace Vesolovsky.Game.Letters
         public LetterAuthor Author => author;
 
         public string Body => body;
+
+        /// <summary>Whether this is the endgame certificate letter (opens the view in certificate mode).</summary>
+        public bool IsCertificate => certificate;
 
         /// <summary>The renderer currently drawing the letter - the enabled LOD, or the only one.</summary>
         public MeshRenderer OutlineRenderer

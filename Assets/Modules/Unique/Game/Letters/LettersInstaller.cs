@@ -28,6 +28,10 @@ namespace Vesolovsky.Game.Letters
             // even though nothing resolves it directly.
             Container.BindInterfacesAndSelfTo<LetterCollection>().AsSingle().NonLazy();
 
+            // NonLazy so it starts watching for milestones and restores the arrival queue on load
+            // without anything resolving it.
+            Container.BindInterfacesTo<LetterAppearanceService>().AsSingle().NonLazy();
+
             Container.BindInterfacesTo<LetterInspector>().AsSingle();
             Container.BindInterfacesTo<LetterInteractionController>().AsSingle();
         }

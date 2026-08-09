@@ -15,6 +15,12 @@ namespace Vesolovsky.Game.Views
         TMP_FontAsset Font { get; }
 
         /// <summary>
+        /// The endgame certificate state: hide the note content, show the Certificate object, and
+        /// ignore Body/Signature/Font (the certificate's message is fixed in the prefab).
+        /// </summary>
+        bool IsCertificate { get; }
+
+        /// <summary>
         /// Asks whoever opened the letter to close it - raised by clicking the dimmed backdrop, and
         /// handled the same way as Escape (the inspector unloads the view and hands the room back).
         /// </summary>

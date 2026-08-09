@@ -8,6 +8,7 @@ using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Services.Skills;
 using Vesolovsky.Game.Services.Upgrades;
 using Vesolovsky.Game.Upgrades;
+using Vesolovsky.Game.Views.GameplayHud;
 using Zenject;
 
 namespace Vesolovsky.Game.Views
@@ -28,6 +29,7 @@ namespace Vesolovsky.Game.Views
         private readonly IUpgradeService _upgrades;
         private readonly UpgradeCatalog _catalog;
         private readonly IGameplayPanels _panels;
+        private readonly IHudHints _hudHints;
         private readonly IInputActions _input;
         private readonly IGameSettingsService _settings;
         private readonly ILevitateTargeting _levitateTargeting;
@@ -36,6 +38,8 @@ namespace Vesolovsky.Game.Views
         public event Action SkillsChanged;
         public event Action BindingsChanged;
         public event Action HintsEnabledChanged;
+        public event Action<SkillId> SkillActivated;
+        public event Action<HintId> HintRaised;
 
         public CardHand Hand => _hand;
 
@@ -50,6 +54,7 @@ namespace Vesolovsky.Game.Views
             IUpgradeService upgrades,
             UpgradeCatalog catalog,
             [InjectOptional] IGameplayPanels panels,
+            [InjectOptional] IHudHints hudHints,
             [InjectOptional] IInputActions input,
             [InjectOptional] IGameSettingsService settings,
             [InjectOptional] ILevitateTargeting levitateTargeting)
@@ -59,12 +64,17 @@ namespace Vesolovsky.Game.Views
             _upgrades = upgrades;
             _catalog = catalog;
             _panels = panels;
+            _hudHints = hudHints;
             _input = input;
             _settings = settings;
             _levitateTargeting = levitateTargeting;
             _levitatePulse = catalog != null ? catalog.FindOneTime(OneTimeUpgradeKind.LevitatePulse) : null;
 
             _upgrades.Changed += OnUpgradesChanged;
+            _skills.Activated += OnSkillActivated;
+
+            if (_hudHints != null)
+                _hudHints.Raised += OnHintRaised;
 
             if (_input != null)
                 _input.BindingsChanged += OnBindingsChanged;
@@ -123,6 +133,10 @@ namespace Vesolovsky.Game.Views
         public override void Dispose()
         {
             _upgrades.Changed -= OnUpgradesChanged;
+            _skills.Activated -= OnSkillActivated;
+
+            if (_hudHints != null)
+                _hudHints.Raised -= OnHintRaised;
 
             if (_input != null)
                 _input.BindingsChanged -= OnBindingsChanged;
@@ -136,6 +150,10 @@ namespace Vesolovsky.Game.Views
         // The upgrade service reports the definition that changed (or null for "assume all"); the
         // HUD only cares that something moved, so it re-reads every skill's owned state.
         private void OnUpgradesChanged(UpgradeDefinition _) => SkillsChanged?.Invoke();
+
+        private void OnSkillActivated(SkillId id) => SkillActivated?.Invoke(id);
+
+        private void OnHintRaised(HintId id) => HintRaised?.Invoke(id);
 
         private void OnBindingsChanged() => BindingsChanged?.Invoke();
 

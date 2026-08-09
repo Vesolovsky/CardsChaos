@@ -56,6 +56,11 @@ namespace Vesolovsky.Game.Views.GameplayHud
             [Tooltip("On for a one-time teaching nudge, shown at most once a scene; off for a hint " +
                      "that may recur, like a skill announcing itself ready each time it comes off cooldown.")]
             public bool OneTime = true;
+
+            [Tooltip("On (the default) for a hint the 'Show hints' setting can silence - the teaching " +
+                     "nudges and skill-ready calls. Off for a hint that must always show whatever the " +
+                     "setting says, like a letter arriving.")]
+            public bool Disableable = true;
         }
 
         [Header("Display")]
@@ -119,8 +124,20 @@ namespace Vesolovsky.Game.Views.GameplayHud
             if (_enabled)
                 return;
 
+            // Turning hints off drops the disable-able ones still waiting, but keeps any always-on
+            // hint (Disableable == false, e.g. "New letter arrived") queued so it still plays.
+            var kept = new Queue<HintDefinition>();
+            foreach (HintDefinition definition in _queue)
+            {
+                if (definition.Disableable)
+                    _pending.Remove(definition.Id);
+                else
+                    kept.Enqueue(definition);
+            }
+
             _queue.Clear();
-            _pending.Clear();
+            foreach (HintDefinition definition in kept)
+                _queue.Enqueue(definition);
         }
 
         /// <summary>
@@ -131,15 +148,17 @@ namespace Vesolovsky.Game.Views.GameplayHud
         /// </summary>
         public void Show(HintId id)
         {
-            if (!_enabled)
-                return;
-
             HintDefinition definition = Find(id);
             if (definition == null)
             {
                 Debug.LogWarning($"[{nameof(HudHint)}] No hint is authored for id '{id}'.", this);
                 return;
             }
+
+            // A disable-able hint is silenced while "Show hints" is off; an always-on hint ignores
+            // the setting and plays regardless.
+            if (!_enabled && definition.Disableable)
+                return;
 
             if (definition.OneTime && _seen.Contains(id))
                 return;

@@ -36,10 +36,11 @@ namespace Vesolovsky.Game.Views
         [Header("Skills")]
         [SerializeField] private HudSkillButton[] skillButtons;
 
-        // The skills that can announce themselves ready, and the hint each raises. A skill's ready
-        // state is polled; each time it turns ready - unlocked, or a cooldown just ended - its hint
-        // is raised. The state a skill loads in is seeded without a hint, so an already-ready skill
-        // does not announce itself the instant the scene opens.
+        // The skills that can announce themselves ready, and the hint each raises. The hint plays
+        // only after the player has actually used the skill and its cooldown then ends: using it
+        // arms the skill, the poll fires (and disarms) the hint on the next turn to ready. So an
+        // already-ready skill on entry, or a fresh unlock, stays silent - only a used-then-cooled
+        // skill calls out.
         private static readonly (SkillId Skill, HintId Hint)[] SkillHints =
         {
             (SkillId.CardMagnet, HintId.CardMagnetReady),
@@ -49,6 +50,9 @@ namespace Vesolovsky.Game.Views
         };
 
         private readonly bool[] _skillReady = new bool[SkillHints.Length];
+
+        // Set when a skill fires, cleared when its ready hint plays - so the hint is tied to a use.
+        private readonly bool[] _skillArmed = new bool[SkillHints.Length];
 
         private int _shownCount = -1;
         private int _shownMax = -1;
@@ -107,9 +111,24 @@ namespace Vesolovsky.Game.Views
             ViewModel.SkillsChanged += OnSkillsChanged;
             ViewModel.BindingsChanged += RefreshBindings;
             ViewModel.HintsEnabledChanged += OnHintsEnabledChanged;
+            ViewModel.SkillActivated += OnSkillActivated;
+            ViewModel.HintRaised += OnHintRaised;
 
             _wired = true;
         }
+
+        // A used skill arms its ready hint; the poll fires it once the cooldown ends.
+        private void OnSkillActivated(SkillId id)
+        {
+            for (int i = 0; i < SkillHints.Length; i++)
+            {
+                if (SkillHints[i].Skill == id)
+                    _skillArmed[i] = true;
+            }
+        }
+
+        // A scene service (e.g. a letter arriving) asked for a hint; put it on the shared queue.
+        private void OnHintRaised(HintId id) => hint?.Show(id);
 
         private void OnHintsEnabledChanged() => hint?.SetEnabled(ViewModel.HintsEnabled);
 
@@ -169,8 +188,8 @@ namespace Vesolovsky.Game.Views
         }
 
         /// <summary>
-        /// Records each skill's ready state as the scene loads, so a skill that is already ready
-        /// then does not raise its hint on the first frame - only a fresh turn to ready does.
+        /// Records each skill's ready state as the scene loads, so the first poll sees no phantom
+        /// turn-to-ready. Nothing is armed yet, so this alone never raises a hint.
         /// </summary>
         private void SeedSkillReady()
         {
@@ -179,8 +198,9 @@ namespace Vesolovsky.Game.Views
         }
 
         /// <summary>
-        /// Raises a skill's "ready" hint on the frame it turns ready - whether that is its unlock or
-        /// a cooldown ending. The hint is a recurring one, so it plays each time round.
+        /// Raises a skill's "ready" hint on the frame its cooldown ends - but only for a skill the
+        /// player has used since (armed on activation). Firing disarms it, so each use earns one
+        /// "ready" call and an unused or freshly-unlocked skill stays quiet.
         /// </summary>
         private void PollSkillReady()
         {
@@ -191,8 +211,11 @@ namespace Vesolovsky.Game.Views
             {
                 bool ready = ViewModel.IsSkillReady(SkillHints[i].Skill);
 
-                if (ready && !_skillReady[i])
+                if (ready && !_skillReady[i] && _skillArmed[i])
+                {
                     hint.Show(SkillHints[i].Hint);
+                    _skillArmed[i] = false;
+                }
 
                 _skillReady[i] = ready;
             }
@@ -242,6 +265,8 @@ namespace Vesolovsky.Game.Views
                 ViewModel.SkillsChanged -= OnSkillsChanged;
                 ViewModel.BindingsChanged -= RefreshBindings;
                 ViewModel.HintsEnabledChanged -= OnHintsEnabledChanged;
+                ViewModel.SkillActivated -= OnSkillActivated;
+                ViewModel.HintRaised -= OnHintRaised;
             }
 
             base.OnDestroy();

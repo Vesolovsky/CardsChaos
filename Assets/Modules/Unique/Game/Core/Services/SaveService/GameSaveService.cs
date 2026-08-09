@@ -73,6 +73,19 @@ namespace Vesolovsky.Game.Services.Save
         public List<string> CollectedLetters { get; set; }
 
         /// <summary>
+        /// The queue of letters that have been triggered but not yet read, in arrival order - index 0
+        /// is the one currently in the room, the rest wait behind it. Lets timed arrivals survive a
+        /// quit mid-queue. Null/empty means nothing is waiting.
+        /// </summary>
+        public List<string> PendingLetters { get; set; }
+
+        /// <summary>
+        /// Whether the endgame card has been released (slid out) after every counted card was filed.
+        /// Kept so it is not released twice and so a reload knows it is already out in the room.
+        /// </summary>
+        public bool EpilogueCardReleased { get; set; }
+
+        /// <summary>
         /// Deep copy for the off-thread write. Every collection is a fresh instance so the writer
         /// thread never shares one with gameplay code; the elements are safe to share because none
         /// of them (AlbumPlacement, the saved-card records) is mutated in place after it is created.
@@ -104,6 +117,10 @@ namespace Vesolovsky.Game.Services.Save
                 CollectedLetters = CollectedLetters == null
                     ? null
                     : new List<string>(CollectedLetters),
+                PendingLetters = PendingLetters == null
+                    ? null
+                    : new List<string>(PendingLetters),
+                EpilogueCardReleased = EpilogueCardReleased,
             };
         }
 
@@ -150,6 +167,8 @@ namespace Vesolovsky.Game.Services.Save
                 SkillCooldowns = new List<SkillCooldownState>(),
                 PlayerStats = new PlayerStatsData(),
                 CollectedLetters = new List<string>(),
+                PendingLetters = new List<string>(),
+                EpilogueCardReleased = false,
             };
         }
 
@@ -185,6 +204,10 @@ namespace Vesolovsky.Game.Services.Save
 
             // Every letter is unread again, so they all come back to the room on a fresh game.
             CurrentSave.CollectedLetters?.Clear();
+
+            // No letters waiting, and the endgame card is back behind its door.
+            CurrentSave.PendingLetters?.Clear();
+            CurrentSave.EpilogueCardReleased = false;
         }
     }
 }

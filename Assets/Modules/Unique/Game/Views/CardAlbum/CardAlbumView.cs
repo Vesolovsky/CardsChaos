@@ -303,6 +303,11 @@ namespace Vesolovsky.Game.Views
                     continue;
                 }
 
+                // The endgame set sits outside the collection and gets no category here - it is
+                // reached only through its own special album state, never the normal set list.
+                if (!set.CountsTowardCollection)
+                    continue;
+
                 AlbumSetButton button = _container.InstantiatePrefabForComponent<AlbumSetButton>(
                     setButtonPrefab, setButtonsContainer);
 

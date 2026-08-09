@@ -3813,6 +3813,7 @@ MonoBehaviour:
     StartDelay: 0
     HoldDuration: 3
     OneTime: 1
+    Disableable: 1
   - Id: 0
     Text: <b>[RMB]</b> + Drag to rotate camera
     ActionName: 
@@ -3820,6 +3821,7 @@ MonoBehaviour:
     StartDelay: 2
     HoldDuration: 3
     OneTime: 1
+    Disableable: 1
   - Id: 3
     Text: Card Magnet is ready - press <b>[{0}]</b> to use it
     ActionName: CardMagnet
@@ -3827,6 +3829,7 @@ MonoBehaviour:
     StartDelay: 0
     HoldDuration: 1
     OneTime: 0
+    Disableable: 0
   - Id: 5
     Text: Hand Sort is ready - press <b>[{0}]</b> to use it
     ActionName: HandSort
@@ -3834,6 +3837,7 @@ MonoBehaviour:
     StartDelay: 0
     HoldDuration: 1
     OneTime: 0
+    Disableable: 0
   - Id: 4
     Text: Smart Album Open is ready - press <b>[{0}]</b> to use it
     ActionName: SmartAlbumOpen
@@ -3841,6 +3845,7 @@ MonoBehaviour:
     StartDelay: 0
     HoldDuration: 1
     OneTime: 0
+    Disableable: 0
   - Id: 2
     Text: Scroll the <b>mouse wheel</b> to cycle through your cards
     ActionName: 
@@ -3848,6 +3853,7 @@ MonoBehaviour:
     StartDelay: 0
     HoldDuration: 3
     OneTime: 1
+    Disableable: 1
   - Id: 6
     Text: Levitate is ready - press <b>[{0}]</b> to use it
     ActionName: Levitate
@@ -3855,6 +3861,23 @@ MonoBehaviour:
     StartDelay: 0
     HoldDuration: 1
     OneTime: 0
+    Disableable: 0
+  - Id: 7
+    Text: New letter arrived near one of the doors
+    ActionName: 
+    Icon: {fileID: 0}
+    StartDelay: 0
+    HoldDuration: 5
+    OneTime: 0
+    Disableable: 0
+  - Id: 8
+    Text: Final cardarrived near one of the doors
+    ActionName: 
+    Icon: {fileID: 0}
+    StartDelay: 0
+    HoldDuration: 5
+    OneTime: 0
+    Disableable: 0
   fadeInDuration: 0.4
   fadeOutDuration: 0.5
   gapDuration: 0.3

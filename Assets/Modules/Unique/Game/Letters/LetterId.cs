@@ -12,6 +12,18 @@ namespace Vesolovsky.Game.Letters
     public enum LetterId
     {
         TheGranCollector_WelcomeLetter = 483920,
+        TheGranCollector_UnderBigPileLetter = 958118,
+        TheGranCollector_TheRightPage = 483419,
+        TheGranCollector_GotCarriedAway = 947577,
+        TheGranCollector_LoveLetterHesitate = 526538,
+        TheGranCollector_LoveLetter = 951623,
+        TheGranCollector_WasThatMagic = 206349,
+        TheGranCollector_IrritatedProgress = 589296,
+        TheGranCollector_Admire = 852974,
         Mira_WelcomeLetter = 617254,
+        Mira_IgnoreGrandCollector = 774628,
+        Mira_FinishTheCollection = 720174,
+        Mira_UniqueWands = 732591,
+        CertificateLetter = 206692,
     }
 }

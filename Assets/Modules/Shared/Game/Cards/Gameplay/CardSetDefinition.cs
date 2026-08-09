@@ -21,6 +21,11 @@ namespace CardsChaos.Cards
                  "cached Sprite wrapper around this same texture when they need to flip a card.")]
         [SerializeField] private Texture2D backArtwork;
 
+        [Tooltip("On for a normal set that counts toward collection progress. Off for a set that " +
+                 "sits outside the collection - the one-card endgame set - so its card is not part " +
+                 "of the 'all cards filed' total.")]
+        [SerializeField] private bool countsTowardCollection = true;
+
         [SerializeField] private List<GameObject> cards = new List<GameObject>();
 
         // NonSerialized for the same reason as in CardCatalog: Unity serializes private
@@ -29,6 +34,12 @@ namespace CardsChaos.Cards
         [System.NonSerialized] private Dictionary<int, CardIdentity> _byNumber;
 
         public string SetId => setId;
+
+        /// <summary>
+        /// Whether this set is part of the collection the player is completing. False for the
+        /// endgame set, whose single card must not swell the "all cards filed" total.
+        /// </summary>
+        public bool CountsTowardCollection => countsTowardCollection;
 
         /// <summary>
         /// Falls back to the id so a set that has not been through the naming pass still shows

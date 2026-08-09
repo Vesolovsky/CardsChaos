@@ -128,6 +128,11 @@ namespace Vesolovsky.Game.Views
 
         public bool TryReturnToHand(AlbumCardSlot slot)
         {
+            // Once the collection is complete the album is sealed - the game is ending, so no card
+            // is ever lifted back out.
+            if (IsCollectionComplete())
+                return false;
+
             if (slot == null || slot.IsEmpty)
                 return false;
 
@@ -205,6 +210,25 @@ namespace Vesolovsky.Game.Views
 
             _album.Place(slot.PageSetId, slot.SlotIndex, card);
             return true;
+        }
+
+        // Every counting card sitting in its slot. Read straight off the album and catalog rather
+        // than the stats snapshot, so the seal takes effect the instant the last card lands.
+        private bool IsCollectionComplete()
+        {
+            int total = 0;
+            int correct = 0;
+
+            foreach (CardSetDefinition set in _catalog.Sets)
+            {
+                if (set == null || !set.CountsTowardCollection)
+                    continue;
+
+                total += set.CardCount;
+                correct += _album.CountCorrect(set.SetId);
+            }
+
+            return total > 0 && correct >= total;
         }
 
         private void OnAlbumPageChanged(string setId) => AlbumChanged?.Invoke(setId);

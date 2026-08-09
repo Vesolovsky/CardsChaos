@@ -11,6 +11,9 @@ namespace Vesolovsky.Game.Letters
 {
     public interface ILetterCollection
     {
+        /// <summary>Raised when a letter is newly marked read - the arrival queue advances on it.</summary>
+        event Action<LetterId> Collected;
+
         /// <summary>Whether this letter has already been read in this or a past session.</summary>
         bool IsCollected(LetterId id);
 
@@ -27,6 +30,8 @@ namespace Vesolovsky.Game.Letters
     /// </summary>
     public class LetterCollection : ILetterCollection, IInitializable, IDisposable
     {
+        public event Action<LetterId> Collected;
+
         private readonly ISaveService<GameSave> _saveService;
         private readonly ISaveCoordinator _saveCoordinator;
         private readonly CancellationTokenSource _applyCts = new CancellationTokenSource();
@@ -53,19 +58,20 @@ namespace Vesolovsky.Game.Letters
 
         public bool IsCollected(LetterId id)
         {
-            List<string> collected = Collected;
+            List<string> collected = CollectedLetters;
             return collected != null && collected.Contains(Key(id));
         }
 
         public void MarkCollected(LetterId id)
         {
-            List<string> collected = Collected;
+            List<string> collected = CollectedLetters;
             string key = Key(id);
             if (collected == null || collected.Contains(key))
                 return;
 
             collected.Add(key);
             _saveCoordinator.MarkDirty();
+            Collected?.Invoke(id);
         }
 
         private async UniTask HideCollectedWhenLoaded(CancellationToken token)
@@ -107,7 +113,7 @@ namespace Vesolovsky.Game.Letters
         /// first use for a save written before letters existed - the same lazy-fill the album and the
         /// stats tally use - so an old save simply starts with nothing read.
         /// </summary>
-        private List<string> Collected
+        private List<string> CollectedLetters
         {
             get
             {

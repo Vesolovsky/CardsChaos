@@ -237,12 +237,17 @@ namespace Vesolovsky.Game.Services.Stats
             if (_catalog == null || _album == null)
                 return;
 
-            int total = _catalog.Cards.Count;
+            // Sets flagged out of the collection (the endgame set) count toward neither the total nor
+            // the filed tally, so "all cards filed" is reached without ever placing the endgame card.
+            int total = 0;
             int correct = 0;
             foreach (CardSetDefinition set in _catalog.Sets)
             {
-                if (set != null)
-                    correct += _album.CountCorrect(set.SetId);
+                if (set == null || !set.CountsTowardCollection)
+                    continue;
+
+                total += set.CardCount;
+                correct += _album.CountCorrect(set.SetId);
             }
 
             bool peakRose = correct > stats.PeakCorrectlyPlaced;

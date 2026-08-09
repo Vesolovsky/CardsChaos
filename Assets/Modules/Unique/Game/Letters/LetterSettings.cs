@@ -44,6 +44,20 @@ namespace Vesolovsky.Game.Letters
                  "fills its signature and picks its handwriting.")]
         public List<LetterAuthorInfo> Authors = new List<LetterAuthorInfo>();
 
+        [Header("Timed arrivals")]
+        [Tooltip("Rules for letters that arrive on a milestone (a skill first used, a card-count " +
+                 "reached, a set completed). Arrivals queue and show one at a time.")]
+        public List<LetterTrigger> Triggers = new List<LetterTrigger>();
+
+        [Header("Endgame")]
+        [Tooltip("The set id of the one-card endgame set. Its card does not count toward the " +
+                 "collection total (set CountsTowardCollection = false on the set asset too), and " +
+                 "picking that card up brings the certificate letter.")]
+        public string EpilogueSetId;
+
+        [Tooltip("The certificate letter queued when the endgame card is picked up.")]
+        public LetterId CertificateLetter;
+
         /// <summary>
         /// The record for this author, or null when the roster has no entry for them - in which case
         /// the letter simply shows with no signature and its default font.

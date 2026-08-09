@@ -2,6 +2,7 @@ using System;
 using CardsChaos.Cards;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Game.Upgrades;
+using Vesolovsky.Game.Views.GameplayHud;
 
 namespace Vesolovsky.Game.Views
 {
@@ -23,6 +24,19 @@ namespace Vesolovsky.Game.Views
 
         /// <summary>Raised after an input rebind draft is applied to the live action asset.</summary>
         event Action BindingsChanged;
+
+        /// <summary>
+        /// Raised each time a skill actually fires. The HUD uses it to arm that skill's "ready" hint,
+        /// so the hint only plays once the player has used the skill and its cooldown then ends -
+        /// never on entry or unlock.
+        /// </summary>
+        event Action<SkillId> SkillActivated;
+
+        /// <summary>
+        /// Raised when a scene service asks for a HUD hint (the IHudHints channel), so the HUD can
+        /// put it on the shared hint queue.
+        /// </summary>
+        event Action<HintId> HintRaised;
 
         /// <summary>Whether the "Show hints" setting is on. Defaults to true when there is no settings service.</summary>
         bool HintsEnabled { get; }
