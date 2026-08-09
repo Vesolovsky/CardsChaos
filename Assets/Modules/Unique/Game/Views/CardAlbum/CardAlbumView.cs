@@ -13,6 +13,7 @@ using Vesolovsky.Core.UISystem;
 using Vesolovsky.Core.UISystem.UIComponents;
 using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Services.Skills;
+using Vesolovsky.Game.Services.Stats;
 using Vesolovsky.Game.Views.Album;
 using VInspector;
 using Zenject;
@@ -53,6 +54,15 @@ namespace Vesolovsky.Game.Views
         [Header("Inspect")]
         [SerializeField] private AlbumCardInspector inspector;
 
+        [Header("Endgame")]
+        [Tooltip("The normal album layout (BG): categories, pages, top and bottom panels. Switched " +
+                 "off when the album opens into its endgame state.")]
+        [SerializeField] private GameObject normalLayout;
+
+        [Tooltip("The endgame layout: the one final-card slot and the closing stat lines. Switched " +
+                 "on instead of the normal layout while the player holds the final card.")]
+        [SerializeField] private AlbumFinalCardLayout finalLayout;
+
         [Header("Header labels")]
         [Tooltip("Current page over total, as X / Y.")]
         [SerializeField] private VText pageText;
@@ -85,6 +95,7 @@ namespace Vesolovsky.Game.Views
         private DiContainer _container;
         private IAlbumFocusRequest _albumFocus;
         private IGameplayPanels _panels;
+        private IPlayerStats _playerStats;
         private IInputActions _input;
         private InputAction _toggleAction;
         private InputAction _flipCardAction;
@@ -102,11 +113,13 @@ namespace Vesolovsky.Game.Views
             DiContainer container,
             [InjectOptional] IAlbumFocusRequest albumFocus,
             [InjectOptional] IGameplayPanels panels,
+            [InjectOptional] IPlayerStats playerStats,
             [InjectOptional] IInputActions input)
         {
             _container = container;
             _albumFocus = albumFocus;
             _panels = panels;
+            _playerStats = playerStats;
             _input = input;
         }
 
@@ -182,9 +195,10 @@ namespace Vesolovsky.Game.Views
                 HandleHandScroll();
 
                 // Escape only ever closes. Bound the other way round it would fight every other
-                // panel that wants the same key to back out of itself.
+                // panel that wants the same key to back out of itself. Refused once the endgame has
+                // sealed the album.
                 if (keyboard.escapeKey.wasPressedThisFrame)
-                    ViewModel.Close();
+                    TryClose();
             }
         }
 
@@ -246,9 +260,41 @@ namespace Vesolovsky.Game.Views
                 return;
 
             if (ViewModel.IsOpen.Value)
-                ViewModel.Close();
+                TryClose();
             else
                 ViewModel.Open();
+        }
+
+        /// <summary>
+        /// Closes the album unless the endgame has sealed it. Once the final card is filed the album
+        /// can no longer be shut - the closing sequence is playing and the ending takes over from
+        /// there - so every way of closing routes through here.
+        /// </summary>
+        private void TryClose()
+        {
+            if (finalLayout != null && finalLayout.IsSealed)
+                return;
+
+            ViewModel.Close();
+        }
+
+        /// <summary>
+        /// Swaps the album between its normal layout and its endgame layout for this open, by whether
+        /// the player is holding the final card. The endgame layout reuses the shared drag and
+        /// inspector, so its one slot files exactly like a page slot.
+        /// </summary>
+        private void ApplyEndgameMode()
+        {
+            bool endgame = finalLayout != null && ViewModel.HoldsEndgameCard;
+
+            if (normalLayout != null)
+                normalLayout.SetActive(!endgame);
+
+            if (finalLayout != null)
+                finalLayout.gameObject.SetActive(endgame);
+
+            if (endgame)
+                finalLayout.Initialize(drag, inspector, ViewModel.EndgameSet, _playerStats);
         }
 
         /// <summary>
@@ -469,6 +515,11 @@ namespace Vesolovsky.Game.Views
                 // can be before the async save load finishes, so the slots and counters it showed
                 // then may be stale-empty; opening always happens long after the save is in.
                 RefreshAlbumDisplay();
+
+                // Holding the final card opens the album straight into its endgame state instead of
+                // the normal layout. Re-evaluated on every open, so a normal open stays normal.
+                ApplyEndgameMode();
+
                 Show(destroyCancellationToken).Forget();
             }
             else

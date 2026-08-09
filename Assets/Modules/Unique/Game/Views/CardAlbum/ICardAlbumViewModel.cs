@@ -22,6 +22,18 @@ namespace Vesolovsky.Game.Views
         /// <summary>Every set, in the order they are listed down the left-hand side.</summary>
         IReadOnlyList<CardSetDefinition> Sets { get; }
 
+        /// <summary>
+        /// The endgame set - the one flagged out of the collection, holding the single final card.
+        /// Null when the game has no such set.
+        /// </summary>
+        CardSetDefinition EndgameSet { get; }
+
+        /// <summary>
+        /// Whether the player is holding the final card right now. When they open the album holding
+        /// it, the album opens straight into its endgame state.
+        /// </summary>
+        bool HoldsEndgameCard { get; }
+
         /// <summary>The hand the pile is a view of.</summary>
         CardHand Hand { get; }
 

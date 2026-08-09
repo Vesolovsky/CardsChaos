@@ -3871,7 +3871,7 @@ MonoBehaviour:
     OneTime: 0
     Disableable: 0
   - Id: 8
-    Text: Final cardarrived near one of the doors
+    Text: Final card arrived near one of the doors
     ActionName: 
     Icon: {fileID: 0}
     StartDelay: 0

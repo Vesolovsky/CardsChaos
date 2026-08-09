@@ -46,6 +46,40 @@ namespace Vesolovsky.Game.Views
         public IReadOnlyList<CardSetDefinition> Sets =>
             _setOrder != null ? _setOrder.GetOrderedSets() : _catalog.Sets;
 
+        // The one set flagged out of the collection - the endgame set. Found by the flag rather than
+        // by id so nothing here has to be told which set it is.
+        public CardSetDefinition EndgameSet
+        {
+            get
+            {
+                foreach (CardSetDefinition set in _catalog.Sets)
+                {
+                    if (set != null && !set.CountsTowardCollection && set.CardCount > 0)
+                        return set;
+                }
+
+                return null;
+            }
+        }
+
+        public bool HoldsEndgameCard
+        {
+            get
+            {
+                CardSetDefinition endgame = EndgameSet;
+                if (endgame == null)
+                    return false;
+
+                foreach (Card card in _hand.Cards)
+                {
+                    if (card != null && card.Identity != null && card.Identity.SetId == endgame.SetId)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+
         public CardHand Hand => _hand;
 
         public ICardAlbum Album => _album;
