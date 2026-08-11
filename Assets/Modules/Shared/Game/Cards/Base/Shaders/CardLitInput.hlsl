@@ -16,6 +16,7 @@ CBUFFER_START(UnityPerMaterial)
     half   _Smoothness;
     half   _Metallic;
     half   _EdgeDarken;
+    half   _MipBias;
     half   _Cutoff;
 CBUFFER_END
 

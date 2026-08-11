@@ -5,7 +5,7 @@ using UnityEngine;
 namespace CardsChaos.Cards
 {
     /// <summary>
-    /// Keeps a streamed card texture at its authored mip while a large close-up is using it.
+    /// Keeps a streamed card texture at its authored mip while a close view is using or preloading it.
     /// Requests are reference counted because a set back can be shared by several views, and one
     /// view closing must not clear a request still owned by another one.
     /// </summary>
@@ -60,7 +60,7 @@ namespace CardsChaos.Cards
         public static IDisposable RequestFullResolution(Sprite sprite) =>
             RequestFullResolution(sprite != null ? sprite.texture : null);
 
-        /// <summary>True once a requested close-up can be revealed without a low-mip pop.</summary>
+        /// <summary>True once a requested close view can be revealed without a low-mip pop.</summary>
         public static bool IsFullResolutionLoaded(Texture2D texture)
         {
             return texture == null

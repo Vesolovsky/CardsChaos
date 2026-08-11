@@ -15,6 +15,7 @@ Shader "CardsChaos/Card Lit"
         _Metallic ("Metallic", Range(0,1)) = 0.0
         _EdgeTint ("Rim Tint", Color) = (1,1,1,1)
         _EdgeDarken ("Rim Darken", Range(0,1)) = 0.18
+        _MipBias ("Close View Mip Bias", Range(-1,0)) = 0
 
     }
 
@@ -131,6 +132,21 @@ Shader "CardsChaos/Card Lit"
                 float2 frontDy = ddy(input.uvFront);
                 float2 backDx = ddx(input.uvBack);
                 float2 backDy = ddy(input.uvBack);
+
+                // The default scale is one, so resting cards keep the same LOD selection as before.
+                // Held/inspected renderers set a small negative bias through their existing property
+                // block, selecting a sharper resident mip without another texture sample.
+                // The branch is uniform for the whole draw: the 1,000+ resting cards skip the
+                // exponent and gradient multiplies; only the handful in a close view pay for them.
+                UNITY_BRANCH
+                if (_MipBias < -0.0001h)
+                {
+                    float mipGradientScale = exp2((float)_MipBias);
+                    frontDx *= mipGradientScale;
+                    frontDy *= mipGradientScale;
+                    backDx *= mipGradientScale;
+                    backDy *= mipGradientScale;
+                }
                 half3 albedo;
 
                 // Every flat-face triangle carries a constant 0 or 1, so its branch is coherent

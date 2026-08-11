@@ -26,6 +26,7 @@ Shader "CardsChaos/Card UI"
         // 0 draws the card in full colour, 1 fully desaturated. The album files a misplaced card
         // in grey by handing it a material with this set to 1.
         _Grayscale ("Grayscale", Range(0, 1)) = 0
+        _MipBias ("Close View Mip Bias", Range(-1, 0)) = 0
 
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -110,6 +111,7 @@ Shader "CardsChaos/Card UI"
             float _Aspect;
             float4 _UvInset;
             float _Grayscale;
+            float _MipBias;
 
             v2f vert(appdata_t v)
             {
@@ -152,7 +154,11 @@ Shader "CardsChaos/Card UI"
                 // filtered edge never picks up the black band just outside the face.
                 float2 uv = (IN.texcoord - 0.5) * (1.0 - 2.0 * _UvInset.xy) + 0.5;
 
-                half4 color = (tex2D(_MainTex, uv) + _TextureSampleAdd) * IN.color;
+                // Ordinary album slots use the zero default. Only the inspector has a material
+                // with a small negative bias, so its large close-up is sharper without changing
+                // the texture residency or sampling cost of the rest of the album.
+                half4 color = (tex2Dbias(_MainTex, float4(uv, 0.0, _MipBias))
+                               + _TextureSampleAdd) * IN.color;
 
                 // Desaturate towards perceived luminance. A misplaced card is drawn grey so it
                 // reads as out of place at a glance without hiding which card it is.

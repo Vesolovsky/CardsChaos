@@ -21,6 +21,11 @@ namespace CardsChaos.Cards
         [Tooltip("Smoothness while the card is in hand. The material value is restored on release.")]
         [SerializeField] private float heldSmoothness = 0f;
 
+        [Tooltip("Texture LOD correction used only while the card is held or inspected. -0.415 " +
+                 "compensates for importing a 3:2 source into the next power-of-two height; " +
+                 "resting cards keep the material default of zero.")]
+        [SerializeField, Range(-1f, 0f)] private float closeViewMipBias = -0.415f;
+
         [Header("Inspect")]
         [Tooltip("Material look while this card is held up for inspection. CardSetBuilder " +
                  "writes these per variant from the measured brightness of the face, so " +
@@ -36,6 +41,7 @@ namespace CardsChaos.Cards
 
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
         private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
+        private static readonly int MipBiasId = Shader.PropertyToID("_MipBias");
 
         // Held (and piled) cards ride right in front of the camera and would otherwise clip into the
         // furniture. When a layer of this name exists they are moved onto it so an overlay camera can
@@ -72,6 +78,7 @@ namespace CardsChaos.Cards
         private MeshFilter _meshFilter;
         private MeshRenderer _renderer;
         private MaterialPropertyBlock _propertyBlock;
+        private System.IDisposable _heldArtworkMipRequest;
 
         // The layer the card was authored on, restored whenever it leaves the hand.
         private int _defaultLayer;
@@ -165,6 +172,7 @@ namespace CardsChaos.Cards
             Rigidbody body = EnsureBody();
 
             IsHeld = true;
+            RequestHeldArtworkMip();
             ApplyMaterialOverrides();
 
             // A card grabbed before it settled is still in a continuous mode, which is illegal on
@@ -248,6 +256,7 @@ namespace CardsChaos.Cards
 
             IsHeld = false;
             IsInspected = false;
+            ReleaseHeldArtworkMip();
             ApplyMaterialOverrides();
 
             transform.SetParent(null, worldPositionStays: true);
@@ -344,6 +353,7 @@ namespace CardsChaos.Cards
 
             IsHeld = false;
             IsInspected = false;
+            ReleaseHeldArtworkMip();
             ApplyMaterialOverrides();
 
             if (_collider != null)
@@ -524,6 +534,7 @@ namespace CardsChaos.Cards
             // material, which is how the card gets its normal smoothness back on release.
             _propertyBlock ??= new MaterialPropertyBlock();
             _propertyBlock.Clear();
+            _propertyBlock.SetFloat(MipBiasId, closeViewMipBias);
 
             if (IsInspected)
             {
@@ -539,6 +550,26 @@ namespace CardsChaos.Cards
             }
 
             _renderer.SetPropertyBlock(_propertyBlock);
+        }
+
+        /// <summary>
+        /// Starts loading mip zero as soon as the card enters the hand, rather than on the frame
+        /// inspect opens. At most the hand-size number of fronts are pinned; the inspector can take
+        /// a second reference without releasing this one when it closes.
+        /// </summary>
+        private void RequestHeldArtworkMip()
+        {
+            if (_heldArtworkMipRequest != null)
+                return;
+
+            _heldArtworkMipRequest = CardMipStreaming.RequestFullResolution(
+                Identity != null ? Identity.ArtworkTexture : null);
+        }
+
+        private void ReleaseHeldArtworkMip()
+        {
+            _heldArtworkMipRequest?.Dispose();
+            _heldArtworkMipRequest = null;
         }
 
         /// <summary>Cancels the slot tweens so an external driver can own the transform.</summary>
@@ -578,6 +609,7 @@ namespace CardsChaos.Cards
 
         private void OnDestroy()
         {
+            ReleaseHeldArtworkMip();
             StopTweens();
         }
     }

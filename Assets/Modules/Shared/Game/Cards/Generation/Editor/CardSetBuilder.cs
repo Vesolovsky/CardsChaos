@@ -24,8 +24,13 @@ namespace CardsChaos.Cards.CardEditor
         private const string BaseMaterialPath = BaseArtFolder + "/M_Card_Base.mat";
         private const string UIMaterialPath = BaseArtFolder + "/M_Card_UI.mat";
         private const string UIGrayMaterialPath = BaseArtFolder + "/M_Card_UI_Gray.mat";
+        private const string UIInspectMaterialPath = BaseArtFolder + "/M_Card_UI_Inspect.mat";
         private const string BasePrefabPath = BaseFolder + "/Card_Base.prefab";
         private const string CatalogPath = CardsRoot + "/CardCatalog.asset";
+
+        // log2(1536 / 2048): compensates only for the extra LOD introduced when the usual
+        // 1024x1536 source is imported at the next power-of-two height.
+        private const float CloseViewMipBias = -0.415f;
 
         /// <summary>
         /// PhysX only starts generating contacts once surfaces are this close, so the value
@@ -102,10 +107,11 @@ namespace CardsChaos.Cards.CardEditor
 
             // Cheap, and it has to run on both paths: the flat card's silhouette is derived from
             // the same measurements as the mesh, and the two drifting apart is exactly the bug
-            // this generation step exists to prevent. A grey twin is written alongside, which the
-            // album files a misplaced card with.
-            BuildUIMaterial(UIMaterialPath, grayscale: 0f);
-            BuildUIMaterial(UIGrayMaterialPath, grayscale: 1f);
+            // this generation step exists to prevent. A grey twin is written for misplaced cards,
+            // plus a sharpened variant used only by the large album inspector.
+            BuildUIMaterial(UIMaterialPath, grayscale: 0f, mipBias: 0f);
+            BuildUIMaterial(UIGrayMaterialPath, grayscale: 1f, mipBias: 0f);
+            BuildUIMaterial(UIInspectMaterialPath, grayscale: 0f, mipBias: CloseViewMipBias);
 
             var setDefinitions = new List<CardSetDefinition>();
             int built = 0;
@@ -223,15 +229,14 @@ namespace CardsChaos.Cards.CardEditor
         }
 
         /// <summary>
-        /// The one material every flat card is drawn with - in a slot, on the pile, and in
-        /// flight between them.
+        /// Builds one of the shared materials flat cards use: normal, grey, or inspect.
         ///
         /// Its corner is written from <see cref="CardMeshSettings"/>, the same numbers the mesh
         /// is cut from, so the card has one silhouette rather than two that happen to look alike
         /// until someone retunes the measurement. Sharing a single material also keeps every
-        /// card in one batch.
+        /// card in one batch per variant.
         /// </summary>
-        private static Material BuildUIMaterial(string path, float grayscale)
+        private static Material BuildUIMaterial(string path, float grayscale, float mipBias)
         {
             Shader shader = Shader.Find(UIShaderName);
             if (shader == null)
@@ -262,6 +267,7 @@ namespace CardsChaos.Cards.CardEditor
                 0f,
                 0f));
             material.SetFloat("_Grayscale", grayscale);
+            material.SetFloat("_MipBias", mipBias);
 
             EditorUtility.SetDirty(material);
             Debug.Log($"[CardSetBuilder] UI card material written to {path}");
