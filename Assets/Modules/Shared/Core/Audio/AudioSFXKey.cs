@@ -14,6 +14,8 @@ namespace Vesolovsky.Core.Audio
         CardLand = 517063,
         HandToPile = 405176,
         HandToFan = 862051,
+        CardScroll = 486203,
+        CardSelectFan = 372918,
 
         // Player
         Footstep = 319688,

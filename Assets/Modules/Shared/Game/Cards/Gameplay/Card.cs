@@ -569,7 +569,11 @@ namespace CardsChaos.Cards
                 return;
 
             _landSoundPlayed = true;
-            _audioService.Play(AudioSFXKey.CardLand);
+
+            // Played from the contact point in 3D so the thwack comes from where the card actually
+            // hit, off a pooled source parented to the audio root - never to this card - so it
+            // survives the card being picked up or filed a moment later.
+            _audioService.Play(AudioSFXKey.CardLand, collision.GetContact(0).point);
         }
 
         private void OnDestroy()

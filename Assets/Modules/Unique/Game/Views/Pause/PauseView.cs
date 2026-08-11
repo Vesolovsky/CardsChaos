@@ -168,9 +168,9 @@ namespace Vesolovsky.Game.Views
 
             AudioService.Play(AudioSFXKey.PauseOpen);
 
-            // The level music keeps playing behind the menu, only muffled - a low-pass filter eased
-            // shut, which reads as the room going quiet while the game is held.
-            AudioService.SetMusicMuffled(true);
+            // Music and the environmental ambient keep playing behind the menu, only muffled - a
+            // low-pass eased shut over the mix, which reads as the room going quiet while it is held.
+            AudioService.SetMuffled(true);
 
             Show(destroyCancellationToken).Forget();
         }
@@ -184,8 +184,8 @@ namespace Vesolovsky.Game.Views
             _isOpen = false;
             ReleaseRoom();
 
-            // Open the filter back up, so the music swells back to full behind the closing menu.
-            AudioService.SetMusicMuffled(false);
+            // Open the filters back up, so music and ambient swell back to full behind the closing menu.
+            AudioService.SetMuffled(false);
 
             Hide(destroyCancellationToken).Forget();
         }
@@ -327,7 +327,7 @@ namespace Vesolovsky.Game.Views
             if (_isOpen)
             {
                 ReleaseRoom();
-                AudioService.SetMusicMuffled(false);
+                AudioService.SetMuffled(false);
             }
 
             base.OnDestroy();

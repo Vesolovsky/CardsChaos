@@ -32,6 +32,7 @@ namespace Vesolovsky.Core.Services.Settings
         public float MasterVolume;
         public float MusicVolume;
         public float SfxVolume;
+        public float AmbientVolume;
 
         public static GameSettingsData CreateDefaults()
         {
@@ -58,7 +59,8 @@ namespace Vesolovsky.Core.Services.Settings
 
                 MasterVolume = 1f,
                 MusicVolume = 1f,
-                SfxVolume = 1f
+                SfxVolume = 1f,
+                AmbientVolume = 1f
             };
         }
 
@@ -85,7 +87,8 @@ namespace Vesolovsky.Core.Services.Settings
                 && FpsLimit == other.FpsLimit
                 && Mathf.Approximately(MasterVolume, other.MasterVolume)
                 && Mathf.Approximately(MusicVolume, other.MusicVolume)
-                && Mathf.Approximately(SfxVolume, other.SfxVolume);
+                && Mathf.Approximately(SfxVolume, other.SfxVolume)
+                && Mathf.Approximately(AmbientVolume, other.AmbientVolume);
         }
 
         public GameSettingsData Clone()
@@ -108,7 +111,8 @@ namespace Vesolovsky.Core.Services.Settings
 
                 MasterVolume = MasterVolume,
                 MusicVolume = MusicVolume,
-                SfxVolume = SfxVolume
+                SfxVolume = SfxVolume,
+                AmbientVolume = AmbientVolume
             };
         }
     }

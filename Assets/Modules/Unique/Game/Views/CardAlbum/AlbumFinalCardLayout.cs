@@ -2,7 +2,10 @@ using System;
 using System.Threading;
 using CardsChaos.Cards;
 using Cysharp.Threading.Tasks;
+using PrimeTween;
+using RoboRyanTron.SceneReference;
 using UnityEngine;
+using UnityEngine.UI;
 using Vesolovsky.Core.UISystem.UIComponents;
 using Vesolovsky.Game.Services.Stats;
 
@@ -46,6 +49,16 @@ namespace Vesolovsky.Game.Views.Album
         [Tooltip("A full-screen raycast blocker switched on the moment the card is filed, so nothing " +
                  "in the album can be touched for the rest of the finale.")]
         [SerializeField] private GameObject sealBlocker;
+
+        [Header("Ending")]
+        [Tooltip("Full-screen image faded up once the stat lines have all shown; the Credits scene " +
+                 "loads when it is fully opaque. Start it transparent - its alpha is driven from here.")]
+        [SerializeField] private Image fader;
+
+        [Tooltip("Seconds the fade to the Credits scene takes.")]
+        [SerializeField] private float fadeDuration = 1.5f;
+
+        [SerializeField] private SceneReference creditsScene;
 
         private IPlayerStats _stats;
         private AlbumDragController _drag;
@@ -130,13 +143,23 @@ namespace Vesolovsky.Game.Views.Album
 
         private void OnSequenceComplete()
         {
-            // ─────────────────────────────────────────────────────────────────────────────────────
-            //  ▼▼▼  END OF GAME HANDOFF GOES HERE  ▼▼▼
-            //  The stat finale has finished. Kick off the ending here - transition to Credits, then
-            //  to the main menu. The album is sealed (cannot be closed), so this is the only way out.
-            //  For now, just a log.
-            // ─────────────────────────────────────────────────────────────────────────────────────
-            Debug.Log("[AlbumFinalCardLayout] Endgame stat sequence complete - trigger Credits here.");
+            // The finale is over: fade the screen out, then load the Credits scene.
+            if (fader == null)
+            {
+                Debug.LogWarning("[AlbumFinalCardLayout] No fader assigned; loading Credits directly.");
+                creditsScene.LoadScene();
+                return;
+            }
+
+            fader.gameObject.SetActive(true);
+
+            // Start clear whatever the authored alpha, so the fade always runs from transparent.
+            Color color = fader.color;
+            color.a = 0f;
+            fader.color = color;
+
+            Tween.Alpha(fader, 1f, fadeDuration)
+                .OnComplete(() => creditsScene.LoadScene());
         }
 
         private void ClearLines()

@@ -288,12 +288,17 @@ namespace CardsChaos.Cards
 
             if (_layout == CardHandLayout.Fan)
             {
+                // Fanned out, the wheel walks the selection along the spread; SelectNeighbour ->
+                // SetSelected plays the fan's own select sound, not the pile's scroll tick.
                 SelectNeighbour(direction);
                 return;
             }
 
-            // A single card has nowhere to travel to, but the wheel should still be able to
-            // claim it rather than doing nothing at all.
+            // In the pile the wheel turns the stack over. Only a real turn - more than one card -
+            // gets the scroll tick; a single card has nowhere to travel but the wheel still claims it.
+            if (_cards.Count > 1)
+                _audioService?.Play(AudioSFXKey.CardScroll);
+
             Card traveller = _cards.Count > 1 ? Rotate(direction) : null;
 
             // Claimed before the layout is issued, so the arc the traveller gets already includes
@@ -317,6 +322,8 @@ namespace CardsChaos.Cards
         {
             if (direction == 0 || _cards.Count < 2)
                 return;
+
+            _audioService?.Play(AudioSFXKey.CardScroll);
 
             Card traveller = Rotate(direction);
 
@@ -516,6 +523,12 @@ namespace CardsChaos.Cards
 
             Card previous = _selected;
             Claim(card);
+
+            // Selecting a card in the fan - reached by the wheel or by pointing at it - gets the
+            // fan's own select sound. The pile has no per-card select sound like this; its wheel
+            // plays the scroll tick in Step instead, so this is gated to the fan layout.
+            if (card != null && _layout == CardHandLayout.Fan)
+                _audioService?.Play(AudioSFXKey.CardSelectFan);
 
             // Only the two cards whose lift changed are re-issued. A full relayout here would
             // restart the slot tween on every card in hand every time the cursor crossed one,

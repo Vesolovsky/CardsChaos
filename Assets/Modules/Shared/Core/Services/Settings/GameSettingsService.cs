@@ -95,6 +95,7 @@ namespace Vesolovsky.Core.Services.Settings
             result.MasterVolume = SanitizeVolume(result.MasterVolume, defaults.MasterVolume);
             result.MusicVolume = SanitizeVolume(result.MusicVolume, defaults.MusicVolume);
             result.SfxVolume = SanitizeVolume(result.SfxVolume, defaults.SfxVolume);
+            result.AmbientVolume = SanitizeVolume(result.AmbientVolume, defaults.AmbientVolume);
 
             return result;
         }

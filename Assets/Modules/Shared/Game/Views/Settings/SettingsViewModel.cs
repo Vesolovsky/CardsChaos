@@ -55,6 +55,7 @@ namespace Vesolovsky.Game.Views
             Draft.MasterVolume = defaults.MasterVolume;
             Draft.MusicVolume = defaults.MusicVolume;
             Draft.SfxVolume = defaults.SfxVolume;
+            Draft.AmbientVolume = defaults.AmbientVolume;
         }
 
         public void ResetInput()

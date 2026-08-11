@@ -8,12 +8,15 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Modules/Unique/Game/SplashScreen/SplashScreenScene.unity
     guid: 63c28c7f0074a7f438c184455e85b5d2
-  - enabled: 0
+  - enabled: 1
     path: Assets/Modules/Unique/Game/MainMenu/MainMenu.unity
     guid: a2e24f9d10983bc4fa878796ee16c940
   - enabled: 1
     path: Assets/Modules/Unique/Game/GameplayScene.unity
     guid: 2a8d516bc7ac68c4cabdae26a078d6b6
+  - enabled: 1
+    path: Assets/Modules/Unique/Game/Credits/Credits.unity
+    guid: 0072cfe8ab1bc6347b3d009012e406c1
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: b59faefb2ea72994282cd4f67c243acf,
       type: 2}

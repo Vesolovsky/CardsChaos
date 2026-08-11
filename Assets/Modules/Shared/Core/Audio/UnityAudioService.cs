@@ -85,10 +85,34 @@ namespace Vesolovsky.Core.Audio
 
         public uint Play(AudioSFXKey sfxKey, GameObject emitter = null)
         {
-            if (_disposed || sfxKey == AudioSFXKey.None)
+            if (!TryResolveSfx(sfxKey, out var clip, out var baseVolume, out var pitch))
                 return 0;
 
-            if (_catalog == null || !_catalog.TryGetSfx(sfxKey, out var clip, out var baseVolume, out var pitch))
+            return StartSfx(AcquireSfxSource(emitter, null), clip, baseVolume, pitch);
+        }
+
+        public uint Play(AudioSFXKey sfxKey, Vector3 position)
+        {
+            if (!TryResolveSfx(sfxKey, out var clip, out var baseVolume, out var pitch))
+                return 0;
+
+            return StartSfx(AcquireSfxSource(null, position), clip, baseVolume, pitch);
+        }
+
+        /// <summary>
+        /// Resolves a key's clip, volume and pitch, reporting a missing clip once, and makes sure the
+        /// audio objects exist. False means nothing should play - the caller returns 0.
+        /// </summary>
+        private bool TryResolveSfx(AudioSFXKey sfxKey, out AudioClip clip, out float baseVolume, out float pitch)
+        {
+            clip = null;
+            baseVolume = 0f;
+            pitch = 1f;
+
+            if (_disposed || sfxKey == AudioSFXKey.None)
+                return false;
+
+            if (_catalog == null || !_catalog.TryGetSfx(sfxKey, out clip, out baseVolume, out pitch))
             {
                 // The game carries on silently for this key; the error just flags the gap so the
                 // clip can be wired in later. Reported once per key so it never floods the console.
@@ -97,12 +121,15 @@ namespace Vesolovsky.Core.Audio
                         $"[{nameof(UnityAudioService)}] No audio clip for SFX key '{sfxKey}'. " +
                         $"Add it to the {nameof(UnityAudioCatalog)}.");
 
-                return 0;
+                return false;
             }
 
             EnsureInitialized();
+            return true;
+        }
 
-            var source = AcquireSfxSource(emitter);
+        private uint StartSfx(AudioSource source, AudioClip clip, float baseVolume, float pitch)
+        {
             source.clip = clip;
             source.pitch = pitch;
             source.volume = CalculateSfxVolume(baseVolume, 1f);
@@ -134,12 +161,16 @@ namespace Vesolovsky.Core.Audio
             playback.FadeStartFactor = playback.FadeFactor;
         }
 
-        public void SetMusicMuffled(bool muffled)
+        public bool IsMuffled { get; private set; }
+
+        public void SetMuffled(bool muffled)
         {
             if (_disposed)
                 return;
 
             EnsureInitialized();
+
+            IsMuffled = muffled;
 
             // Only the target moves here; Tick sweeps the actual cutoff toward it, so the muffle
             // eases in and out rather than snapping the moment the menu opens or closes.
@@ -271,7 +302,14 @@ namespace Vesolovsky.Core.Audio
             _musicLowPassTarget = MusicLowPassOpen;
         }
 
-        private AudioSource AcquireSfxSource(GameObject emitter)
+        /// <summary>
+        /// Hands out a pooled SFX source configured for one of three modes: 2D (no emitter, no
+        /// position), 3D tracking a scene object (<paramref name="emitter"/>), or 3D at a fixed
+        /// world point (<paramref name="position"/>). The positional mode parents to the audio root
+        /// rather than to a scene object, so the source is never destroyed with a transient like a
+        /// thrown card and always makes it back to the pool.
+        /// </summary>
+        private AudioSource AcquireSfxSource(GameObject emitter, Vector3? position)
         {
             AudioSource source = null;
             while (_sfxPool.Count > 0 && source == null)
@@ -285,9 +323,16 @@ namespace Vesolovsky.Core.Audio
 
             source.gameObject.SetActive(true);
             source.transform.SetParent(emitter != null ? emitter.transform : _root.transform, false);
+
+            // Reset the local offset a pooled source may carry, then place it: an emitter or the root
+            // sits it at their origin, a bare position moves it out to that world point.
+            source.transform.localPosition = Vector3.zero;
+            if (position.HasValue)
+                source.transform.position = position.Value;
+
             ConfigureCommonSource(source);
             source.loop = false;
-            source.spatialBlend = emitter != null ? 1f : 0f;
+            source.spatialBlend = emitter != null || position.HasValue ? 1f : 0f;
             source.dopplerLevel = 0f;
             source.rolloffMode = AudioRolloffMode.Logarithmic;
             source.minDistance = DefaultMinDistance;

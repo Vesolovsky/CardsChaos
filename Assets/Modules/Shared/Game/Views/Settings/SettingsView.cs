@@ -79,6 +79,8 @@ namespace Vesolovsky.Game.Views
         [SerializeField] private VText musicVolumeValueText;
         [SerializeField] private Slider sfxVolumeSlider;
         [SerializeField] private VText sfxVolumeValueText;
+        [SerializeField] private Slider ambientVolumeSlider;
+        [SerializeField] private VText ambientVolumeValueText;
         [SerializeField] private VButton audioResetButton;
 
         [Header("Bottom bar")]
@@ -152,6 +154,7 @@ namespace Vesolovsky.Game.Views
             PrepareVolumeSlider(masterVolumeSlider, OnMasterVolumeChanged);
             PrepareVolumeSlider(musicVolumeSlider, OnMusicVolumeChanged);
             PrepareVolumeSlider(sfxVolumeSlider, OnSfxVolumeChanged);
+            PrepareVolumeSlider(ambientVolumeSlider, OnAmbientVolumeChanged);
             audioResetButton?.Bind(OnResetAudio);
 
             applyButton?.Bind(OnApply);
@@ -165,6 +168,7 @@ namespace Vesolovsky.Game.Views
             AddSliderAudio(masterVolumeSlider);
             AddSliderAudio(musicVolumeSlider);
             AddSliderAudio(sfxVolumeSlider);
+            AddSliderAudio(ambientVolumeSlider);
             AddControlAudio(qualityDropdown);
             AddControlAudio(displayModeDropdown);
             AddControlAudio(resolutionDropdown);
@@ -769,6 +773,12 @@ namespace Vesolovsky.Game.Views
             SetVolumeText(sfxVolumeValueText, ViewModel.Draft.SfxVolume);
         }
 
+        private void OnAmbientVolumeChanged(float value)
+        {
+            ViewModel.Draft.AmbientVolume = Mathf.Clamp01(value);
+            SetVolumeText(ambientVolumeValueText, ViewModel.Draft.AmbientVolume);
+        }
+
         private void OnResetAudio()
         {
             ViewModel.ResetAudio();
@@ -782,10 +792,12 @@ namespace Vesolovsky.Game.Views
             masterVolumeSlider?.SetValueWithoutNotify(draft.MasterVolume);
             musicVolumeSlider?.SetValueWithoutNotify(draft.MusicVolume);
             sfxVolumeSlider?.SetValueWithoutNotify(draft.SfxVolume);
+            ambientVolumeSlider?.SetValueWithoutNotify(draft.AmbientVolume);
 
             SetVolumeText(masterVolumeValueText, draft.MasterVolume);
             SetVolumeText(musicVolumeValueText, draft.MusicVolume);
             SetVolumeText(sfxVolumeValueText, draft.SfxVolume);
+            SetVolumeText(ambientVolumeValueText, draft.AmbientVolume);
         }
 
         private static void SetVolumeText(VText text, float normalizedValue)
@@ -977,6 +989,7 @@ namespace Vesolovsky.Game.Views
                 masterVolumeSlider?.onValueChanged.RemoveListener(OnMasterVolumeChanged);
                 musicVolumeSlider?.onValueChanged.RemoveListener(OnMusicVolumeChanged);
                 sfxVolumeSlider?.onValueChanged.RemoveListener(OnSfxVolumeChanged);
+                ambientVolumeSlider?.onValueChanged.RemoveListener(OnAmbientVolumeChanged);
             }
 
             if (_activePopup != null)

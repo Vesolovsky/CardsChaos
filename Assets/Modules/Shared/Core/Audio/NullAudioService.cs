@@ -9,8 +9,10 @@ namespace Vesolovsky.Core.Audio
     public class NullAudioService : IAudioService
     {
         public uint Play(AudioSFXKey sfxKey, GameObject emitter = null) => 0;
+        public uint Play(AudioSFXKey sfxKey, Vector3 position) => 0;
         public void Stop(uint playingId, int fadeMs = 0) { }
         public void SetState(AudioStateKey stateKey) { }
-        public void SetMusicMuffled(bool muffled) { }
+        public void SetMuffled(bool muffled) { }
+        public bool IsMuffled => false;
     }
 }

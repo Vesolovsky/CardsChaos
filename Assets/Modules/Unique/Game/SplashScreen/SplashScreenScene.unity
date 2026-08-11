@@ -190,7 +190,7 @@ MonoBehaviour:
   rootCanvasGroup: {fileID: 13854965}
   cameraShakeTarget: {fileID: 27442609}
   uiShakeTarget: {fileID: 13854964}
-  startDelay: 0.2
+  startDelay: 2
   dropDuration: 0.3
   dropDistance: 320
   entranceStartScale: 1.35
