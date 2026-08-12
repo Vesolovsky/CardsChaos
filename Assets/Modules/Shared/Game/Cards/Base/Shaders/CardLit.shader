@@ -16,6 +16,7 @@ Shader "CardsChaos/Card Lit"
         _EdgeTint ("Rim Tint", Color) = (1,1,1,1)
         _EdgeDarken ("Rim Darken", Range(0,1)) = 0.18
         _MipBias ("Close View Mip Bias", Range(-1,0)) = 0
+        _InspectSharpen ("Inspect Sharpen", Range(0,0.35)) = 0
 
     }
 
@@ -122,16 +123,102 @@ Shader "CardsChaos/Card Lit"
                 return output;
             }
 
+            half3 SafeSharpen5(
+                half3 center, half3 left, half3 right, half3 down, half3 up, half strength)
+            {
+                // The correction is clipped both to a small absolute range and to the colours
+                // already present in the five samples. It therefore cannot create the bright or
+                // dark overshoot that gives a conventional unsharp mask its visible halo.
+                half3 localMin = min(center, min(min(left, right), min(down, up)));
+                half3 localMax = max(center, max(max(left, right), max(down, up)));
+                half3 average = (left + right + down + up) * 0.25h;
+
+                const half3 Luminance = half3(0.2126h, 0.7152h, 0.0722h);
+                half centerLuma = dot(center, Luminance);
+                half leftLuma = dot(left, Luminance);
+                half rightLuma = dot(right, Luminance);
+                half downLuma = dot(down, Luminance);
+                half upLuma = dot(up, Luminance);
+                half lumaMin = min(centerLuma,
+                    min(min(leftLuma, rightLuma), min(downLuma, upLuma)));
+                half lumaMax = max(centerLuma,
+                    max(max(leftLuma, rightLuma), max(downLuma, upLuma)));
+
+                // Back away on very strong authored edges, where extra contrast is least useful
+                // and most likely to turn compression blocks into a visible contour.
+                half edgeGuard = 1.0h - smoothstep(0.25h, 0.65h, lumaMax - lumaMin);
+                half3 delta = clamp(
+                    (center - average) * (strength * edgeGuard), -0.03h, 0.03h);
+
+                return clamp(center + delta, localMin, localMax);
+            }
+
+            half SharpenAnisotropyGuard(
+                float2 pixelDx, float2 pixelDy, float2 textureTexelSize)
+            {
+                float2 safeTexelSize = max(textureTexelSize, float2(1e-8, 1e-8));
+                float footprintX = length(pixelDx / safeTexelSize);
+                float footprintY = length(pixelDy / safeTexelSize);
+                float anisotropy = max(footprintX, footprintY)
+                                   / max(min(footprintX, footprintY), 1e-4);
+
+                // Fade out before a flip or steep tilt can turn sharpening into temporal shimmer.
+                return (half)(1.0 - smoothstep(2.0, 4.0, anisotropy));
+            }
+
+            half3 SampleCardFace(
+                float2 uv,
+                float2 pixelDx,
+                float2 pixelDy,
+                float2 sampleDx,
+                float2 sampleDy,
+                float2 textureTexelSize,
+                TEXTURE2D_PARAM(faceTexture, faceSampler))
+            {
+                half3 center = SAMPLE_TEXTURE2D_GRAD(
+                    faceTexture, faceSampler, uv, sampleDx, sampleDy).rgb;
+
+                // Uniform for the entire draw. Ground and ordinary held cards return after their
+                // original single sample; only the one inspected card takes the four neighbours.
+                UNITY_BRANCH
+                if (_InspectSharpen <= 0.0001h)
+                    return center;
+
+                half strength = _InspectSharpen
+                                * SharpenAnisotropyGuard(pixelDx, pixelDy, textureTexelSize);
+
+                UNITY_BRANCH
+                if (strength <= 0.0001h)
+                    return center;
+
+                half3 left = SAMPLE_TEXTURE2D_GRAD(
+                    faceTexture, faceSampler, uv - pixelDx, sampleDx, sampleDy).rgb;
+                half3 right = SAMPLE_TEXTURE2D_GRAD(
+                    faceTexture, faceSampler, uv + pixelDx, sampleDx, sampleDy).rgb;
+                half3 down = SAMPLE_TEXTURE2D_GRAD(
+                    faceTexture, faceSampler, uv - pixelDy, sampleDx, sampleDy).rgb;
+                half3 up = SAMPLE_TEXTURE2D_GRAD(
+                    faceTexture, faceSampler, uv + pixelDy, sampleDx, sampleDy).rgb;
+
+                return SafeSharpen5(center, left, right, down, up, strength);
+            }
+
             half4 CardFragment(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 half faceMix = saturate(input.color.r);
-                float2 frontDx = ddx(input.uvFront);
-                float2 frontDy = ddy(input.uvFront);
-                float2 backDx = ddx(input.uvBack);
-                float2 backDy = ddy(input.uvBack);
+                // Keep the raw one-screen-pixel derivatives for the sharpen taps. Separate copies
+                // are scaled for texture LOD, so the -0.415 bias does not shrink the filter radius.
+                float2 frontPixelDx = ddx(input.uvFront);
+                float2 frontPixelDy = ddy(input.uvFront);
+                float2 backPixelDx = ddx(input.uvBack);
+                float2 backPixelDy = ddy(input.uvBack);
+                float2 frontSampleDx = frontPixelDx;
+                float2 frontSampleDy = frontPixelDy;
+                float2 backSampleDx = backPixelDx;
+                float2 backSampleDy = backPixelDy;
 
                 // The default scale is one, so resting cards keep the same LOD selection as before.
                 // Held/inspected renderers set a small negative bias through their existing property
@@ -142,10 +229,10 @@ Shader "CardsChaos/Card Lit"
                 if (_MipBias < -0.0001h)
                 {
                     float mipGradientScale = exp2((float)_MipBias);
-                    frontDx *= mipGradientScale;
-                    frontDy *= mipGradientScale;
-                    backDx *= mipGradientScale;
-                    backDy *= mipGradientScale;
+                    frontSampleDx *= mipGradientScale;
+                    frontSampleDy *= mipGradientScale;
+                    backSampleDx *= mipGradientScale;
+                    backSampleDy *= mipGradientScale;
                 }
                 half3 albedo;
 
@@ -156,20 +243,36 @@ Shader "CardsChaos/Card Lit"
                 UNITY_BRANCH
                 if (faceMix >= 1.0h)
                 {
-                    albedo = SAMPLE_TEXTURE2D_GRAD(
-                        _FrontTex, sampler_FrontTex, input.uvFront, frontDx, frontDy).rgb;
+                    albedo = SampleCardFace(
+                        input.uvFront,
+                        frontPixelDx,
+                        frontPixelDy,
+                        frontSampleDx,
+                        frontSampleDy,
+                        _FrontTex_TexelSize.xy,
+                        TEXTURE2D_ARGS(_FrontTex, sampler_FrontTex));
                 }
                 else if (faceMix <= 0.0h)
                 {
-                    albedo = SAMPLE_TEXTURE2D_GRAD(
-                        _BackTex, sampler_BackTex, input.uvBack, backDx, backDy).rgb;
+                    albedo = SampleCardFace(
+                        input.uvBack,
+                        backPixelDx,
+                        backPixelDy,
+                        backSampleDx,
+                        backSampleDy,
+                        _BackTex_TexelSize.xy,
+                        TEXTURE2D_ARGS(_BackTex, sampler_BackTex));
                 }
                 else
                 {
+                    // The narrow rim keeps its original two samples. Sharpening across two faces
+                    // would cost ten taps and could turn their blend into a visible seam.
                     half3 front = SAMPLE_TEXTURE2D_GRAD(
-                        _FrontTex, sampler_FrontTex, input.uvFront, frontDx, frontDy).rgb;
+                        _FrontTex, sampler_FrontTex, input.uvFront,
+                        frontSampleDx, frontSampleDy).rgb;
                     half3 back = SAMPLE_TEXTURE2D_GRAD(
-                        _BackTex, sampler_BackTex, input.uvBack, backDx, backDy).rgb;
+                        _BackTex, sampler_BackTex, input.uvBack,
+                        backSampleDx, backSampleDy).rgb;
                     albedo = lerp(back, front, faceMix);
                 }
 

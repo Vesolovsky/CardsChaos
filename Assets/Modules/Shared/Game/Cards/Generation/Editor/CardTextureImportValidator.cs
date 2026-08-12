@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -130,6 +131,14 @@ namespace CardsChaos.Cards.CardEditor
                 failures.Add($"Standalone resizeAlgorithm={standalone.resizeAlgorithm}");
             if (standalone.format != TextureImporterFormat.BC7)
                 failures.Add($"Standalone format={standalone.format}");
+            if (!CardTextureImportQuality.UsesMaximumBC7Quality(standalone))
+                failures.Add("Standalone BC7 maximum encoder quality disabled");
+            if (standalone.textureCompression != TextureImporterCompression.Compressed)
+                failures.Add($"Standalone textureCompression={standalone.textureCompression}");
+            if (standalone.compressionQuality != 50)
+                failures.Add($"Standalone compressionQuality={standalone.compressionQuality}");
+            if (standalone.crunchedCompression)
+                failures.Add("Standalone Crunch compression enabled");
             if (standalone.ignorePlatformSupport)
                 failures.Add("Standalone ignorePlatformSupport enabled");
 
@@ -150,6 +159,56 @@ namespace CardsChaos.Cards.CardEditor
             }
 
             return null;
+        }
+    }
+
+    /// <summary>
+    /// Unity 2022.3 serializes a dedicated maximum-quality switch for BC6H/BC7, but keeps the
+    /// corresponding API internal. Keeping the reflection in one version-checked editor helper
+    /// lets the builder and validator use the real switch. The public compressionQuality value
+    /// alone cannot reliably identify BC7 "Best", because Unity serializes that choice here.
+    /// </summary>
+    internal static class CardTextureImportQuality
+    {
+        private const string MaximumQualityPropertyName =
+            "forceMaximumCompressionQuality_BC6H_BC7";
+
+        private static readonly PropertyInfo MaximumQualityProperty = ResolveProperty();
+
+        public static bool UsesMaximumBC7Quality(TextureImporterPlatformSettings settings)
+        {
+            if (settings == null)
+                throw new ArgumentNullException(nameof(settings));
+
+            return (int)MaximumQualityProperty.GetValue(settings) != 0;
+        }
+
+        public static void EnableMaximumBC7Quality(TextureImporterPlatformSettings settings)
+        {
+            if (settings == null)
+                throw new ArgumentNullException(nameof(settings));
+
+            MaximumQualityProperty.SetValue(settings, 1);
+        }
+
+        private static PropertyInfo ResolveProperty()
+        {
+            PropertyInfo property = typeof(TextureImporterPlatformSettings).GetProperty(
+                MaximumQualityPropertyName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (property != null
+                && property.PropertyType == typeof(int)
+                && property.CanRead
+                && property.CanWrite)
+            {
+                return property;
+            }
+
+            throw new MissingMemberException(
+                $"Unity {Application.unityVersion} does not expose the expected internal " +
+                $"{nameof(TextureImporterPlatformSettings)}.{MaximumQualityPropertyName} " +
+                "integer property. Card BC7 quality was not changed.");
         }
     }
 }

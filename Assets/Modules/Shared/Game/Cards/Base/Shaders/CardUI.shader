@@ -27,6 +27,7 @@ Shader "CardsChaos/Card UI"
         // in grey by handing it a material with this set to 1.
         _Grayscale ("Grayscale", Range(0, 1)) = 0
         _MipBias ("Close View Mip Bias", Range(-1, 0)) = 0
+        _InspectSharpen ("Inspect Sharpen", Range(0, 0.35)) = 0
 
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -102,6 +103,7 @@ Shader "CardsChaos/Card UI"
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
+            float4 _MainTex_TexelSize;
             fixed4 _Color;
             fixed4 _TextureSampleAdd;
             float4 _ClipRect;
@@ -112,6 +114,7 @@ Shader "CardsChaos/Card UI"
             float4 _UvInset;
             float _Grayscale;
             float _MipBias;
+            float _InspectSharpen;
 
             v2f vert(appdata_t v)
             {
@@ -148,28 +151,88 @@ Shader "CardsChaos/Card UI"
                 return corner + min(max(q.x, q.y), 0.0) - radius;
             }
 
+            half3 SafeSharpen5(
+                half3 center, half3 left, half3 right, half3 down, half3 up, half strength)
+            {
+                half3 localMin = min(center, min(min(left, right), min(down, up)));
+                half3 localMax = max(center, max(max(left, right), max(down, up)));
+                half3 average = (left + right + down + up) * 0.25h;
+
+                const half3 Luminance = half3(0.2126h, 0.7152h, 0.0722h);
+                half centerLuma = dot(center, Luminance);
+                half leftLuma = dot(left, Luminance);
+                half rightLuma = dot(right, Luminance);
+                half downLuma = dot(down, Luminance);
+                half upLuma = dot(up, Luminance);
+                half lumaMin = min(centerLuma,
+                    min(min(leftLuma, rightLuma), min(downLuma, upLuma)));
+                half lumaMax = max(centerLuma,
+                    max(max(leftLuma, rightLuma), max(downLuma, upLuma)));
+                half edgeGuard = 1.0h - smoothstep(0.25h, 0.65h, lumaMax - lumaMin);
+                half3 delta = clamp(
+                    (center - average) * (strength * edgeGuard), -0.03h, 0.03h);
+
+                return clamp(center + delta, localMin, localMax);
+            }
+
             fixed4 frag(v2f IN) : SV_Target
             {
                 // Sampled a few pixels in from the edge, exactly as the mesh UVs are, so the
                 // filtered edge never picks up the black band just outside the face.
                 float2 uv = (IN.texcoord - 0.5) * (1.0 - 2.0 * _UvInset.xy) + 0.5;
 
+                // The silhouette is also the ordinary alpha mask below, so it is evaluated for
+                // every UI card. Sharpen-only derivatives stay inside their uniform material
+                // branch, leaving normal and grey album slots on the previous lightweight path.
+                float distance = CardDistance(IN.texcoord);
+                float edge = max(fwidth(distance), 0.00001);
+
                 // Ordinary album slots use the zero default. Only the inspector has a material
                 // with a small negative bias, so its large close-up is sharper without changing
                 // the texture residency or sampling cost of the rest of the album.
-                half4 color = (tex2Dbias(_MainTex, float4(uv, 0.0, _MipBias))
-                               + _TextureSampleAdd) * IN.color;
+                half4 center = tex2Dbias(_MainTex, float4(uv, 0.0, _MipBias));
+                half3 sharpened = center.rgb;
+
+                UNITY_BRANCH
+                if (_InspectSharpen > 0.0001)
+                {
+                    float2 pixelDx = ddx(uv);
+                    float2 pixelDy = ddy(uv);
+                    half silhouetteGuard = saturate((-distance / edge - 1.0) * 0.5);
+                    float2 safeTexelSize = max(_MainTex_TexelSize.xy, float2(1e-8, 1e-8));
+                    float footprintX = length(pixelDx / safeTexelSize);
+                    float footprintY = length(pixelDy / safeTexelSize);
+                    float anisotropy = max(footprintX, footprintY)
+                                       / max(min(footprintX, footprintY), 1e-4);
+                    half anisoGuard = (half)(1.0 - smoothstep(2.0, 4.0, anisotropy));
+                    half strength = (half)_InspectSharpen * silhouetteGuard * anisoGuard;
+
+                    UNITY_BRANCH
+                    if (strength > 0.0001h)
+                    {
+                        half3 left = tex2Dbias(
+                            _MainTex, float4(uv - pixelDx, 0.0, _MipBias)).rgb;
+                        half3 right = tex2Dbias(
+                            _MainTex, float4(uv + pixelDx, 0.0, _MipBias)).rgb;
+                        half3 down = tex2Dbias(
+                            _MainTex, float4(uv - pixelDy, 0.0, _MipBias)).rgb;
+                        half3 up = tex2Dbias(
+                            _MainTex, float4(uv + pixelDy, 0.0, _MipBias)).rgb;
+                        sharpened = SafeSharpen5(
+                            center.rgb, left, right, down, up, strength);
+                    }
+                }
+
+                // Preserve the central alpha exactly; only the artwork's RGB is sharpened.
+                half4 color = (half4(sharpened, center.a) + _TextureSampleAdd) * IN.color;
 
                 // Desaturate towards perceived luminance. A misplaced card is drawn grey so it
                 // reads as out of place at a glance without hiding which card it is.
                 float luma = dot(color.rgb, float3(0.299, 0.587, 0.114));
                 color.rgb = lerp(color.rgb, luma.xxx, _Grayscale);
 
-                float distance = CardDistance(IN.texcoord);
-
                 // One pixel of the distance field, so the silhouette stays smooth at any size
                 // the card is drawn - the pile draws it small, the drag layer large.
-                float edge = max(fwidth(distance), 0.00001);
                 color.a *= 1.0 - smoothstep(-edge, edge, distance);
 
                 #ifdef UNITY_UI_CLIP_RECT

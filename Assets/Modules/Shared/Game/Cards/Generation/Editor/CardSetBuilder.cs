@@ -31,6 +31,7 @@ namespace CardsChaos.Cards.CardEditor
         // log2(1536 / 2048): compensates only for the extra LOD introduced when the usual
         // 1024x1536 source is imported at the next power-of-two height.
         private const float CloseViewMipBias = -0.415f;
+        private const float InspectSharpen = 0.18f;
 
         /// <summary>
         /// PhysX only starts generating contacts once surfaces are this close, so the value
@@ -109,9 +110,13 @@ namespace CardsChaos.Cards.CardEditor
             // the same measurements as the mesh, and the two drifting apart is exactly the bug
             // this generation step exists to prevent. A grey twin is written for misplaced cards,
             // plus a sharpened variant used only by the large album inspector.
-            BuildUIMaterial(UIMaterialPath, grayscale: 0f, mipBias: 0f);
-            BuildUIMaterial(UIGrayMaterialPath, grayscale: 1f, mipBias: 0f);
-            BuildUIMaterial(UIInspectMaterialPath, grayscale: 0f, mipBias: CloseViewMipBias);
+            BuildUIMaterial(
+                UIMaterialPath, grayscale: 0f, mipBias: 0f, inspectSharpen: 0f);
+            BuildUIMaterial(
+                UIGrayMaterialPath, grayscale: 1f, mipBias: 0f, inspectSharpen: 0f);
+            BuildUIMaterial(
+                UIInspectMaterialPath, grayscale: 0f, mipBias: CloseViewMipBias,
+                inspectSharpen: InspectSharpen);
 
             var setDefinitions = new List<CardSetDefinition>();
             int built = 0;
@@ -236,7 +241,8 @@ namespace CardsChaos.Cards.CardEditor
         /// until someone retunes the measurement. Sharing a single material also keeps every
         /// card in one batch per variant.
         /// </summary>
-        private static Material BuildUIMaterial(string path, float grayscale, float mipBias)
+        private static Material BuildUIMaterial(
+            string path, float grayscale, float mipBias, float inspectSharpen)
         {
             Shader shader = Shader.Find(UIShaderName);
             if (shader == null)
@@ -268,6 +274,7 @@ namespace CardsChaos.Cards.CardEditor
                 0f));
             material.SetFloat("_Grayscale", grayscale);
             material.SetFloat("_MipBias", mipBias);
+            material.SetFloat("_InspectSharpen", inspectSharpen);
 
             EditorUtility.SetDirty(material);
             Debug.Log($"[CardSetBuilder] UI card material written to {path}");
@@ -282,6 +289,8 @@ namespace CardsChaos.Cards.CardEditor
             material.SetFloat("_Metallic", 0f);
             material.SetColor("_EdgeTint", Color.white);
             material.SetFloat("_EdgeDarken", 0.18f);
+            material.SetFloat("_MipBias", 0f);
+            material.SetFloat("_InspectSharpen", 0f);
             material.enableInstancing = true;
         }
 
@@ -626,6 +635,7 @@ namespace CardsChaos.Cards.CardEditor
                 || standalone.maxTextureSize != 2048
                 || standalone.resizeAlgorithm != TextureResizeAlgorithm.Mitchell
                 || standalone.format != TextureImporterFormat.BC7
+                || !CardTextureImportQuality.UsesMaximumBC7Quality(standalone)
                 || standalone.textureCompression != TextureImporterCompression.Compressed
                 || standalone.compressionQuality != 50
                 || standalone.ignorePlatformSupport
@@ -637,6 +647,7 @@ namespace CardsChaos.Cards.CardEditor
                 standalone.maxTextureSize = 2048;
                 standalone.resizeAlgorithm = TextureResizeAlgorithm.Mitchell;
                 standalone.format = TextureImporterFormat.BC7;
+                CardTextureImportQuality.EnableMaximumBC7Quality(standalone);
                 standalone.textureCompression = TextureImporterCompression.Compressed;
                 standalone.compressionQuality = 50;
                 standalone.ignorePlatformSupport = false;

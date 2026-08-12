@@ -17,12 +17,15 @@ CBUFFER_START(UnityPerMaterial)
     half   _Metallic;
     half   _EdgeDarken;
     half   _MipBias;
+    half   _InspectSharpen;
     half   _Cutoff;
 CBUFFER_END
 
 TEXTURE2D(_FrontTex);
 SAMPLER(sampler_FrontTex);
+float4 _FrontTex_TexelSize;
 TEXTURE2D(_BackTex);
 SAMPLER(sampler_BackTex);
+float4 _BackTex_TexelSize;
 
 #endif

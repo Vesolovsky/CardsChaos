@@ -33,6 +33,7 @@ Material:
     - _ColorMask: 15
     - _CornerRadius: 0.04736328
     - _Grayscale: 0
+    - _InspectSharpen: 0
     - _MipBias: 0
     - _Squareness: 1.73
     - _Stencil: 0

@@ -26,6 +26,11 @@ namespace CardsChaos.Cards
                  "resting cards keep the material default of zero.")]
         [SerializeField, Range(-1f, 0f)] private float closeViewMipBias = -0.415f;
 
+        [Tooltip("A conservative five-tap sharpen used only while this card is inspected. It is " +
+                 "bounded in the shader and fades out at steep viewing angles to avoid halos " +
+                 "and shimmer. Zero disables it completely.")]
+        [SerializeField, Range(0f, 0.35f)] private float inspectSharpen = 0.18f;
+
         [Header("Inspect")]
         [Tooltip("Material look while this card is held up for inspection. CardSetBuilder " +
                  "writes these per variant from the measured brightness of the face, so " +
@@ -42,6 +47,7 @@ namespace CardsChaos.Cards
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
         private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
         private static readonly int MipBiasId = Shader.PropertyToID("_MipBias");
+        private static readonly int InspectSharpenId = Shader.PropertyToID("_InspectSharpen");
 
         // Held (and piled) cards ride right in front of the camera and would otherwise clip into the
         // furniture. When a layer of this name exists they are moved onto it so an overlay camera can
@@ -541,6 +547,7 @@ namespace CardsChaos.Cards
                 // Under inspection the card is the whole point, so let it catch the light.
                 _propertyBlock.SetFloat(SmoothnessId, inspectSmoothness);
                 _propertyBlock.SetFloat(MetallicId, inspectMetallic);
+                _propertyBlock.SetFloat(InspectSharpenId, inspectSharpen);
             }
             else if (IsHeld)
             {
