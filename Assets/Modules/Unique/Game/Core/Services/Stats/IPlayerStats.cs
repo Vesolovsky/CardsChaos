@@ -48,13 +48,13 @@ namespace Vesolovsky.Game.Services.Stats
 
         // --- Collection snapshot, saved ---
 
-        /// <summary>Every card in the game - the denominator of collection progress.</summary>
+        /// <summary>Every original and its one allowed duplicate - the collection denominator.</summary>
         int TotalCards { get; }
 
-        /// <summary>How many cards are sitting correctly filed in the album.</summary>
+        /// <summary>Correct album originals plus valid duplicates stored in duplicate containers.</summary>
         int CorrectlyPlacedCards { get; }
 
-        /// <summary>How many cards are still to be filed correctly - <see cref="TotalCards"/> minus the above.</summary>
+        /// <summary>How many originals/duplicates remain to be put in their correct destination.</summary>
         int CardsRemainingToPlace { get; }
     }
 }

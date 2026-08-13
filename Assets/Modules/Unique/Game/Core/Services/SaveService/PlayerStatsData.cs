@@ -36,23 +36,30 @@ namespace Vesolovsky.Game.Services.Save
         public double DistanceSprinted { get; set; }
 
         /// <summary>
-        /// The most cards ever correctly filed in the album at one moment - the high-water mark of
-        /// progress. Unlike the live count it never falls when cards are taken back out.
+        /// The most originals/duplicates ever correctly placed at one moment - the high-water mark
+        /// of progress. Unlike the live count it never falls when cards are taken back out.
         /// </summary>
         public int PeakCorrectlyPlaced { get; set; }
 
         /// <summary>
-        /// How many cards are correctly filed in the album, as of the last time the room was loaded
-        /// and kept in sync. A snapshot, not a running total - it rises and falls with the album.
+        /// Correct album originals plus valid duplicates in their boxes, kept in sync while the room
+        /// is loaded. A snapshot, not a running total - it rises and falls with both destinations.
         /// </summary>
         public int CorrectlyPlacedCards { get; set; }
 
         /// <summary>
-        /// Every card in the game at snapshot time - the denominator of collection progress, and
-        /// what "cards left to file" is measured against. Refreshed alongside
+        /// Every card plus every duplicate of one at snapshot time - the collection denominator and
+        /// what "cards left to place" is measured against. Refreshed alongside
         /// <see cref="CorrectlyPlacedCards"/> so both come from the same moment.
         /// </summary>
         public int TotalCards { get; set; }
+
+        /// <summary>
+        /// The most duplicates ever sitting in the duplicate box at one moment. A high-water mark
+        /// like <see cref="PeakCorrectlyPlaced"/>, because the duplicate task is measured against
+        /// it: emptying a box afterwards must not take back a task the player has already done.
+        /// </summary>
+        public int PeakDuplicatesStored { get; set; }
 
         /// <summary>
         /// Isolated copy for the off-thread save write, so serializing on a background thread never
@@ -73,6 +80,7 @@ namespace Vesolovsky.Game.Services.Save
                 PeakCorrectlyPlaced = PeakCorrectlyPlaced,
                 CorrectlyPlacedCards = CorrectlyPlacedCards,
                 TotalCards = TotalCards,
+                PeakDuplicatesStored = PeakDuplicatesStored,
             };
         }
     }

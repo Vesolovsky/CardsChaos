@@ -19,15 +19,21 @@ namespace Vesolovsky.Game.Services.Save
 
         /// <summary>
         /// Cards in hand, in hand order - index 0 is the top of the pile / leftmost of the fan.
-        /// Only the card's identity is kept; the hand lays them out from scratch on load.
+        /// Repeated set-and-number rows are separate physical copies; the hand lays them out anew.
         /// </summary>
         public List<SavedCard> HeldCards { get; set; }
 
-        /// <summary>Every card resting in the room, by identity and exact pose.</summary>
+        /// <summary>
+        /// Every physical card resting in the room. Repeated identities are preserved as separate
+        /// rows; cards in a stack additionally name their container and local pose.
+        /// </summary>
         public List<SavedGroundCard> GroundCards { get; set; }
     }
 
-    /// <summary>A card named the way the save always names one - by set and number.</summary>
+    /// <summary>
+    /// One physical card named by set and number. The list row, not CardRef, is its instance:
+    /// multiple equal rows deliberately represent duplicates.
+    /// </summary>
     public class SavedCard
     {
         public string SetId { get; set; }
@@ -39,6 +45,16 @@ namespace Vesolovsky.Game.Services.Save
     {
         public SaveVector3 Position { get; set; }
         public SaveQuaternion Rotation { get; set; }
+
+        /// <summary>Empty for an ordinary room card; otherwise the stable CardStackContainer id.</summary>
+        public string ContainerId { get; set; }
+
+        /// <summary>Grid slot within the named container. Ignored when ContainerId is empty.</summary>
+        public int ContainerSlot { get; set; }
+
+        /// <summary>Exact local pose preserves stack ordering and authored loose test layouts.</summary>
+        public SaveVector3 ContainerLocalPosition { get; set; }
+        public SaveQuaternion ContainerLocalRotation { get; set; }
     }
 
     /// <summary>

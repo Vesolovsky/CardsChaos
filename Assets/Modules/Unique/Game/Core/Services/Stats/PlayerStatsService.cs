@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using CardsChaos.Cards;
 using CardsChaos.Cards.Album;
 using UnityEngine;
@@ -18,10 +19,9 @@ namespace Vesolovsky.Game.Services.Stats
     /// accumulate each frame straight into the save object, the way the wallet mutates its balances
     /// in place.
     ///
-    /// The collection figures (correctly filed, total, left to file) are worked out from the album
-    /// and catalog, but a snapshot of them is written into the save and kept in step with every
-    /// album change - so a screen outside the gameplay scene can read progress from the save alone,
-    /// with no album around to ask.
+    /// The collection figures (correctly placed, total, left) are worked out from the album,
+    /// duplicate containers and catalog. A snapshot is written into the save and kept in step with
+    /// both destinations, so a screen outside gameplay can read progress without scene objects.
     ///
     /// Nothing here forces a write on the per-frame path: the counters live inside the save, so any
     /// save the game already takes carries them, and a light throttle nudges the coordinator dirty
@@ -50,6 +50,7 @@ namespace Vesolovsky.Game.Services.Stats
         private readonly bool _enableLogging;
 
         private bool _sessionCounted;
+        private bool _collectionDirty;
         private float _secondsSinceDirty;
         private float _secondsSinceLog;
 
@@ -89,6 +90,8 @@ namespace Vesolovsky.Game.Services.Stats
 
             if (_album != null)
                 _album.PageChanged += OnPageChanged;
+
+            CardStackContainer.ContentsChanged += OnContainerContentsChanged;
         }
 
         public void Dispose()
@@ -104,6 +107,8 @@ namespace Vesolovsky.Game.Services.Stats
 
             if (_album != null)
                 _album.PageChanged -= OnPageChanged;
+
+            CardStackContainer.ContentsChanged -= OnContainerContentsChanged;
         }
 
         public void Tick()
@@ -128,6 +133,12 @@ namespace Vesolovsky.Game.Services.Stats
                 _saveCoordinator.MarkDirty();
                 Log($"Session #{stats.SessionsPlayed} started — {Summary(stats)}");
                 Changed?.Invoke();
+            }
+
+            if (_collectionDirty)
+            {
+                _collectionDirty = false;
+                RefreshCollection(stats);
             }
 
             AccumulateDistance(stats);
@@ -227,6 +238,13 @@ namespace Vesolovsky.Game.Services.Stats
             RefreshCollection(stats);
         }
 
+        private void OnContainerContentsChanged()
+        {
+            // Parenting can change many cards in one save-restore frame. Coalesce the burst into
+            // one scan on Tick instead of rescanning the whole room for every restored child.
+            _collectionDirty = true;
+        }
+
         /// <summary>
         /// Recomputes the collection snapshot from the live album and writes it into the save when it
         /// has moved. Also lifts the all-time peak. A no-op when the album or catalog is absent, so
@@ -237,8 +255,10 @@ namespace Vesolovsky.Game.Services.Stats
             if (_catalog == null || _album == null)
                 return;
 
-            // Sets flagged out of the collection (the endgame set) count toward neither the total nor
-            // the filed tally, so "all cards filed" is reached without ever placing the endgame card.
+            // Every counted catalog card earns a point by sitting correctly in the album, and the
+            // share of them authored into the room twice earns a second one by having that copy put
+            // away in the duplicate box. Sets flagged out of the collection (the endgame set) count
+            // toward neither side.
             int total = 0;
             int correct = 0;
             foreach (CardSetDefinition set in _catalog.Sets)
@@ -246,13 +266,31 @@ namespace Vesolovsky.Game.Services.Stats
                 if (set == null || !set.CountsTowardCollection)
                     continue;
 
-                total += set.CardCount;
+                total += set.CardCount + set.DuplicateCount;
                 correct += _album.CountCorrect(set.SetId);
             }
 
+            // A boxed card is put away whether or not its twin is in the album yet - the two halves
+            // are earned independently, in whichever order the player gets to them. The containers
+            // keep their own tally, so this does not sweep the room; they also refuse a second copy
+            // of the same card, and the count is clamped in case a hand-edited save slipped one in.
+            int duplicates = 0;
+            foreach (KeyValuePair<CardRef, int> stored in CardStackContainer.StoredCards)
+            {
+                if (!stored.Key.IsValid || stored.Value <= 0)
+                    continue;
+
+                CardSetDefinition set = _catalog.FindSet(stored.Key.SetId);
+                if (set != null && set.CountsTowardCollection)
+                    duplicates++;
+            }
+
+            correct += duplicates;
+
             bool peakRose = correct > stats.PeakCorrectlyPlaced;
+            bool duplicatePeakRose = duplicates > stats.PeakDuplicatesStored;
             bool snapshotMoved = correct != stats.CorrectlyPlacedCards || total != stats.TotalCards;
-            if (!peakRose && !snapshotMoved)
+            if (!peakRose && !duplicatePeakRose && !snapshotMoved)
                 return;
 
             stats.CorrectlyPlacedCards = correct;
@@ -260,9 +298,15 @@ namespace Vesolovsky.Game.Services.Stats
             if (peakRose)
                 stats.PeakCorrectlyPlaced = correct;
 
+            // The duplicate task is measured against the high-water mark, so emptying a box later
+            // cannot take a claimed reward - or a nearly finished task - back off the player.
+            if (duplicatePeakRose)
+                stats.PeakDuplicatesStored = duplicates;
+
             _saveCoordinator.MarkDirty();
             Log($"Collection {correct}/{total} (remaining {Mathf.Max(0, total - correct)}, " +
-                $"peak {stats.PeakCorrectlyPlaced})");
+                $"peak {stats.PeakCorrectlyPlaced}, boxed duplicates {duplicates}, " +
+                $"peak {stats.PeakDuplicatesStored})");
             Changed?.Invoke();
         }
 

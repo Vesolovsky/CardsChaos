@@ -48,6 +48,7 @@ namespace CardsChaos.Cards
         private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
         private static readonly int MipBiasId = Shader.PropertyToID("_MipBias");
         private static readonly int InspectSharpenId = Shader.PropertyToID("_InspectSharpen");
+        private static readonly int GrayscaleId = Shader.PropertyToID("_Grayscale");
 
         // Held (and piled) cards ride right in front of the camera and would otherwise clip into the
         // furniture. When a layer of this name exists they are moved onto it so an overlay camera can
@@ -103,6 +104,14 @@ namespace CardsChaos.Cards
         public bool IsHeld { get; private set; }
 
         public bool IsInspected { get; private set; }
+
+        /// <summary>
+        /// Whether this card is drawn drained of colour while it is in hand - how a copy the player
+        /// has already filed away is told apart from a card still worth keeping. Set from outside
+        /// (see the duplicate service) and deliberately ignored while the card is inspected: a card
+        /// held up close is being read, and the artwork is the point.
+        /// </summary>
+        public bool IsShaded { get; private set; }
 
         /// <summary>
         /// The house of cards this card was placed into, if any. Set by <see cref="CardHouse"/> and
@@ -167,6 +176,16 @@ namespace CardsChaos.Cards
                 return;
 
             IsInspected = inspected;
+            ApplyMaterialOverrides();
+        }
+
+        /// <summary>Turns the in-hand grey wash on or off. See <see cref="IsShaded"/>.</summary>
+        public void SetShaded(bool shaded)
+        {
+            if (IsShaded == shaded)
+                return;
+
+            IsShaded = shaded;
             ApplyMaterialOverrides();
         }
 
@@ -256,12 +275,55 @@ namespace CardsChaos.Cards
                 _rotationTween = Tween.LocalRotation(transform, localRotation, duration, ease);
         }
 
+        /// <summary>
+        /// Flies to a local pose on a quadratic arc and adds a temporary local tilt that is exactly
+        /// zero at both ends. Unlike a physics throw this is deterministic and always lands flush;
+        /// it is intended for transfers into authored slots such as a card container.
+        /// </summary>
+        public void FlyTo(
+            Vector3 localPosition,
+            Quaternion localRotation,
+            Vector3 arc,
+            Vector3 flourishEuler,
+            float duration,
+            Ease ease)
+        {
+            StopTweens();
+
+            if (duration <= 0f)
+            {
+                transform.SetLocalPositionAndRotation(localPosition, localRotation);
+                return;
+            }
+
+            Vector3 startPosition = transform.localPosition;
+            Quaternion startRotation = transform.localRotation;
+            Vector3 control = (startPosition + localPosition) * 0.5f + arc;
+            Transform cardTransform = transform;
+
+            // PrimeTween supplies the eased 0..1 value. The sine envelope gives the card a little
+            // character in mid-air, then mathematically removes the extra tilt before it lands.
+            _positionTween = Tween.Custom(0f, 1f, duration, t =>
+            {
+                float inverse = 1f - t;
+                cardTransform.localPosition = inverse * inverse * startPosition
+                                              + 2f * inverse * t * control
+                                              + t * t * localPosition;
+
+                Quaternion directRotation = Quaternion.Slerp(startRotation, localRotation, t);
+                float flourish = Mathf.Sin(t * Mathf.PI);
+                cardTransform.localRotation = directRotation *
+                                              Quaternion.Euler(flourishEuler * flourish);
+            }, ease);
+        }
+
         public void Release(Vector3 velocity, Vector3 angularVelocity)
         {
             StopTweens();
 
             IsHeld = false;
             IsInspected = false;
+            IsShaded = false;
             ReleaseHeldArtworkMip();
             ApplyMaterialOverrides();
 
@@ -359,6 +421,7 @@ namespace CardsChaos.Cards
 
             IsHeld = false;
             IsInspected = false;
+            IsShaded = false;
             ReleaseHeldArtworkMip();
             ApplyMaterialOverrides();
 
@@ -554,6 +617,11 @@ namespace CardsChaos.Cards
                 // Fanned out in hand a glossy card catches a specular sweep that sits right
                 // on top of the artwork; matte it out until it is looked at or put down.
                 _propertyBlock.SetFloat(SmoothnessId, heldSmoothness);
+
+                // Only in hand, and only outside the close-up: a shaded card goes back to full
+                // colour the moment it is held up to be read.
+                if (IsShaded)
+                    _propertyBlock.SetFloat(GrayscaleId, 1f);
             }
 
             _renderer.SetPropertyBlock(_propertyBlock);

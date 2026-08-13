@@ -126,7 +126,8 @@ namespace Vesolovsky.Game.Services.Skills
 
         private static bool IsEligible(Card card, string setId, Vector3 eye, float radiusSqr)
         {
-            if (card == null || card.IsHeld || card.Identity == null || card.Identity.SetId != setId)
+            if (card == null || card.IsHeld || CardStackContainer.IsStored(card) ||
+                card.Identity == null || card.Identity.SetId != setId)
                 return false;
 
             // A card holding up a house of cards is fair game: raising it collapses the house, the

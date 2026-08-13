@@ -58,6 +58,13 @@ namespace CardsChaos.Cards
         public int CardCount => cards.Count;
 
         /// <summary>
+        /// How many of this set's cards are authored into the room a second time, to be sorted into
+        /// the duplicate box. Derived from the set's size by <see cref="CardDuplicates"/> rather
+        /// than authored, so the placer and the collection total cannot drift apart.
+        /// </summary>
+        public int DuplicateCount => CardDuplicates.QuotaFor(this);
+
+        /// <summary>
         /// The card that belongs at a given number. Numbers run 1..<see cref="CardCount"/>; the
         /// builder rejects a set whose numbering has holes, because the album lays slots out by
         /// number and a hole would leave a slot no card could ever fill.

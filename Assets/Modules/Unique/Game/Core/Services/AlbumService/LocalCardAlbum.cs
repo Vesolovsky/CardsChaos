@@ -113,6 +113,23 @@ namespace Vesolovsky.Game.Services.Album
             return card;
         }
 
+        public bool Contains(CardRef card)
+        {
+            if (!card.IsValid)
+                return false;
+
+            foreach (Dictionary<int, CardRef> slots in Pages.Values)
+            {
+                foreach (CardRef placed in slots.Values)
+                {
+                    if (placed == card)
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
         public int CountCorrect(string pageSetId)
         {
             if (!Pages.TryGetValue(pageSetId, out Dictionary<int, CardRef> slots))

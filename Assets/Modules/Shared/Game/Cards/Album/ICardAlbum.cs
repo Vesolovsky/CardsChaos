@@ -34,6 +34,12 @@ namespace CardsChaos.Cards.Album
         CardRef Take(string pageSetId, int slotIndex);
 
         /// <summary>
+        /// Whether an instance of this card is anywhere in the album, regardless of page or slot.
+        /// This is the canonical test for whether another physical copy counts as a duplicate.
+        /// </summary>
+        bool Contains(CardRef card);
+
+        /// <summary>
         /// How many of a set's own cards are sitting in their own slots - the X of the "X / Y" on
         /// the set button. A card of this set parked on someone else's page does not count, and
         /// neither does a stranger filling a slot here.

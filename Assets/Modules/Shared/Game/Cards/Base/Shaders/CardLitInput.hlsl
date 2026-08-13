@@ -18,6 +18,7 @@ CBUFFER_START(UnityPerMaterial)
     half   _EdgeDarken;
     half   _MipBias;
     half   _InspectSharpen;
+    half   _Grayscale;
     half   _Cutoff;
 CBUFFER_END
 

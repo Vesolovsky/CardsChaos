@@ -21,15 +21,20 @@ namespace Vesolovsky.Game
     /// album up to a milestone-minus-one so the next card is yours to file and watch the arrival:
     /// F9 = 299, F8 = 599, F7 = 999, F6 = 1199. F5 files every card of the Unique Wands set but the
     /// last, so completing it is your move. F4 completes Unique Wands AND fills to 300 at once, to
-    /// see two arrivals queue one after another. F3 files every card but one, so filing that last one
-    /// finishes the collection and slides the endgame card out. Filing through the cheat also removes
-    /// the card from the floor - the same as filing it by hand - and raises the same album event, so
-    /// the triggers fire exactly as in play.
+    /// see two arrivals queue one after another. F3 files every card but one AND boxes every
+    /// duplicate, so filing that last one finishes the collection and slides the endgame card out.
+    /// F2 boxes duplicates up to one short of the "Muscle memory" task, so the next one you put away
+    /// finishes it. Filing through the cheat also removes the card from the floor - the same as
+    /// filing it by hand - and raises the same album event, so the triggers fire exactly as in play.
     /// </summary>
     [AddComponentMenu("CardsChaos/Debug/Cheats")]
     public class Cheats : MonoBehaviour
     {
         private const int SkillPointsPerPress = 100;
+
+        // What the "Muscle memory" task asks for. F2 stops one short of it, the same way the album
+        // fills stop one short of a milestone, so the next duplicate the player boxes finishes it.
+        private const int DuplicateTaskTarget = 200;
 
         [Header("Collection cheats")]
         [Tooltip("The Unique Wands set's folder id, used by F5 and F4.")]
@@ -101,6 +106,9 @@ namespace Vesolovsky.Game
 
             if (keyboard.f3Key.wasPressedThisFrame)
                 FillAllExceptLast();
+
+            if (keyboard.f2Key.wasPressedThisFrame)
+                BoxDuplicatesTo(DuplicateTaskTarget - 1);
         }
 
         // Files correct cards, set by set, until the collection holds this many - so the milestone
@@ -208,8 +216,78 @@ namespace Vesolovsky.Game
                 }
             }
 
-            Debug.Log($"[Cheats] Filled every counting card except {lastSet.SetId} #{lastSlot + 1} - " +
-                      "file it to finish the collection and trigger the endgame card.");
+            // The collection is only complete once every duplicate is in the box too, so the endgame
+            // is out of reach without this. Only one copy per card is ever boxed, so the last card
+            // is still lying in the room afterwards - exactly the one left for the player to file.
+            int boxed = BoxDuplicatesTo(int.MaxValue);
+
+            Debug.Log($"[Cheats] Filled every counting card except {lastSet.SetId} #{lastSlot + 1} " +
+                      $"and boxed {boxed} duplicate(s) - file that card to finish the collection " +
+                      "and trigger the endgame card.");
+        }
+
+        // Puts loose cards away in the duplicate box until that many are stored. Only a card that
+        // really has a duplicate is boxed - either a second copy is still lying about, or its twin
+        // is already filed - so this can never box the only copy of a card the album still wants.
+        // Returns how many are boxed afterwards.
+        private int BoxDuplicatesTo(int target)
+        {
+            var stored = new HashSet<CardRef>(CardStackContainer.StoredCards.Keys);
+            int boxed = stored.Count;
+
+            var loose = new List<Card>();
+            var copies = new Dictionary<CardRef, int>();
+
+            foreach (Card card in FindObjectsByType<Card>(FindObjectsSortMode.None))
+            {
+                if (card == null || card.IsHeld || CardStackContainer.IsStored(card))
+                    continue;
+
+                CardRef key = CardRef.From(card.Identity);
+                if (!key.IsValid)
+                    continue;
+
+                loose.Add(card);
+                copies.TryGetValue(key, out int count);
+                copies[key] = count + 1;
+            }
+
+            foreach (Card card in loose)
+            {
+                if (boxed >= target)
+                    break;
+
+                CardRef key = CardRef.From(card.Identity);
+
+                // Add doubles as the "is this one already spoken for" test, so the second copy of
+                // a card is left where it is rather than rejected by the container a moment later.
+                if (!stored.Add(key))
+                    continue;
+
+                if (copies[key] < 2 && !_album.Contains(key))
+                {
+                    stored.Remove(key);
+                    continue;
+                }
+
+                if (!CardStackContainer.TryFindAutoPlacement(
+                        card,
+                        out CardStackContainer container,
+                        out CardStackContainer.SlotTarget slot))
+                {
+                    Debug.LogWarning("[Cheats] The duplicate box is full; stopped at " +
+                                     $"{boxed} card(s).");
+                    break;
+                }
+
+                if (container.TryStore(hand: null, card, slot, animate: false))
+                    boxed++;
+                else
+                    stored.Remove(key);
+            }
+
+            Debug.Log($"[Cheats] {boxed} duplicate(s) in the box.");
+            return boxed;
         }
 
         // Completes a set AND tops the whole album up to a count, in one press - so a set-completion
@@ -293,8 +371,16 @@ namespace Vesolovsky.Game
                     continue;
 
                 CardRef key = CardRef.From(card.Identity);
-                if (key.IsValid)
+                if (!key.IsValid)
+                    continue;
+
+                // Filing removes the original world copy, never the duplicate already sorted into
+                // a box. If only a boxed copy exists it remains a fallback for legacy test scenes.
+                if (!map.TryGetValue(key, out Card existing) ||
+                    (CardStackContainer.IsStored(existing) && !CardStackContainer.IsStored(card)))
+                {
                     map[key] = card;
+                }
             }
 
             return map;

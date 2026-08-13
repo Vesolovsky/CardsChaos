@@ -3816,7 +3816,7 @@ MonoBehaviour:
     Disableable: 1
   - Id: 0
     Text: <b>[RMB]</b> + Drag to rotate camera
-    ActionName: 
+    ActionName:
     Icon: {fileID: 21300000, guid: 9517a684a29f9fe4b9e3c4e0ef0df828, type: 3}
     StartDelay: 2
     HoldDuration: 3
@@ -3848,7 +3848,7 @@ MonoBehaviour:
     Disableable: 0
   - Id: 2
     Text: Scroll the <b>mouse wheel</b> to cycle through your cards
-    ActionName: 
+    ActionName:
     Icon: {fileID: 21300000, guid: 49a9e3248e64fb647bb8e6967e924b07, type: 3}
     StartDelay: 0
     HoldDuration: 3
@@ -3876,6 +3876,14 @@ MonoBehaviour:
     Icon: {fileID: 0}
     StartDelay: 0
     HoldDuration: 5
+    OneTime: 0
+    Disableable: 0
+  - Id: 9
+    Text: This card is already in the duplicates box
+    ActionName: ''
+    Icon: {fileID: 0}
+    StartDelay: 0
+    HoldDuration: 3
     OneTime: 0
     Disableable: 0
   fadeInDuration: 0.4

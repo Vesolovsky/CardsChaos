@@ -252,6 +252,9 @@ namespace Vesolovsky.Game.Trailer
 
             foreach (Card card in FindObjectsByType<Card>(FindObjectsSortMode.None))
             {
+                if (CardStackContainer.IsStored(card))
+                    continue;
+
                 CardIdentity identity = IdentityOf(card);
 
                 if (identity == null)

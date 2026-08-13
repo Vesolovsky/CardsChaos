@@ -33,5 +33,8 @@ namespace Vesolovsky.Game.Views.GameplayHud
 
         /// <summary>Shown when the endgame card slides out, once the collection is complete. Always-on.</summary>
         FinalCardArrived,
+
+        /// <summary>The duplicate box already contains this exact set-and-number.</summary>
+        DuplicateAlreadyStored,
     }
 }

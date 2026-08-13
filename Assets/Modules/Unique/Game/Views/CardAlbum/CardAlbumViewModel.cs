@@ -6,6 +6,7 @@ using UniRx;
 using UnityEngine;
 using Vesolovsky.Core.Services;
 using Vesolovsky.Core.UISystem;
+using Vesolovsky.Game.Services.Stats;
 using Vesolovsky.Game.Services.Upgrades;
 using Vesolovsky.Game.Views.Album;
 using Zenject;
@@ -30,6 +31,7 @@ namespace Vesolovsky.Game.Views
         private readonly ICardFactory _cardFactory;
         private readonly IWorldInteractionLock _worldLock;
         private readonly IAlbumSetOrder _setOrder;
+        private readonly IPlayerStats _stats;
 
         private readonly ReactiveProperty<bool> _isOpen = new ReactiveProperty<bool>(false);
 
@@ -93,7 +95,8 @@ namespace Vesolovsky.Game.Views
             CardHand hand,
             ICardFactory cardFactory,
             IWorldInteractionLock worldLock,
-            [InjectOptional] IAlbumSetOrder setOrder)
+            [InjectOptional] IAlbumSetOrder setOrder,
+            [InjectOptional] IPlayerStats stats)
         {
             _catalog = catalog;
             _album = album;
@@ -101,6 +104,7 @@ namespace Vesolovsky.Game.Views
             _cardFactory = cardFactory;
             _worldLock = worldLock;
             _setOrder = setOrder;
+            _stats = stats;
 
             Artwork = new CardArtworkResolver(catalog);
             _album.PageChanged += OnAlbumPageChanged;
@@ -162,8 +166,8 @@ namespace Vesolovsky.Game.Views
 
         public bool TryReturnToHand(AlbumCardSlot slot)
         {
-            // Once the collection is complete the album is sealed - the game is ending, so no card
-            // is ever lifted back out.
+            // Once originals and duplicate boxes are both complete the album is sealed - the game
+            // is ending, so no card is ever lifted back out.
             if (IsCollectionComplete())
                 return false;
 
@@ -250,6 +254,12 @@ namespace Vesolovsky.Game.Views
         // than the stats snapshot, so the seal takes effect the instant the last card lands.
         private bool IsCollectionComplete()
         {
+            // The stats snapshot includes both destinations and updates on album/container changes.
+            // Keep the old album-only calculation as a fallback for isolated UI test scenes where
+            // the gameplay stats service is intentionally absent.
+            if (_stats != null && _stats.TotalCards > 0)
+                return _stats.CorrectlyPlacedCards >= _stats.TotalCards;
+
             int total = 0;
             int correct = 0;
 

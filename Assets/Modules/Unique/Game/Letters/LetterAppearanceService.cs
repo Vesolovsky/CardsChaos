@@ -175,11 +175,18 @@ namespace Vesolovsky.Game.Letters
             if (card == null || card.Identity == null || string.IsNullOrEmpty(_settings.EpilogueSetId))
                 return;
 
-            if (card.Identity.SetId == _settings.EpilogueSetId)
-            {
-                Enqueue(_settings.CertificateLetter);
-                ShowHead(announce: true);
-            }
+            if (card.Identity.SetId != _settings.EpilogueSetId)
+                return;
+
+            // The certificate is the answer to the endgame card, so it waits for that card to have
+            // slid out. Any other copy of the epilogue set that ends up in the room - the duplicate
+            // pass spawns one - is then just a card, and cannot hand the player the ending early.
+            GameSave save = _saveService.CurrentSave;
+            if (save == null || !save.EpilogueCardReleased)
+                return;
+
+            Enqueue(_settings.CertificateLetter);
+            ShowHead(announce: true);
         }
 
         private void OnLetterCollected(LetterId id)
@@ -292,8 +299,8 @@ namespace Vesolovsky.Game.Letters
             if (save == null || save.EpilogueCardReleased)
                 return;
 
-            // TotalCards already excludes the endgame set (flagged out of the collection), so "every
-            // counted card filed" is a plain equality - guarded against an empty/unloaded catalog.
+            // TotalCards includes every original and allowed duplicate but excludes the endgame set,
+            // so this fires only after the album and duplicate boxes are both complete.
             if (_stats.TotalCards <= 0 || _stats.CorrectlyPlacedCards < _stats.TotalCards)
                 return;
 
