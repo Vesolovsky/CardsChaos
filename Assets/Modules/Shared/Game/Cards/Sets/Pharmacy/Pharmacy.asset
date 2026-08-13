@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: Pharmacy
+  m_EditorClassIdentifier: 
+  setId: Pharmacy
+  setName: Pharmacy
+  icon: {fileID: 21300000, guid: 925adab2019f4c040aef2f2de216a203, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 12da57b0e7403374995a051196c13fb0, type: 3}
+  backArtwork: {fileID: 2800000, guid: af8a456d368f29c468867f26c27bf6fc, type: 3}
+  countsTowardCollection: 1
+  cards:
+  - {fileID: 7938649145570661554, guid: aa15197290e945c4d95807cc5c0004b1, type: 3}
+  - {fileID: 7167180015161590532, guid: 589995e2562eb9948a8ce14cbe089e31, type: 3}
+  - {fileID: 180618259653897652, guid: 0230e99e75d304d458ddf61c0bd68935, type: 3}
+  - {fileID: 3748131245933888273, guid: b3a59b4a37926b746bf9f2d129e8405c, type: 3}
+  - {fileID: 7109089585805450297, guid: ccab8311ef8e84c4c974c79bc5cbc7ed, type: 3}
+  - {fileID: 2626685838525202205, guid: 6f542c8bad7af6d4d9e20149ddda2fa9, type: 3}
+  - {fileID: 6898939395878419866, guid: 4e88af1b97d00e5429b85eaf7e23c2f0, type: 3}
+  - {fileID: 8604127622158012551, guid: 1599f4d4fee98c3418cdd01b8ca39182, type: 3}
+  - {fileID: 1428953357346553735, guid: 149ce775bedc2024fa2909e2c73c6513, type: 3}
+  - {fileID: 1727582538733573153, guid: 86f0e66888d555141a177741db48a45c, type: 3}
+  - {fileID: 7551710203065794683, guid: 832525d3e198abc4db354447e742e515, type: 3}
+  - {fileID: 8837762361221741766, guid: 528fadca9fca5414d962f81eb7c2de63, type: 3}
+  - {fileID: 5374430062081696992, guid: 3dc0f7b47e93eba4fa79fc6c6f89f808, type: 3}
+  - {fileID: 4445292321225912560, guid: b00a11a913fff3c45861522c2dd7d5cd, type: 3}
+  - {fileID: 6718873540552228551, guid: 3e008d1a725884f499a70a3926eb5239, type: 3}
+  - {fileID: 2992762036311274136, guid: 2fdcca432070ff44fb771198f6db84d6, type: 3}
+  - {fileID: 353851932686358289, guid: dd63380f46695c145be78dcc5896b7c7, type: 3}
+  - {fileID: 8113811039776046784, guid: d693cb029a1a6154c904931091a427cd, type: 3}
+  - {fileID: 5812237748747185229, guid: d125767658b0e594f8fe551ad502f69e, type: 3}
+  - {fileID: 5510044449106051216, guid: 6f9edd33385326942b4c6fdbec14b273, type: 3}

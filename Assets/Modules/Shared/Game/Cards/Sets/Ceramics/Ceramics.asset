@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: Ceramics
+  m_EditorClassIdentifier: 
+  setId: Ceramics
+  setName: Ceramics
+  icon: {fileID: 21300000, guid: 0f518ce719e23984d897755bbb1c2cfc, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 8353a5ce62ce2784c8689b1bd3ec991f, type: 3}
+  backArtwork: {fileID: 2800000, guid: 2ada8605c5808414aac2c08cf92b4523, type: 3}
+  countsTowardCollection: 1
+  cards:
+  - {fileID: 2445492471672240198, guid: 7ef548f75b1c3354a93f77958f4e9972, type: 3}
+  - {fileID: 4808081397702626965, guid: c3969560a51291f46a362bf35c171cfe, type: 3}
+  - {fileID: 5183343995024174628, guid: 2c6add6b46203874995d8b67ccf35269, type: 3}
+  - {fileID: 4235866663853068127, guid: 681dc6c5481101b4c8eae7295eccee7b, type: 3}
+  - {fileID: 4774711288543889700, guid: 42b6811d294f1e74893b3670e19113b2, type: 3}
+  - {fileID: 2712837945693114517, guid: 62253cced67008449aa9e31836391d40, type: 3}
+  - {fileID: 7222394325029271580, guid: b822e6ecc2da3d14daa52bb603e16a5d, type: 3}
+  - {fileID: 4686842077326190561, guid: 939a81382214517419b53d4fe85770e6, type: 3}
+  - {fileID: 3091415586763910343, guid: 3941a97e667471841be50a808d917eb5, type: 3}
+  - {fileID: 78506254553625955, guid: 0e8c05d79898ac34e80569ffd880efba, type: 3}
+  - {fileID: 1725636716511540680, guid: 4a27d92d3cbdf3a4fa54d689764525e9, type: 3}
+  - {fileID: 2444035890356472141, guid: 0a743cee60b9f2e40849ce1a1deeda65, type: 3}
+  - {fileID: 3899921982051294600, guid: 69c8929c0d9a4954cbac09cfe3d6fb15, type: 3}
+  - {fileID: 6115048651346033512, guid: f54d9371a20a5f14bb585bcbaa8fc7d7, type: 3}
+  - {fileID: 1578009150648767753, guid: b79d32143e00ce745908c5e1184c4f8c, type: 3}
+  - {fileID: 4243068979098011497, guid: 5dad7ba455c5c9644b1d3d914ba12bce, type: 3}
+  - {fileID: 2562340765664513065, guid: b084e4a030390954589bb00622eba432, type: 3}
+  - {fileID: 7737361767313747244, guid: 4cc8c99f4b423d64eb8240745928d211, type: 3}
+  - {fileID: 3671916036149435285, guid: ba8e5fb922e94fb45b19eb04fde82595, type: 3}
+  - {fileID: 1496882953810610630, guid: ad51bcc0f4a7dba42b2bb6d9a0ce6d7f, type: 3}
+  - {fileID: 2647909961645002656, guid: 97c492712c1e6b543ba17db3adee3941, type: 3}
+  - {fileID: 8653577231548473163, guid: ec1a33338652c424c9f04f5596a5d52d, type: 3}
+  - {fileID: 9118228667826122148, guid: 1380c8b67bc146b4cb592b39f973271e, type: 3}
+  - {fileID: 4943124697384460945, guid: 699f155942b75724d96bba01d614ab0e, type: 3}
+  - {fileID: 2349807340873150104, guid: 91fea76e07d845447b48d1b659dd63cf, type: 3}
+  - {fileID: 5343238725049353306, guid: 21e712ba915145b4eafae278e4e4698c, type: 3}
+  - {fileID: 7697794352847299257, guid: e918b3ac727b0b54b80c3ba11e9af732, type: 3}
+  - {fileID: 7638200226093640506, guid: 5fb5ff2562f5b89429b04d18e398b57e, type: 3}
+  - {fileID: 6346298335383132457, guid: 1765f0ff25b6c304b969bc23bc5b68ac, type: 3}
+  - {fileID: 99553071507258584, guid: aafd314b05fafcf4ba5cf94a0734c775, type: 3}
+  - {fileID: 1199268750376991788, guid: f14a4a415f469a54497ce2cd2a6231af, type: 3}
+  - {fileID: 1454844387000140790, guid: f6d558b7fdff7c243be8468dc7c00d18, type: 3}
+  - {fileID: 1327431079971795458, guid: 379e542ed5302b642a933adfc4e43ec1, type: 3}
+  - {fileID: 7290644594708462998, guid: 8f93d552bac21104db55595de9e6f66f, type: 3}
+  - {fileID: 2791601063235047243, guid: ec5a638cadd76724e84b6f1f9694402b, type: 3}
+  - {fileID: 8250807749529440723, guid: ca100fc0ed3247f42a75156a2efdadbc, type: 3}
+  - {fileID: 7882560253330577572, guid: a586d8976a64a2e42b12039c34b76b98, type: 3}
+  - {fileID: 5773880279898832951, guid: c584d04e50cc6be4eb8266e9435e7043, type: 3}
+  - {fileID: 4276282350950033578, guid: 4c4929f5adedd414eb131d11f2d1d52f, type: 3}
+  - {fileID: 7093084539333532037, guid: 59c91967cf853354ab610359a339d139, type: 3}

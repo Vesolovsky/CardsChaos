@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: CharmingCottages
+  m_EditorClassIdentifier: 
+  setId: CharmingCottages
+  setName: Charming cottages
+  icon: {fileID: 21300000, guid: c3a3dd6118324574f854e68c0d23d809, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: f27d0e3352b0ade418fed02967ddd0ba, type: 3}
+  backArtwork: {fileID: 2800000, guid: 271d1333fd28ef74e97b4f08ffbd422a, type: 3}
+  countsTowardCollection: 1
+  cards:
+  - {fileID: 7712325194821676743, guid: ccf314093a4460348951d87092eca220, type: 3}
+  - {fileID: 4281421001080072128, guid: 6ea4439b20ebe91418d8a9420059a91d, type: 3}
+  - {fileID: 500775961508733801, guid: bad5c69499ec9364bac79c132efeff38, type: 3}
+  - {fileID: 7700034270768217530, guid: 744b37ca6b5ccf94990c409694c89372, type: 3}
+  - {fileID: 6174770550934168894, guid: 06f40762e87289e4bb06ec852e31a486, type: 3}
+  - {fileID: 209610124981610258, guid: 2875ce0e4ef4cbc44b3d1338bd160699, type: 3}
+  - {fileID: 5948659308797222724, guid: 919833c83c5e87c4685e4c930f6b760d, type: 3}
+  - {fileID: 6835010323391791717, guid: 21f8d708231c26941a97c82ff8e73acf, type: 3}
+  - {fileID: 7479415532027093134, guid: 1f3c4b5158cdf3b42bce88565adc9d56, type: 3}
+  - {fileID: 926032301047051117, guid: 7c1ed5a13129984469381e10b7aacaf7, type: 3}
+  - {fileID: 4263477360827362035, guid: bdeff2b86f915f74a900d963b383b8b8, type: 3}
+  - {fileID: 3256615510866195719, guid: 14d59e7593444d443ad21a870c9cded6, type: 3}
+  - {fileID: 4891752674397249590, guid: 6faaeb818318bfa42831c1d72b92bcdb, type: 3}
+  - {fileID: 5070801910791062143, guid: 3d1634aed23b1f44083ada3c22ea13e8, type: 3}
+  - {fileID: 2275643639973553120, guid: 619ebf186b23d64418f7a469c9515329, type: 3}
+  - {fileID: 7573528745889191933, guid: fcd5f2868cfbc0742872a59538a123d1, type: 3}
+  - {fileID: 4474329494756009945, guid: 913a8e23bde6f7446a2d3fbafc403bef, type: 3}
+  - {fileID: 4536050952438653224, guid: 48fa4788032b60b44b5fd1fb3dedb1b5, type: 3}
+  - {fileID: 9109231841897123705, guid: 3510cab3294492d429f6397486daf55c, type: 3}
+  - {fileID: 5693819272374481153, guid: 2ae7bb05e9fcecc49ad064e7a016eb23, type: 3}
+  - {fileID: 3489583127329936831, guid: fc97251d2da97c0488e93ad45addbbca, type: 3}
+  - {fileID: 7970501835009933154, guid: 42db357a85c57bb419291bb706b7eba7, type: 3}
+  - {fileID: 841213532261672070, guid: 253320a9e318e7647828048a496df2f8, type: 3}
+  - {fileID: 616843636914942379, guid: 9fa9fbbd70a6e034db361ad28ad30d19, type: 3}
+  - {fileID: 3586308690198075620, guid: 91c91fa2039de504291932582b80acc1, type: 3}
+  - {fileID: 8080470934974508355, guid: 645d4525ad69e984bb9d900a24a0477f, type: 3}
+  - {fileID: 8333593282853750825, guid: 3b67df0ce298ac84d9f6b6f801bc9750, type: 3}
+  - {fileID: 740441255160639018, guid: 009b2f6d6d8bae7459247c8f3ca4b765, type: 3}
+  - {fileID: 2451756325401754190, guid: 085cbbda452aa1644acb7bd10aa07d13, type: 3}
+  - {fileID: 8242288108140675566, guid: d674b4a9adad545419f26e890478150b, type: 3}

@@ -17622,6 +17622,7 @@ MonoBehaviour:
   nearCutoff: 22000
   farCutoff: 800
   smoothing: 6
+  pauseMuffleCutoff: 700
 --- !u!82 &235140271
 AudioSource:
   m_ObjectHideFlags: 0
@@ -32572,7 +32573,6 @@ MonoBehaviour:
   throwSpeed: 1.2
   throwLift: 0.35
   throwSpin: 6
-  layoutSoundStagger: 0.04
 --- !u!1001 &467833751
 PrefabInstance:
   m_ObjectHideFlags: 0

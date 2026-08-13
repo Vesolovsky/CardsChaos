@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: Halloween
+  m_EditorClassIdentifier: 
+  setId: Halloween
+  setName: Halloween
+  icon: {fileID: 21300000, guid: 9705eccdeb7db9b40b3d8971e235d476, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 54a6946e85fbe774bad5074de7a367d1, type: 3}
+  backArtwork: {fileID: 2800000, guid: 67c1a627a7c903042b7c38ea4a8125d5, type: 3}
+  countsTowardCollection: 1
+  cards:
+  - {fileID: 3672637283433186208, guid: 50036fdc4abacb34a866b2dd2ea740d4, type: 3}
+  - {fileID: 2017601422759912336, guid: ad2f4734b5c8fbe4d9507d9a68c13c09, type: 3}
+  - {fileID: 8107045558025115947, guid: 2a379d2bedf09dd49823b16f64be4819, type: 3}
+  - {fileID: 5333135889126712198, guid: b5bdb81776202044e9afddede085d5df, type: 3}
+  - {fileID: 3061405845707460396, guid: 60e277052a32bef49a1230af08beb6d0, type: 3}
+  - {fileID: 8399805917771290124, guid: 0fc9babe9c9db214abeea9ea8ed73011, type: 3}
+  - {fileID: 8374863191090216724, guid: fea934cad53dcf64097cb3b47fbd6dfc, type: 3}
+  - {fileID: 5944622170681327105, guid: bcb53a5d09d88c64a9466049aedafc22, type: 3}
+  - {fileID: 6550729860385626694, guid: 494475f9801019f44a8a1141763aefdf, type: 3}
+  - {fileID: 8720234008101788782, guid: a95e663ce03f05f4b984c53720955e51, type: 3}
+  - {fileID: 3634114313287330277, guid: db78c2958d2f4f043b71a8c49e5b1659, type: 3}
+  - {fileID: 5477734305647663568, guid: 3ef8930bc7f31d5449775f0a82464832, type: 3}
+  - {fileID: 6647554760391019397, guid: 4eabc2659925f5643a1db67c3fb9b426, type: 3}
+  - {fileID: 6333418870736141971, guid: b0b2184aff7f50743b2f924053317e89, type: 3}
+  - {fileID: 6473452053168777251, guid: 960f249b2ce6dc24eb8d05a4e54ed139, type: 3}
+  - {fileID: 2987727943744470344, guid: 2e9e1a8c05879e740929dd39975cd3a7, type: 3}
+  - {fileID: 9112847978712796026, guid: 7e990e94e7e9ff34b904516d9676207e, type: 3}
+  - {fileID: 2172759768623248249, guid: 90b58ef6b106d5d4b9c09402973a79d8, type: 3}
+  - {fileID: 7679471638678221150, guid: f74f84df0650d0b4ab26b5b83c604224, type: 3}
+  - {fileID: 7396709509339406474, guid: 9aea01a24fed9f44fad20911e0dfcbc5, type: 3}
