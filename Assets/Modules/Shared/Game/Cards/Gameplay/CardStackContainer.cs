@@ -35,6 +35,14 @@ namespace CardsChaos.Cards
         private static readonly int BackTexStId = Shader.PropertyToID("_BackTex_ST");
         private static readonly int GhostTintId = Shader.PropertyToID("_GhostTint");
 
+        // Tried in order as multiples of the sweep the tuning asked for: the same bend the other
+        // way, then wider each way. Shared and static because they are the same for every box.
+        private static readonly float[] ArcAlternatives = { -1f, 1.5f, -1.5f, 2.25f, -2.25f };
+
+        // One buffer for the look-ahead sweeps. They all run inside a single call, one after
+        // another, so there is nothing to keep between them.
+        private static readonly RaycastHit[] ObstacleHits = new RaycastHit[8];
+
         private static readonly List<CardStackContainer> Instances =
             new List<CardStackContainer>();
         private static readonly Dictionary<CardRef, int> StoredCardCounts =
@@ -125,6 +133,22 @@ namespace CardsChaos.Cards
 
         [Tooltip("Ease-in-out reads as floating; the card lifts away slowly and settles slowly.")]
         [SerializeField, SearchableEnum] private Ease flourishEase = Ease.InOutSine;
+
+        [Tooltip("What the card tries not to sail through on its way out. Other cards are never " +
+                 "treated as obstacles whatever this says - the floor is covered in them and the " +
+                 "card is meant to pass over. Defaults to everything but Ignore Raycast.")]
+        [SerializeField] private LayerMask flourishObstacles = ~(1 << 2);
+
+        [Tooltip("Radius of the sweep that looks ahead, in metres of room - about half a card.")]
+        [SerializeField, Min(0f)] private float flourishClearance = 0.04f;
+
+        [Tooltip("How much of the flight is looked at, measured from the throw. Only the first " +
+                 "stretch is worth bending: past that the card is away across the room and the " +
+                 "player has looked back at the floor. Zero turns the check off entirely.")]
+        [SerializeField, Range(0f, 1f)] private float flourishCheckedPart = 0.45f;
+
+        [Tooltip("How many sweeps that stretch is broken into.")]
+        [SerializeField, Range(2, 12)] private int flourishCheckSteps = 5;
 
         private readonly List<Card> _childCards = new List<Card>();
         private readonly List<PlacementReservation> _reservations =
@@ -725,7 +749,8 @@ namespace CardsChaos.Cards
             // Sideways only. sideDirection is level with the floor, so the control point never
             // lifts the path: the card stays in the plane the player is already looking at.
             float bow = Mathf.Clamp(distance * flourishBow, flourishMinBow, flourishMaxBow);
-            Vector3 arc = sideDirection * bow;
+            Vector3 arc = ChooseClearArc(
+                card.transform.localPosition, target.LocalPosition, sideDirection, bow);
 
             card.FlyTo(
                 target.LocalPosition,
@@ -737,6 +762,91 @@ namespace CardsChaos.Cards
                 flourishTurns);
 
             return duration;
+        }
+
+        /// <summary>
+        /// Picks the sweep the card takes out of the player's hands. The one the tuning asks for is
+        /// used whenever it is clear; otherwise the same sweep is tried the other way round and
+        /// then wider, so a card thrown at an armchair goes round it instead of through it. Every
+        /// candidate keeps the flight level and keeps its shape - the move still reads as the move.
+        ///
+        /// Only the near stretch is looked at, and only once, as the card leaves. Bending the far
+        /// end would cost more sweeps for something nobody is watching by then, and the room is
+        /// full of furniture no curve could dodge anyway.
+        /// </summary>
+        private Vector3 ChooseClearArc(Vector3 start, Vector3 end, Vector3 sideDirection, float bow)
+        {
+            Vector3 preferred = sideDirection * bow;
+
+            if (flourishCheckedPart <= 0f || flourishClearance <= 0f || IsPathClear(start, end, preferred))
+                return preferred;
+
+            foreach (float scale in ArcAlternatives)
+            {
+                Vector3 candidate = sideDirection * (bow * scale);
+                if (IsPathClear(start, end, candidate))
+                    return candidate;
+            }
+
+            // Nothing was clear - thrown at a wall from a foot away there is nowhere to bend to.
+            // The card flies anyway rather than the throw being refused: a reward the player cannot
+            // rely on is worse than a card that clips a chair.
+            return preferred;
+        }
+
+        private bool IsPathClear(Vector3 start, Vector3 end, Vector3 arc)
+        {
+            Vector3 previous = transform.TransformPoint(start);
+
+            for (int step = 1; step <= flourishCheckSteps; step++)
+            {
+                float t = flourishCheckedPart * step / flourishCheckSteps;
+                Vector3 point = transform.TransformPoint(Card.FlightPoint(start, end, arc, t));
+
+                if (IsBlocked(previous, point))
+                    return false;
+
+                previous = point;
+            }
+
+            return true;
+        }
+
+        private bool IsBlocked(Vector3 from, Vector3 to)
+        {
+            Vector3 delta = to - from;
+            float distance = delta.magnitude;
+            if (distance <= 0.0001f)
+                return false;
+
+            int count = Physics.SphereCastNonAlloc(
+                from,
+                flourishClearance,
+                delta / distance,
+                ObstacleHits,
+                distance,
+                flourishObstacles,
+                QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < count; i++)
+            {
+                Collider hit = ObstacleHits[i].collider;
+                if (hit == null)
+                    continue;
+
+                // Cards are what the room is made of - the card in flight itself included - and the
+                // box is where this is going. Neither is something to steer around. A card's
+                // collider sits on the card itself, so this is a lookup rather than a walk upwards.
+                if (hit.TryGetComponent(out Card _))
+                    continue;
+
+                if (hit.transform.IsChildOf(transform) || transform.IsChildOf(hit.transform))
+                    continue;
+
+                return true;
+            }
+
+            return false;
         }
 
         public bool TryGetSavedPlacement(

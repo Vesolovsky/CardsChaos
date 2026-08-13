@@ -315,7 +315,6 @@ namespace CardsChaos.Cards
 
             Vector3 startPosition = transform.localPosition;
             Quaternion startRotation = transform.localRotation;
-            Vector3 control = (startPosition + localPosition) * 0.5f + arc;
             Transform cardTransform = transform;
 
             float spinDegrees = turns * 360f;
@@ -324,10 +323,7 @@ namespace CardsChaos.Cards
             // character in mid-air, then mathematically removes the extra tilt before it lands.
             _positionTween = Tween.Custom(0f, 1f, duration, t =>
             {
-                float inverse = 1f - t;
-                cardTransform.localPosition = inverse * inverse * startPosition
-                                              + 2f * inverse * t * control
-                                              + t * t * localPosition;
+                cardTransform.localPosition = FlightPoint(startPosition, localPosition, arc, t);
 
                 Quaternion directRotation = Quaternion.Slerp(startRotation, localRotation, t);
                 float flourish = Mathf.Sin(t * Mathf.PI);
@@ -339,6 +335,21 @@ namespace CardsChaos.Cards
                     ? rotation
                     : Quaternion.AngleAxis(spinDegrees * t, Vector3.up) * rotation;
             }, ease);
+        }
+
+        /// <summary>
+        /// Where <see cref="FlyTo"/> puts the card at <paramref name="t"/> of the way through, in
+        /// the same local space. Public so a caller can look along the path before committing to it
+        /// - checking a curve the card does not actually follow would be worse than not checking.
+        /// </summary>
+        public static Vector3 FlightPoint(Vector3 start, Vector3 end, Vector3 arc, float t)
+        {
+            // Quadratic bezier. The control point is only ever approached, never reached, so the
+            // sweep reads as softer than the offset suggests.
+            Vector3 control = (start + end) * 0.5f + arc;
+            float inverse = 1f - t;
+
+            return inverse * inverse * start + 2f * inverse * t * control + t * t * end;
         }
 
         public void Release(Vector3 velocity, Vector3 angularVelocity)
