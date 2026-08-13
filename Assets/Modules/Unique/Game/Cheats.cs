@@ -280,7 +280,8 @@ namespace Vesolovsky.Game
                     break;
                 }
 
-                if (container.TryStore(hand: null, card, slot, animate: false))
+                if (container.TryStore(
+                        hand: null, card, slot, CardStackContainer.PlacementFlight.Instant))
                     boxed++;
                 else
                     stored.Remove(key);

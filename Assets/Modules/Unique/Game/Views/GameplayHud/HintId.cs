@@ -36,5 +36,8 @@ namespace Vesolovsky.Game.Views.GameplayHud
 
         /// <summary>The duplicate box already contains this exact set-and-number.</summary>
         DuplicateAlreadyStored,
+
+        /// <summary>This card exists only once, so it belongs in the album, not in the box.</summary>
+        NotADuplicate,
     }
 }

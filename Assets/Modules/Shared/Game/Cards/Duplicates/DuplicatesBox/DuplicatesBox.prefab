@@ -233,7 +233,7 @@ MonoBehaviour:
   baseCenterY: 0.0186
   stackStep: 0.00245
   maxCenterY: 0.102
-  maxCardsPerSlot: 32
+  maxCardsPerSlot: 30
   interactionDistance: 2
   ghostTint: {r: 0.2, g: 0.9, b: 1, a: 0.5}
   placementDuration: 0.45

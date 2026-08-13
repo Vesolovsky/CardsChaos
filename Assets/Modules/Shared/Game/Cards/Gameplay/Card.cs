@@ -144,6 +144,10 @@ namespace CardsChaos.Cards
             _renderer = GetComponent<MeshRenderer>();
             Identity = GetComponent<CardIdentity>();
             _defaultLayer = gameObject.layer;
+
+            // Joined here, left in OnDestroy: the registry is how the room answers "does this card
+            // have a second copy", which is what a duplicate box will and will not take.
+            CardRegistry.Add(this);
         }
 
         // Optional: scene-placed cards are injected by the SceneContext and factory-spawned cards by
@@ -179,6 +183,13 @@ namespace CardsChaos.Cards
             ApplyMaterialOverrides();
         }
 
+        /// <summary>
+        /// Raised when the grey wash goes on or off, so a second view of the same card - the album
+        /// draws the hand as a flat pile of its own - can follow the room's card rather than work
+        /// the rule out again for itself.
+        /// </summary>
+        public event System.Action<Card> ShadedChanged;
+
         /// <summary>Turns the in-hand grey wash on or off. See <see cref="IsShaded"/>.</summary>
         public void SetShaded(bool shaded)
         {
@@ -187,6 +198,7 @@ namespace CardsChaos.Cards
 
             IsShaded = shaded;
             ApplyMaterialOverrides();
+            ShadedChanged?.Invoke(this);
         }
 
         public void AttachTo(Transform parent)
@@ -279,6 +291,10 @@ namespace CardsChaos.Cards
         /// Flies to a local pose on a quadratic arc and adds a temporary local tilt that is exactly
         /// zero at both ends. Unlike a physics throw this is deterministic and always lands flush;
         /// it is intended for transfers into authored slots such as a card container.
+        ///
+        /// <paramref name="turns"/> spins the card about its parent's upright axis on the way, the
+        /// way a card sailing into place turns as it goes. Whole turns are the point: the spin is
+        /// back where it started on landing, so it cannot leave the card square-but-backwards.
         /// </summary>
         public void FlyTo(
             Vector3 localPosition,
@@ -286,7 +302,8 @@ namespace CardsChaos.Cards
             Vector3 arc,
             Vector3 flourishEuler,
             float duration,
-            Ease ease)
+            Ease ease,
+            int turns = 0)
         {
             StopTweens();
 
@@ -301,6 +318,8 @@ namespace CardsChaos.Cards
             Vector3 control = (startPosition + localPosition) * 0.5f + arc;
             Transform cardTransform = transform;
 
+            float spinDegrees = turns * 360f;
+
             // PrimeTween supplies the eased 0..1 value. The sine envelope gives the card a little
             // character in mid-air, then mathematically removes the extra tilt before it lands.
             _positionTween = Tween.Custom(0f, 1f, duration, t =>
@@ -312,8 +331,13 @@ namespace CardsChaos.Cards
 
                 Quaternion directRotation = Quaternion.Slerp(startRotation, localRotation, t);
                 float flourish = Mathf.Sin(t * Mathf.PI);
-                cardTransform.localRotation = directRotation *
-                                              Quaternion.Euler(flourishEuler * flourish);
+                Quaternion rotation = directRotation * Quaternion.Euler(flourishEuler * flourish);
+
+                // Applied on the parent's side of the product, so the card turns about the slot's
+                // upright axis - flat and face-up throughout - rather than tumbling end over end.
+                cardTransform.localRotation = spinDegrees == 0f
+                    ? rotation
+                    : Quaternion.AngleAxis(spinDegrees * t, Vector3.up) * rotation;
             }, ease);
         }
 
@@ -321,11 +345,15 @@ namespace CardsChaos.Cards
         {
             StopTweens();
 
+            bool wasShaded = IsShaded;
             IsHeld = false;
             IsInspected = false;
             IsShaded = false;
             ReleaseHeldArtworkMip();
             ApplyMaterialOverrides();
+
+            if (wasShaded)
+                ShadedChanged?.Invoke(this);
 
             transform.SetParent(null, worldPositionStays: true);
 
@@ -419,11 +447,15 @@ namespace CardsChaos.Cards
                 _restingBodyRemoval = null;
             }
 
+            bool wasShaded = IsShaded;
             IsHeld = false;
             IsInspected = false;
             IsShaded = false;
             ReleaseHeldArtworkMip();
             ApplyMaterialOverrides();
+
+            if (wasShaded)
+                ShadedChanged?.Invoke(this);
 
             if (_collider != null)
             {
@@ -684,6 +716,7 @@ namespace CardsChaos.Cards
 
         private void OnDestroy()
         {
+            CardRegistry.Remove(this);
             ReleaseHeldArtworkMip();
             StopTweens();
         }

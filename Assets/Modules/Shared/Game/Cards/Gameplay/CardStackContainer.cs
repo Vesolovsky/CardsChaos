@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using CardsChaos.Cards.Album;
 using PrimeTween;
+using RoboRyanTron.SearchableEnum;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Vesolovsky.Game.Services.Hud;
@@ -90,6 +91,41 @@ namespace CardsChaos.Cards
         [Tooltip("Small temporary pitch layered over the rotation toward the flat slot pose.")]
         [SerializeField, Range(0f, 12f)] private float placementPitchDegrees = 4f;
 
+        [Header("Flourish (a card that files itself)")]
+        [Tooltip("A card the player did not aim crosses the whole room, so its flight is timed and " +
+                 "bent by how far it has to go rather than by the fixed numbers above. All lengths " +
+                 "here are container-local: the box is scaled up, so one local unit is more than a " +
+                 "metre of room.")]
+        [SerializeField, Min(0f)] private float flourishDuration = 0.85f;
+
+        [Tooltip("Added to the duration for each local unit of travel.")]
+        [SerializeField, Min(0f)] private float flourishSecondsPerUnit = 0.18f;
+
+        [Tooltip("However far the card comes from, it never floats for longer than this.")]
+        [SerializeField, Min(0.1f)] private float flourishMaxDuration = 2f;
+
+        [Tooltip("How far the path bows out to the side, as a fraction of the distance travelled. " +
+                 "The bend is level: the card sinks from wherever it was thrown to the slot in a " +
+                 "straight descent and does all its curving sideways, because a player looking " +
+                 "down at the floor would never see a card that arced overhead. The Bezier path " +
+                 "reaches half this offset at its widest point.")]
+        [SerializeField, Range(0f, 1f)] private float flourishBow = 0.3f;
+
+        [SerializeField, Min(0f)] private float flourishMinBow = 0.15f;
+        [SerializeField, Min(0f)] private float flourishMaxBow = 1.5f;
+
+        [Tooltip("Full turns about the box's upright axis on the way in. Whole turns land the card " +
+                 "square with the stack; a half turn would leave its face upside down.")]
+        [SerializeField, Range(0f, 3f)] private int flourishTurns = 1;
+
+        [Tooltip("Temporary roll and pitch at the middle of the flight; zero again on landing.")]
+        [SerializeField, Range(0f, 30f)] private float flourishRollDegrees = 14f;
+
+        [SerializeField, Range(0f, 20f)] private float flourishPitchDegrees = 7f;
+
+        [Tooltip("Ease-in-out reads as floating; the card lifts away slowly and settles slowly.")]
+        [SerializeField, SearchableEnum] private Ease flourishEase = Ease.InOutSine;
+
         private readonly List<Card> _childCards = new List<Card>();
         private readonly List<PlacementReservation> _reservations =
             new List<PlacementReservation>();
@@ -97,6 +133,12 @@ namespace CardsChaos.Cards
         private int[] _stackCounts;
         private float[] _highestLocalY;
         private Card[] _topCards;
+
+        // Aiming at a box asks for its slot heights every frame, and working them out means walking
+        // every card in it - hundreds of them once the collection is under way. The answer only
+        // moves when the box's contents do, and the box is told when that happens, so the walk runs
+        // on a change rather than on a look.
+        private bool _stacksDirty = true;
         private Material _ghostMaterial;
         private MaterialPropertyBlock _ghostProperties;
         private MaterialPropertyBlock _sourceProperties;
@@ -106,12 +148,35 @@ namespace CardsChaos.Cards
         private Camera _ghostCamera;
         private int _ghostFrame = -1;
         private IHudHints _hudHints;
+        private IDuplicateCards _duplicates;
 
         public enum StoreRejection
         {
             None,
             InvalidCard,
             AlreadyStored,
+
+            /// <summary>
+            /// The card was only ever authored once, so there is no spare copy of it - putting this
+            /// one in a box would leave its album slot with nothing left to fill it.
+            /// </summary>
+            NotADuplicate,
+        }
+
+        /// <summary>How a card travels the last stretch into its slot.</summary>
+        public enum PlacementFlight
+        {
+            /// <summary>Already there - a debug fill has no time to spend on flights.</summary>
+            Instant,
+
+            /// <summary>The short hop from a hand held over the box, aimed by the player.</summary>
+            Placed,
+
+            /// <summary>
+            /// The long one, for a card that files itself from wherever the player happened to be
+            /// standing: swept out to the side, turning, and timed by the distance it has to cross.
+            /// </summary>
+            Flourish,
         }
 
         /// <summary>
@@ -171,9 +236,12 @@ namespace CardsChaos.Cards
         }
 
         [Inject]
-        private void Construct([InjectOptional] IHudHints hudHints)
+        private void Construct(
+            [InjectOptional] IHudHints hudHints,
+            [InjectOptional] IDuplicateCards duplicates)
         {
             _hudHints = hudHints;
+            _duplicates = duplicates;
         }
 
         public readonly struct SlotTarget
@@ -209,6 +277,7 @@ namespace CardsChaos.Cards
                 Instances.Add(this);
 
             _storedCardCountsDirty = true;
+            MarkStacksDirty();
             EnsureStackBuffers();
         }
 
@@ -216,6 +285,7 @@ namespace CardsChaos.Cards
         {
             Instances.Remove(this);
             _storedCardCountsDirty = true;
+            MarkStacksDirty();
             _ghostFrame = -1;
 
             // A disabled container no longer advances its completion coroutines. Finish any cards
@@ -232,6 +302,7 @@ namespace CardsChaos.Cards
         private void OnTransformChildrenChanged()
         {
             _storedCardCountsDirty = true;
+            MarkStacksDirty();
 
             if (!Application.isPlaying)
                 return;
@@ -248,6 +319,7 @@ namespace CardsChaos.Cards
             stackStep = Mathf.Max(0.0001f, stackStep);
             maxCardsPerSlot = Mathf.Max(1, maxCardsPerSlot);
             interactionDistance = Mathf.Max(0.1f, interactionDistance);
+            MarkStacksDirty();
             placementDuration = Mathf.Max(0f, placementDuration);
             placementSideArc = Mathf.Max(0f, placementSideArc);
             placementRollDegrees = Mathf.Clamp(placementRollDegrees, 0f, 20f);
@@ -446,6 +518,14 @@ namespace CardsChaos.Cards
                 return false;
             }
 
+            // The box is for spare copies. A card the room only holds once has to end up in the
+            // album, and a box would be a dead end for it - nothing could ever fill its slot again.
+            if (_duplicates != null && !_duplicates.HasDuplicate(cardRef))
+            {
+                rejection = StoreRejection.NotADuplicate;
+                return false;
+            }
+
             if (IsCardRefStored(cardRef, card))
             {
                 rejection = StoreRejection.AlreadyStored;
@@ -513,10 +593,13 @@ namespace CardsChaos.Cards
         ///
         /// A card that is not being held - one taken straight off the floor by a debug fill - is
         /// accepted too; then there is no hand to take it out of and <paramref name="hand"/> may be
-        /// null. Set <paramref name="animate"/> to false to have it appear in its slot at once
-        /// rather than flying there.
+        /// null. <paramref name="flight"/> chooses how it travels the last stretch.
         /// </summary>
-        public bool TryStore(CardHand hand, Card card, SlotTarget target, bool animate = true)
+        public bool TryStore(
+            CardHand hand,
+            Card card,
+            SlotTarget target,
+            PlacementFlight flight = PlacementFlight.Placed)
         {
             if (card == null || !target.IsValid)
                 return false;
@@ -526,8 +609,16 @@ namespace CardsChaos.Cards
 
             if (!CanStore(card, out StoreRejection rejection))
             {
-                if (rejection == StoreRejection.AlreadyStored)
-                    _hudHints?.Raise(HintId.DuplicateAlreadyStored);
+                switch (rejection)
+                {
+                    case StoreRejection.AlreadyStored:
+                        _hudHints?.Raise(HintId.DuplicateAlreadyStored);
+                        break;
+
+                    case StoreRejection.NotADuplicate:
+                        _hudHints?.Raise(HintId.NotADuplicate);
+                        break;
+                }
 
                 return false;
             }
@@ -561,41 +652,91 @@ namespace CardsChaos.Cards
                 current.LocalRotation);
             _reservations.Add(reservation);
 
-            if (!animate || !Application.isPlaying || placementDuration <= 0f || !isActiveAndEnabled)
+            // A card in flight already owns its slot height, so the next card queued into this box
+            // stacks on top of it rather than into the same place.
+            MarkStacksDirty();
+
+            // Card owns and cancels its PrimeTween handles, so picking it back up mid-flight remains
+            // safe. No Rigidbody is created: this is a visual transfer, not another physics object.
+            float duration = Application.isPlaying && isActiveAndEnabled
+                ? BeginPlacementFlight(card, current, flight)
+                : 0f;
+
+            if (duration <= 0f)
             {
                 SnapToReservation(reservation);
                 RemoveReservation(card);
             }
             else
             {
-                // Card owns and cancels its PrimeTween handles, so picking it back up during the
-                // short flight remains safe. No Rigidbody is created: this is a visual transfer,
-                // not another physics object in the room.
-                Vector3 localTravel = current.LocalPosition - cardTransform.localPosition;
-                Vector3 planarTravel = Vector3.ProjectOnPlane(localTravel, Vector3.up);
-                Vector3 sideDirection = planarTravel.sqrMagnitude > 0.000001f
-                    ? Vector3.Cross(Vector3.up, planarTravel.normalized)
-                    : Vector3.right;
-                float turnSign = Mathf.Abs(localTravel.x) > 0.0001f
-                    ? Mathf.Sign(localTravel.x)
-                    : 1f;
-
-                card.FlyTo(
-                    current.LocalPosition,
-                    current.LocalRotation,
-                    sideDirection * placementSideArc,
-                    new Vector3(
-                        placementPitchDegrees,
-                        0f,
-                        -turnSign * placementRollDegrees),
-                    placementDuration,
-                    Ease.InOutCubic);
-                StartCoroutine(CompletePlacementAfter(card, placementDuration));
+                StartCoroutine(CompletePlacementAfter(card, duration));
             }
 
             Physics.SyncTransforms();
             _ghostFrame = -1;
             return true;
+        }
+
+        /// <summary>
+        /// Starts the card on its way and reports how long it will be in the air, or zero when it
+        /// should simply appear in its slot.
+        /// </summary>
+        private float BeginPlacementFlight(Card card, SlotTarget target, PlacementFlight flight)
+        {
+            if (flight == PlacementFlight.Instant)
+                return 0f;
+
+            Vector3 localTravel = target.LocalPosition - card.transform.localPosition;
+            Vector3 planarTravel = Vector3.ProjectOnPlane(localTravel, Vector3.up);
+            Vector3 sideDirection = planarTravel.sqrMagnitude > 0.000001f
+                ? Vector3.Cross(Vector3.up, planarTravel.normalized)
+                : Vector3.right;
+
+            // Which way the card banks: away from the side it is coming in on, so the roll reads as
+            // part of the turn rather than fighting it.
+            float turnSign = Mathf.Abs(localTravel.x) > 0.0001f ? Mathf.Sign(localTravel.x) : 1f;
+
+            if (flight == PlacementFlight.Placed)
+            {
+                if (placementDuration <= 0f)
+                    return 0f;
+
+                card.FlyTo(
+                    target.LocalPosition,
+                    target.LocalRotation,
+                    sideDirection * placementSideArc,
+                    new Vector3(placementPitchDegrees, 0f, -turnSign * placementRollDegrees),
+                    placementDuration,
+                    Ease.InOutCubic);
+
+                return placementDuration;
+            }
+
+            // A card crossing the room needs longer in the air than one dropped from just above the
+            // box, and a bend big enough to read from that distance - a fixed arc of a few
+            // centimetres would be invisible over several metres and the flight would look like a
+            // straight line. Both come off the distance, so a card thrown from the doorway takes a
+            // long slow sweep and one thrown from beside the box still lands promptly.
+            float distance = localTravel.magnitude;
+            float duration = Mathf.Min(
+                flourishDuration + distance * flourishSecondsPerUnit,
+                flourishMaxDuration);
+
+            // Sideways only. sideDirection is level with the floor, so the control point never
+            // lifts the path: the card stays in the plane the player is already looking at.
+            float bow = Mathf.Clamp(distance * flourishBow, flourishMinBow, flourishMaxBow);
+            Vector3 arc = sideDirection * bow;
+
+            card.FlyTo(
+                target.LocalPosition,
+                target.LocalRotation,
+                arc,
+                new Vector3(flourishPitchDegrees, 0f, -turnSign * flourishRollDegrees),
+                duration,
+                flourishEase,
+                flourishTurns);
+
+            return duration;
         }
 
         public bool TryGetSavedPlacement(
@@ -648,10 +789,18 @@ namespace CardsChaos.Cards
             card.transform.SetParent(transform, worldPositionStays: true);
             card.transform.SetLocalPositionAndRotation(localPosition, localRotation);
             card.transform.SetAsLastSibling();
+
+            // Reparenting announces itself, but a card already under this box only moves - and a
+            // restore is exactly when a whole stack lands at once.
+            MarkStacksDirty();
             return true;
         }
 
-        /// <summary>Queues one translucent, collider-free preview draw for the current frame.</summary>
+        /// <summary>
+        /// Queues one translucent, collider-free preview draw for the current frame. The preview
+        /// shows where the card would land, not whether it may: a card the box refuses is turned
+        /// away on the key press, with a hint saying why.
+        /// </summary>
         public void ShowGhost(Card card, SlotTarget target, Camera camera)
         {
             _ghostCard = card;
@@ -874,8 +1023,15 @@ namespace CardsChaos.Cards
                 : baseCenterY;
         }
 
+        private void MarkStacksDirty() => _stacksDirty = true;
+
         private void RefreshStacks()
         {
+            if (!_stacksDirty)
+                return;
+
+            _stacksDirty = false;
+
             Array.Clear(_stackCounts, 0, _stackCounts.Length);
             Array.Clear(_topCards, 0, _topCards.Length);
             for (int i = 0; i < _highestLocalY.Length; i++)
@@ -939,7 +1095,10 @@ namespace CardsChaos.Cards
             {
                 Card card = _reservations[i].Card;
                 if (card == null || !card.transform.IsChildOf(transform))
+                {
                     _reservations.RemoveAt(i);
+                    MarkStacksDirty();
+                }
             }
         }
 
@@ -955,6 +1114,7 @@ namespace CardsChaos.Cards
 
                 SnapToReservation(reservation);
                 _reservations.RemoveAt(i);
+                MarkStacksDirty();
                 Physics.SyncTransforms();
                 yield break;
             }
@@ -970,6 +1130,10 @@ namespace CardsChaos.Cards
             card.transform.SetLocalPositionAndRotation(
                 reservation.LocalPosition,
                 reservation.LocalRotation);
+
+            // The card moved without the child list changing, which is the one way the layout can
+            // shift without Unity telling this component about it.
+            MarkStacksDirty();
         }
 
         private void RemoveReservation(Card card)
@@ -979,6 +1143,8 @@ namespace CardsChaos.Cards
                 if (_reservations[i].Card == card)
                     _reservations.RemoveAt(i);
             }
+
+            MarkStacksDirty();
         }
 
         private bool TryGetNearestSlot(Vector3 localPoint, out int slotIndex)
@@ -1026,6 +1192,7 @@ namespace CardsChaos.Cards
             _stackCounts = new int[slotCount];
             _highestLocalY = new float[slotCount];
             _topCards = new Card[slotCount];
+            MarkStacksDirty();
         }
 
         private void OnDrawGizmosSelected()

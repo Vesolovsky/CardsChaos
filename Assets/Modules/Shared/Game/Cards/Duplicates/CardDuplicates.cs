@@ -8,20 +8,25 @@ namespace CardsChaos.Cards
     /// <see cref="Step"/> so a set's duplicates stack in tidy fives, with a tie rounding down. A
     /// set small enough for the rounding to reach zero simply has no duplicates - not every set
     /// needs them, and one box has to hold the lot.
+    ///
+    /// The share is tuned rather than round: at 1500 cards (8 sets of 20, 37 of 30, 2 of 40, 3 of
+    /// 50) anything in 35%..37.5% lands on exactly 500 duplicates - 5, 10, 15 and 20 per set - and
+    /// so on a round 2000 cards to collect. 36% sits in the middle of that band, as far from either
+    /// rounding edge as the numbers allow, so a set gained or lost does not swing the total.
     /// </summary>
     public static class CardDuplicates
     {
         /// <summary>The share of a set that gets a second copy, before rounding.</summary>
-        public const float Share = 0.3f;
+        public const float Share = 0.36f;
 
         /// <summary>Duplicate counts are always a multiple of this.</summary>
         public const int Step = 5;
 
-        // Share as a whole-number fraction. The rounding is done in integers because the tie case
-        // (a set of 25) lands exactly halfway, and a float 7.5 is not exactly 7.5 - it would round
-        // the wrong way and hand that set 40% instead of 20%.
-        private const int ShareNumerator = 3;
-        private const int ShareDenominator = 10;
+        // Share as a whole-number fraction. The rounding is done in integers because a float share
+        // of a set size is not exact - 0.36f * 50 is not quite 18 - and a tie landing on the wrong
+        // side of a step would quietly move a whole size class of sets by five cards.
+        private const int ShareNumerator = 9;
+        private const int ShareDenominator = 25;
 
         /// <summary>
         /// How many of this set's cards get a second copy. Zero for a set outside the collection:

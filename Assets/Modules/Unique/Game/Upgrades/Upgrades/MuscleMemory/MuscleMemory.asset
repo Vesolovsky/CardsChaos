@@ -11,12 +11,12 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 785ef1c32e4e03d4da4fae0f8f181010, type: 3}
   m_Name: MuscleMemory
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   id: MuscleMemory
   displayName: Muscle memory
-  description: Throwing a duplicate sends it straight to the box - onto a stack of
-    its own set when there is room, otherwise to the first free space
-  icon: {fileID: 0}
+  description: Throwing a card that is a duplicate sends it straight to the box with
+    duplicates
+  icon: {fileID: 21300000, guid: ea1eb3e5ae5d97546a0a93035b3c70a8, type: 3}
   kind: 7
   objective:
     kind: 3

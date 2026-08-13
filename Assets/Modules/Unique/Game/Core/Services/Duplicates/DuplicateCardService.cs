@@ -9,12 +9,21 @@ using Zenject;
 namespace Vesolovsky.Game.Services.Duplicates
 {
     /// <summary>
-    /// The one place that answers "is this card a spare" and turns the two duplicate rewards on.
+    /// The one place that decides which card in hand is a spare, and turns the two duplicate
+    /// rewards on.
     ///
-    /// Both rewards read live off the upgrade service, so claiming or buying one takes effect at
-    /// once. The shading is pushed rather than polled: only the handful of cards in hand can ever
-    /// be shaded, and the three things that can change the answer - the album gaining or losing a
-    /// card, the hand changing, an upgrade being bought - each re-run the same short pass.
+    /// The rule is per physical card, not per card face. Within the hand, each card the album still
+    /// wants keeps one copy back; everything beyond that is spare. So a lone copy of a card already
+    /// filed is spare, both-in-hand leaves exactly one spare, and throwing the kept one promotes the
+    /// other back to ordinary - which is what the player sees when the grey moves.
+    ///
+    /// The marking is sticky: a card that was kept stays kept for as long as it is in hand, so
+    /// turning the pile over with the wheel does not walk the grey from one copy to the other.
+    ///
+    /// Both rewards read live off the upgrade service, so buying or claiming one takes effect at
+    /// once. The shading is pushed rather than polled: only the handful of cards in hand can ever be
+    /// spare, and the three things that change the answer - the album gaining or losing a card, the
+    /// hand changing, an upgrade being bought - each re-run the same short pass.
     /// </summary>
     public class DuplicateCardService : IDuplicateCards, IInitializable, IDisposable
     {
@@ -23,10 +32,14 @@ namespace Vesolovsky.Game.Services.Duplicates
         private readonly UpgradeCatalog _catalog;
         private readonly IUpgradeService _upgrades;
 
-        // The cards currently drawn grey, so the ones that stop qualifying can be given their
-        // colour back without walking every card in the room.
-        private readonly List<Card> _shaded = new List<Card>();
-        private readonly List<Card> _wanted = new List<Card>();
+        // The spares in hand, newest pass first. Kept as state because the marking is sticky and
+        // because a card that stops being spare has to be told to drop the grey.
+        private readonly List<Card> _spare = new List<Card>();
+        private readonly List<Card> _nextSpare = new List<Card>();
+
+        // Scratch for one pass, reused so a hand change does not allocate.
+        private readonly Dictionary<CardRef, int> _keepQuota = new Dictionary<CardRef, int>();
+        private readonly List<Card> _ordered = new List<Card>();
 
         [Inject]
         public DuplicateCardService(
@@ -44,8 +57,8 @@ namespace Vesolovsky.Game.Services.Duplicates
         public bool AutoStoresThrownDuplicates =>
             IsClaimed(OneTimeUpgradeKind.AutoStoreThrownDuplicates);
 
-        /// <summary>Whether duplicates in hand are drawn grey - the bought half of the pair.</summary>
-        private bool ShadesDuplicatesInHand => IsBought(PermanentUpgradeKind.DuplicateSight);
+        /// <summary>Whether spares in hand are drawn grey - the bought half of the pair.</summary>
+        private bool ShadesSparesInHand => IsBought(PermanentUpgradeKind.DuplicateSight);
 
         public void Initialize()
         {
@@ -53,12 +66,12 @@ namespace Vesolovsky.Game.Services.Duplicates
                 _album.PageChanged += OnPageChanged;
 
             if (_hand != null)
-                _hand.Changed += RefreshShading;
+                _hand.Changed += Refresh;
 
             if (_upgrades != null)
                 _upgrades.Changed += OnUpgradeChanged;
 
-            RefreshShading();
+            Refresh();
         }
 
         public void Dispose()
@@ -67,31 +80,40 @@ namespace Vesolovsky.Game.Services.Duplicates
                 _album.PageChanged -= OnPageChanged;
 
             if (_hand != null)
-                _hand.Changed -= RefreshShading;
+                _hand.Changed -= Refresh;
 
             if (_upgrades != null)
                 _upgrades.Changed -= OnUpgradeChanged;
         }
 
-        public bool IsDuplicate(CardRef card)
+        public bool HasDuplicate(CardRef card)
         {
-            return card.IsValid && _album != null && _album.Contains(card);
+            if (!card.IsValid)
+                return false;
+
+            // The copy the album swallowed is gone as an object but still counts: a card filed away
+            // with its twin in the room is exactly the case the box exists for.
+            int copies = CardRegistry.CountOf(card);
+            if (_album != null && _album.Contains(card))
+                copies++;
+
+            return copies >= 2;
         }
 
-        public bool IsDuplicate(Card card)
+        public bool IsSpare(Card card)
         {
-            return card != null && IsDuplicate(CardRef.From(card.Identity));
+            return card != null && _spare.Contains(card);
         }
 
         public bool TryAutoStore(CardHand hand, Card card)
         {
-            if (hand == null || card == null || !card.IsHeld)
+            if (hand == null || card == null || !card.IsHeld || !AutoStoresThrownDuplicates)
                 return false;
 
-            if (!AutoStoresThrownDuplicates || !IsDuplicate(card))
+            if (!IsAutoStorable(card))
                 return false;
 
-            // Every box full is not a failure worth announcing: the throw simply happens as it
+            // Every stack full is not a failure worth announcing: the throw simply happens as it
             // always did, and the card lands on the floor.
             if (!CardStackContainer.TryFindAutoPlacement(
                     card,
@@ -101,39 +123,113 @@ namespace Vesolovsky.Game.Services.Duplicates
                 return false;
             }
 
-            return container.TryStore(hand, card, target);
+            // The player did not aim this one, so it gets the long way in: a card that files itself
+            // from across the room should look like it meant to.
+            return container.TryStore(
+                hand, card, target, CardStackContainer.PlacementFlight.Flourish);
         }
 
-        private void OnPageChanged(string setId) => RefreshShading();
-
-        private void OnUpgradeChanged(UpgradeDefinition definition) => RefreshShading();
-
-        private void RefreshShading()
+        /// <summary>
+        /// Which thrown cards the reward files for the player. With the grey wash bought, exactly
+        /// the card shown as spare - what you see is what happens, and throwing the kept copy is
+        /// still an ordinary throw. Without it there is nothing on screen telling the two copies
+        /// apart, so throwing either of them files one, and the second throw behaves normally
+        /// because by then only the album's copy is left.
+        /// </summary>
+        private bool IsAutoStorable(Card card)
         {
-            _wanted.Clear();
+            return ShadesSparesInHand ? IsSpare(card) : SpareCountInHand(card) > 0;
+        }
 
-            if (_hand != null && ShadesDuplicatesInHand)
+        private int SpareCountInHand(Card card)
+        {
+            CardRef key = CardRef.From(card.Identity);
+            if (!key.IsValid || _hand == null)
+                return 0;
+
+            int copies = 0;
+            foreach (Card held in _hand.Cards)
             {
-                foreach (Card card in _hand.Cards)
-                {
-                    if (card != null && IsDuplicate(card))
-                        _wanted.Add(card);
-                }
+                if (held != null && CardRef.From(held.Identity) == key)
+                    copies++;
             }
 
-            // Cleared first so a card that has just been filed, thrown or sold out of the reward
-            // is not left grey. Card ignores a value it already has, so nothing is re-applied.
-            foreach (Card card in _shaded)
+            return copies - KeepCount(key);
+        }
+
+        /// <summary>How many copies of a card the hand must keep back for the album: one, or none
+        /// once the album already holds it.</summary>
+        private int KeepCount(CardRef card)
+        {
+            return _album != null && _album.Contains(card) ? 0 : 1;
+        }
+
+        private void OnPageChanged(string setId) => Refresh();
+
+        private void OnUpgradeChanged(UpgradeDefinition definition) => Refresh();
+
+        private void Refresh()
+        {
+            _nextSpare.Clear();
+
+            if (_hand != null)
+                MarkSpares();
+
+            // Cleared first so a card that has just been filed, thrown or promoted back is not left
+            // grey. Card ignores a value it already has, so nothing is re-applied.
+            foreach (Card card in _spare)
             {
-                if (card != null && !_wanted.Contains(card))
+                if (card != null && !_nextSpare.Contains(card))
                     card.SetShaded(false);
             }
 
-            foreach (Card card in _wanted)
-                card.SetShaded(true);
+            bool shade = ShadesSparesInHand;
+            foreach (Card card in _nextSpare)
+                card.SetShaded(shade);
 
-            _shaded.Clear();
-            _shaded.AddRange(_wanted);
+            _spare.Clear();
+            _spare.AddRange(_nextSpare);
+        }
+
+        /// <summary>
+        /// Walks the hand and puts every copy beyond what the album still wants into
+        /// <see cref="_nextSpare"/>. Cards already marked spare are considered last, so the copy
+        /// that was kept stays kept and the grey does not jump between two identical cards.
+        /// </summary>
+        private void MarkSpares()
+        {
+            _keepQuota.Clear();
+            _ordered.Clear();
+
+            // Two passes rather than one: everything the last pass kept goes to the front, so the
+            // album's share is spent on those cards again and the grey stays on the same copy.
+            AddToOrder(alreadySpare: false);
+            AddToOrder(alreadySpare: true);
+
+            foreach (Card card in _ordered)
+            {
+                CardRef key = CardRef.From(card.Identity);
+
+                if (!_keepQuota.TryGetValue(key, out int keep))
+                    keep = KeepCount(key);
+
+                if (keep > 0)
+                    _keepQuota[key] = keep - 1;
+                else
+                    _nextSpare.Add(card);
+            }
+        }
+
+        private void AddToOrder(bool alreadySpare)
+        {
+            foreach (Card card in _hand.Cards)
+            {
+                if (card == null || !CardRef.From(card.Identity).IsValid)
+                    continue;
+
+                if (_spare.Contains(card) == alreadySpare)
+                    _ordered.Add(card);
+            }
         }
 
         private bool IsBought(PermanentUpgradeKind kind)
