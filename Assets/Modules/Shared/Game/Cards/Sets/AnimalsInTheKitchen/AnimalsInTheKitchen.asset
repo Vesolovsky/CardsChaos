@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: AnimalsInTheKitchen
+  m_EditorClassIdentifier: 
+  setId: AnimalsInTheKitchen
+  setName: Animals in the kitchen
+  icon: {fileID: 21300000, guid: cf7c45ccb2df8794eb3d051237cd2ac2, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: f16549786d270544282b4ecf2ef89ca3, type: 3}
+  backArtwork: {fileID: 2800000, guid: 1000e3f44509fcb48b8293bd6fb142e4, type: 3}
+  countsTowardCollection: 1
+  cards:
+  - {fileID: 1625963800239847464, guid: fbdd13047ed7d3041b0c77108407c0db, type: 3}
+  - {fileID: 8739865245586978438, guid: 6b35945e766487b42b8152684a59e57d, type: 3}
+  - {fileID: 2528672595428846548, guid: 66e8f43013fa6984eaad508d3c5faa0c, type: 3}
+  - {fileID: 1090045355825946985, guid: 44255e3618e0ed446a42649d2082d48e, type: 3}
+  - {fileID: 6927371965626654824, guid: e5e868f1469493f4e9cd8d5b2ac8ca93, type: 3}
+  - {fileID: 2167798393103209298, guid: 9d426be8298fa1e43bb39b438e2970dd, type: 3}
+  - {fileID: 952989749325686639, guid: aa997c0159453ae4fa53b26d47a1dafe, type: 3}
+  - {fileID: 2142812385172336434, guid: deb254312c4a4df4583027ea694e067b, type: 3}
+  - {fileID: 1695976811201452809, guid: 8eb5d2c248cb62848ae0c657b1d3d661, type: 3}
+  - {fileID: 1632186260435242991, guid: 56b6ae04f46c118439df6271b5a99852, type: 3}
+  - {fileID: 7631605212620937738, guid: bc0c0247197c798408ee7658e0b7746d, type: 3}
+  - {fileID: 740535259960226290, guid: 312d66270658821448637b1a737b6cdc, type: 3}
+  - {fileID: 362073056075871700, guid: ce16345738af0574f89486d0f478f706, type: 3}
+  - {fileID: 7546644037367100298, guid: 9831b9fba08bca14e84a29df7c1b8e31, type: 3}
+  - {fileID: 8114036164318609174, guid: 84574397b4da6ae41a1630c2c869b058, type: 3}
+  - {fileID: 4425657118069904207, guid: 4838f648a953e3040b9643c203146603, type: 3}
+  - {fileID: 9134656163455318754, guid: 92d847adfb6e9d94a805809b3438d2f0, type: 3}
+  - {fileID: 397678882953588650, guid: 16c1787d02c899c4fbe5615d6206764b, type: 3}
+  - {fileID: 1188772210245985365, guid: c3ca8b41dd9ae2a468484ab54a494651, type: 3}
+  - {fileID: 4910410818566824841, guid: 5953c614eb156b34585aec6401bbb332, type: 3}

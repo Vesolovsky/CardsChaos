@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02e54d33d0ddb1b4b8633d1daba68138, type: 3}
+  m_Name: Vegetables
+  m_EditorClassIdentifier: 
+  setId: Vegetables
+  setName: Vegetables
+  icon: {fileID: 21300000, guid: 3fdeb297615f1054f88cc62b67ffb616, type: 3}
+  iconInnerShadow: {fileID: 21300000, guid: 0ca38ff028df1fe4dac0515d4752db53, type: 3}
+  backArtwork: {fileID: 2800000, guid: c004c91c94c7f304b8beaf3fd1a945b2, type: 3}
+  countsTowardCollection: 1
+  cards:
+  - {fileID: 3589787318574487471, guid: 02dde5e4556759649818f51f05f5bfd4, type: 3}
+  - {fileID: 5960458863177922076, guid: 6f9b038925019124fb252a7e9ca84105, type: 3}
+  - {fileID: 1306745200748638437, guid: e4fbd2412a18dc947b7059a6610e6b4f, type: 3}
+  - {fileID: 7285280109103834343, guid: 9dee2a5054c84004e93d0beb80127469, type: 3}
+  - {fileID: 8975742685057980528, guid: 61b4eca6185623d4590f5c31fe846f22, type: 3}
+  - {fileID: 5499423252596244925, guid: 800988bdb1033b740accb6786f6b089b, type: 3}
+  - {fileID: 3662764093392734628, guid: c7210db7695a6da42be8cb80880508a7, type: 3}
+  - {fileID: 5464737467528800591, guid: 213d6440a9ae7184b950d0f89ff15883, type: 3}
+  - {fileID: 9053766621428556256, guid: 9404a422b43589c4a9f8d6c1eb0ed7c6, type: 3}
+  - {fileID: 8784680553440533678, guid: a8bdb379e53b0e94b98973f8fa0ec435, type: 3}
+  - {fileID: 4767288102759636984, guid: 571f109a0ee2bd746a79f00811b5b2c4, type: 3}
+  - {fileID: 5919564954819861725, guid: 99f85b8b006a88144b5aa69943f571c4, type: 3}
+  - {fileID: 6592970934054420362, guid: 5976d7ba5158c624087cf5f0b08a16bc, type: 3}
+  - {fileID: 6099105276564536757, guid: c9e3906846e54564582aee11f3dd86c0, type: 3}
+  - {fileID: 6165563695915286884, guid: b241d34cbe5b2c04691ecbfef4dc9067, type: 3}
+  - {fileID: 7669498284961244661, guid: 83d00a2d8065ebd4a91700ce3259350d, type: 3}
+  - {fileID: 2987035355354029939, guid: 7f86c0bf8342b0f40b21a78153b0b7bd, type: 3}
+  - {fileID: 8370758385288372299, guid: 9d15c162b94f5a645a102388022d5847, type: 3}
+  - {fileID: 1782863961411511623, guid: bf94a03e8b34c1a46aa669ac89ddc15e, type: 3}
+  - {fileID: 7654022906141021130, guid: d6d0a221ca194054ea6c8ba6792cda22, type: 3}
+  - {fileID: 5819809775631579570, guid: 9bfe614508f01a74eaf9361d0b8cbd42, type: 3}
+  - {fileID: 1098855059298882974, guid: 13ee4c89da32b5c4089ef22bba5d9657, type: 3}
+  - {fileID: 3571052176966431850, guid: 71713f3b84fa7e245944a79450e9255f, type: 3}
+  - {fileID: 2564025305696924989, guid: 2d3072b027e00d8499dad36ddf29b4e7, type: 3}
+  - {fileID: 7123483304654421528, guid: 94b08bd4792ccaf44b1a1a7c8ff5a7a2, type: 3}
+  - {fileID: 7108916045590746357, guid: 154eb0c0baa710a41a65c3b22a2879d7, type: 3}
+  - {fileID: 5421006621235185951, guid: c8d1399af5d079f4d9f9f283ef42668b, type: 3}
+  - {fileID: 4532785535629736238, guid: b45aa9d6ade5ccc43a47dd04eec4c3f1, type: 3}
+  - {fileID: 445473693416419636, guid: 372ac68ee73123f49b78ccbdf85a25a3, type: 3}
+  - {fileID: 942923125227188501, guid: 0647454b414420d45a6e812f6da8868b, type: 3}
