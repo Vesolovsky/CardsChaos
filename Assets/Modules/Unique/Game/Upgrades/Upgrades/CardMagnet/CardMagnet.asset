@@ -21,18 +21,18 @@ MonoBehaviour:
     type: 3}
   unlockedBy: {fileID: 0}
   levels:
-  - cost: 3
+  - cost: 2
     value: 1
     cooldown: 180
-  - cost: 5
+  - cost: 4
     value: 2
     cooldown: 150
-  - cost: 8
+  - cost: 7
     value: 3
     cooldown: 120
-  - cost: 12
+  - cost: 10
     value: 4
     cooldown: 90
-  - cost: 15
+  - cost: 12
     value: 5
     cooldown: 60
