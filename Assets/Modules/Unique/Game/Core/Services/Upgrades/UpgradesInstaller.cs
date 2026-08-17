@@ -1,4 +1,5 @@
 using UnityEngine;
+using Vesolovsky.Game.Services.Duplicates;
 using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Services.Pause;
 using Vesolovsky.Game.Services.Progress;
@@ -70,6 +71,11 @@ namespace Vesolovsky.Game.Services.Upgrades
             // "Is the clock stopped" - set by the pause menu, read by anything that runs on game
             // time (currently the skill cooldowns).
             Container.Bind<IPauseState>().To<PauseState>().AsSingle();
+
+            // What counts as a duplicate, and the two rewards written against it. NonLazy so the
+            // grey wash is already listening to the album and the hand from the first frame - the
+            // card table resolves it optionally and would otherwise never bring it into being.
+            Container.BindInterfacesAndSelfTo<DuplicateCardService>().AsSingle().NonLazy();
 
             // Each handler is registered as an ISkillHandler; the service takes them as a list.
             Container.BindInterfacesAndSelfTo<CardMagnetSkill>().AsSingle();

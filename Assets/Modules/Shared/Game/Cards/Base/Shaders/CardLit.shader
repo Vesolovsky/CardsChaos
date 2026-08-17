@@ -17,6 +17,7 @@ Shader "CardsChaos/Card Lit"
         _EdgeDarken ("Rim Darken", Range(0,1)) = 0.18
         _MipBias ("Close View Mip Bias", Range(-1,0)) = 0
         _InspectSharpen ("Inspect Sharpen", Range(0,0.35)) = 0
+        _Grayscale ("Grayscale", Range(0,1)) = 0
 
     }
 
@@ -277,6 +278,17 @@ Shader "CardsChaos/Card Lit"
                 }
 
                 albedo *= _BaseColor.rgb;
+
+                // Desaturate towards perceived luminance, the same move the album's flat card
+                // shader makes for a misplaced card: it reads as set aside at a glance without
+                // hiding which card it is. Uniform for the whole draw, so the thousand ordinary
+                // cards in the room branch straight past it.
+                UNITY_BRANCH
+                if (_Grayscale > 0.0001h)
+                {
+                    half luma = dot(albedo, half3(0.299h, 0.587h, 0.114h));
+                    albedo = lerp(albedo, luma.xxx, _Grayscale);
+                }
 
                 // 0 on the flat faces, 1 at the outermost point of the rim.
                 half rimMask = 1.0h - abs(faceMix * 2.0h - 1.0h);

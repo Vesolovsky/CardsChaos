@@ -19,10 +19,10 @@ namespace Vesolovsky.Game.Services.Save
     /// pose, cards in hand, cards on the floor, skill cooldowns - and as a save contributor it
     /// writes that same state back just before every write.
     ///
-    /// Cards are authored into the scene, so a fresh load always starts with every card resting on
-    /// the floor. Apply reshapes that authored starting point into the saved one: it repositions
-    /// the floor cards, lifts the held ones into the hand, and removes the ones now filed away.
-    /// Cards are keyed by set-and-number, which the game guarantees is unique per physical card.
+    /// Cards are authored into the scene, so a fresh load starts with every copy resting in its
+    /// authored place. Apply reshapes that starting point into the saved one: equal set-and-number
+    /// cards live in per-identity pools, so duplicates are consumed as separate physical instances
+    /// rather than collapsing in a dictionary. Container membership is restored explicitly.
     /// </summary>
     public class WorldSaveService : IInitializable, ITickable, IDisposable, ISaveContributor
     {
@@ -197,13 +197,26 @@ namespace Vesolovsky.Game.Services.Save
                     continue;
 
                 Transform t = card.transform;
-                world.GroundCards.Add(new SavedGroundCard
+                var saved = new SavedGroundCard
                 {
                     SetId = setId,
                     Number = number,
                     Position = new SaveVector3(t.position),
                     Rotation = new SaveQuaternion(t.rotation),
-                });
+                };
+
+                CardStackContainer container = card.GetComponentInParent<CardStackContainer>();
+                if (container != null && container.TryGetSavedPlacement(
+                        card, out int slot, out Vector3 localPosition,
+                        out Quaternion localRotation))
+                {
+                    saved.ContainerId = container.ContainerId;
+                    saved.ContainerSlot = slot;
+                    saved.ContainerLocalPosition = new SaveVector3(localPosition);
+                    saved.ContainerLocalRotation = new SaveQuaternion(localRotation);
+                }
+
+                world.GroundCards.Add(saved);
             }
 
             return world;
@@ -230,7 +243,7 @@ namespace Vesolovsky.Game.Services.Save
 
         private void ApplyWorld(WorldState world, List<AlbumPlacement> album)
         {
-            Dictionary<CardRef, Card> byRef = MapSceneCards();
+            Dictionary<CardRef, List<Card>> byRef = MapSceneCards();
 
             RemoveFiledCards(byRef, album);
 
@@ -242,7 +255,10 @@ namespace Vesolovsky.Game.Services.Save
 
                 foreach (SavedCard saved in world.HeldCards)
                 {
-                    Card card = TakeOrCreate(byRef, saved.SetId, saved.Number, handPosition, handRotation);
+                    Card card = TakeOrCreate(
+                        byRef, saved.SetId, saved.Number, handPosition, handRotation,
+                        preferredContainerId: null,
+                        preferOutsideContainers: true);
                     if (card != null)
                         held.Add(card);
                 }
@@ -257,9 +273,50 @@ namespace Vesolovsky.Game.Services.Save
                     Vector3 position = saved.Position.ToVector3();
                     Quaternion rotation = saved.Rotation.ToQuaternion();
 
-                    Card card = TakeOrCreate(byRef, saved.SetId, saved.Number, position, rotation);
-                    if (card != null)
-                        PlaceOnGround(card, position, rotation);
+                    Card card = TakeOrCreate(
+                        byRef, saved.SetId, saved.Number, position, rotation, saved.ContainerId,
+                        preferOutsideContainers: false);
+                    if (card == null)
+                        continue;
+
+                    if (!string.IsNullOrEmpty(saved.ContainerId) &&
+                        CardStackContainer.TryFindById(saved.ContainerId, out CardStackContainer container) &&
+                        container.RestoreCard(
+                            card,
+                            saved.ContainerSlot,
+                            saved.ContainerLocalPosition.ToVector3(),
+                            saved.ContainerLocalRotation.ToQuaternion()))
+                    {
+                        continue;
+                    }
+
+                    // Saves written before container metadata existed still carry the exact world
+                    // pose. If the nearest authored copy is already a child of a container at that
+                    // same pose, preserve that membership as a lossless best-effort migration.
+                    CardStackContainer legacyContainer =
+                        card.GetComponentInParent<CardStackContainer>();
+                    if (string.IsNullOrEmpty(saved.ContainerId) && legacyContainer != null &&
+                        (card.transform.position - position).sqrMagnitude <= 0.0004f &&
+                        legacyContainer.TryGetSavedPlacement(
+                            card, out int legacySlot, out _, out _) &&
+                        legacyContainer.RestoreCard(
+                            card,
+                            legacySlot,
+                            legacyContainer.transform.InverseTransformPoint(position),
+                            Quaternion.Inverse(legacyContainer.transform.rotation) * rotation))
+                    {
+                        continue;
+                    }
+
+                    if (!string.IsNullOrEmpty(saved.ContainerId))
+                    {
+                        Debug.LogWarning(
+                            $"[{nameof(WorldSaveService)}] Could not restore {saved.SetId}#" +
+                            $"{saved.Number} into container '{saved.ContainerId}' slot " +
+                            $"{saved.ContainerSlot}; placed it in the room instead.");
+                    }
+
+                    PlaceOnGround(card, position, rotation);
                 }
             }
 
@@ -269,9 +326,9 @@ namespace Vesolovsky.Game.Services.Save
             ApplyPlayerPose(world);
         }
 
-        private Dictionary<CardRef, Card> MapSceneCards()
+        private Dictionary<CardRef, List<Card>> MapSceneCards()
         {
-            var byRef = new Dictionary<CardRef, Card>();
+            var byRef = new Dictionary<CardRef, List<Card>>();
 
             foreach (Card card in UnityEngine.Object.FindObjectsByType<Card>(FindObjectsSortMode.None))
             {
@@ -279,18 +336,18 @@ namespace Vesolovsky.Game.Services.Save
                     continue;
 
                 var key = new CardRef(setId, number);
-                if (!byRef.TryAdd(key, card))
-                {
-                    Debug.LogWarning(
-                        $"[{nameof(WorldSaveService)}] Two scene cards are {key}; the save assumes " +
-                        "each card is unique, so the duplicate is left where it was authored.", card);
-                }
+                if (!byRef.TryGetValue(key, out List<Card> copies))
+                    byRef[key] = copies = new List<Card>();
+
+                copies.Add(card);
             }
 
             return byRef;
         }
 
-        private static void RemoveFiledCards(Dictionary<CardRef, Card> byRef, List<AlbumPlacement> album)
+        private static void RemoveFiledCards(
+            Dictionary<CardRef, List<Card>> byRef,
+            List<AlbumPlacement> album)
         {
             if (album == null)
                 return;
@@ -301,24 +358,33 @@ namespace Vesolovsky.Game.Services.Save
                     continue;
 
                 var key = new CardRef(placement.CardSetId, placement.CardNumber);
-                if (!byRef.TryGetValue(key, out Card card))
+                Card card = TakeCandidate(byRef, key, Vector3.zero, preferredContainerId: null,
+                    preferOutsideContainers: true);
+                if (card == null)
                     continue;
 
-                byRef.Remove(key);
-                if (card != null)
-                    UnityEngine.Object.Destroy(card.gameObject);
+                UnityEngine.Object.Destroy(card.gameObject);
             }
         }
 
         private Card TakeOrCreate(
-            Dictionary<CardRef, Card> byRef, string setId, int number, Vector3 position, Quaternion rotation)
+            Dictionary<CardRef, List<Card>> byRef,
+            string setId,
+            int number,
+            Vector3 position,
+            Quaternion rotation,
+            string preferredContainerId,
+            bool preferOutsideContainers)
         {
             var key = new CardRef(setId, number);
-            if (byRef.TryGetValue(key, out Card existing))
-            {
-                byRef.Remove(key);
+            Card existing = TakeCandidate(
+                byRef,
+                key,
+                position,
+                preferredContainerId,
+                preferOutsideContainers);
+            if (existing != null)
                 return existing;
-            }
 
             // Not authored in this scene (e.g. content added after the save, or a trimmed scene) -
             // build it from the catalog prefab so the save is still honoured.
@@ -334,9 +400,55 @@ namespace Vesolovsky.Game.Services.Save
             return _cardFactory.Create(prefab, position, rotation);
         }
 
+        private static Card TakeCandidate(
+            Dictionary<CardRef, List<Card>> byRef,
+            CardRef key,
+            Vector3 wantedPosition,
+            string preferredContainerId,
+            bool preferOutsideContainers)
+        {
+            if (!byRef.TryGetValue(key, out List<Card> copies) || copies.Count == 0)
+                return null;
+
+            int bestIndex = -1;
+            float bestScore = float.PositiveInfinity;
+
+            for (int i = 0; i < copies.Count; i++)
+            {
+                Card candidate = copies[i];
+                if (candidate == null)
+                    continue;
+
+                CardStackContainer container = candidate.GetComponentInParent<CardStackContainer>();
+                float preference = 0f;
+                if (!string.IsNullOrEmpty(preferredContainerId))
+                    preference = container != null && container.ContainerId == preferredContainerId ? 0f : 1000000f;
+                else if (preferOutsideContainers && container != null)
+                    preference = 1000000f;
+
+                float score = preference + (candidate.transform.position - wantedPosition).sqrMagnitude;
+                if (score >= bestScore)
+                    continue;
+
+                bestScore = score;
+                bestIndex = i;
+            }
+
+            if (bestIndex < 0)
+                return null;
+
+            Card chosen = copies[bestIndex];
+            copies.RemoveAt(bestIndex);
+            if (copies.Count == 0)
+                byRef.Remove(key);
+
+            return chosen;
+        }
+
         private static void PlaceOnGround(Card card, Vector3 position, Quaternion rotation)
         {
             card.StopAnimation();
+            card.transform.SetParent(null, worldPositionStays: true);
             card.transform.SetPositionAndRotation(position, rotation);
             card.FreezeInPlace();
         }

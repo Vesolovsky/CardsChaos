@@ -89,3 +89,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cardImage: {fileID: 8945201319258240204}
+  duplicateMaterial: {fileID: 2100000, guid: d06a4035ed8741c4f976b2333241ba4d, type: 2}

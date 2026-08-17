@@ -66,17 +66,104 @@ namespace CardsChaos.Cards.CardEditor
                 return;
             }
 
-            CardPlacer.Counts(out int placed, out int total);
+            CardPlacer.Counts(
+                out int placed, out int duplicates, out int total, out int duplicateTotal);
             EditorGUILayout.LabelField("Placed", $"{placed} / {total}");
 
             if (total > 0)
             {
                 Rect bar = EditorGUILayout.GetControlRect(false, 6f);
-                EditorGUI.ProgressBar(bar, total == 0 ? 0f : placed / (float)total, string.Empty);
+                EditorGUI.ProgressBar(bar, placed / (float)total, string.Empty);
+
+                // Only a share of each set gets a second copy, so this is measured against the
+                // quota the sets add up to rather than against the catalog.
+                EditorGUILayout.LabelField("Duplicates", $"{duplicates} / {duplicateTotal}");
+                Rect duplicateBar = EditorGUILayout.GetControlRect(false, 6f);
+                EditorGUI.ProgressBar(
+                    duplicateBar,
+                    duplicateTotal > 0 ? duplicates / (float)duplicateTotal : 0f,
+                    string.Empty);
             }
 
-            if (placed >= total && total > 0)
-                EditorGUILayout.HelpBox("Every card is on the scene.", MessageType.Info);
+            if (duplicates >= duplicateTotal && duplicateTotal > 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "Every duplicate is on the scene. Nothing is left to place.", MessageType.Info);
+            }
+            else if (placed >= total && total > 0)
+            {
+                EditorGUILayout.HelpBox(
+                    $"Every card is on the scene once. The placer is now adding the " +
+                    $"{duplicateTotal} duplicates - about {Mathf.RoundToInt(CardDuplicates.Share * 100f)}% " +
+                    $"of each set, rounded to fives, and none at all for the smallest sets.",
+                    MessageType.Info);
+            }
+
+            if (duplicates > 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "A second copy is the card's duplicate: the album takes the first, the " +
+                    "duplicate box takes the second, and the save keeps the two apart.",
+                    MessageType.Info);
+            }
+
+            DrawBoxCapacity(duplicateTotal);
+
+            EditorGUILayout.Space();
+
+            if (GUILayout.Button(new GUIContent(
+                    "Remove every extra copy",
+                    "Deletes every card the scene holds more than once, leaving one of each. " +
+                    "Undoable in one step.")))
+            {
+                RemoveExtraCopies(duplicates);
+            }
+        }
+
+        /// <summary>
+        /// Every duplicate is meant to fit in the room's duplicate box, and the quota grows with
+        /// the catalog while the box does not - so the day a new set tips it over should be the day
+        /// this says so, not the day a player runs out of slots.
+        /// </summary>
+        private static void DrawBoxCapacity(int duplicateTotal)
+        {
+            CardStackContainer[] boxes = Object.FindObjectsByType<CardStackContainer>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+            if (boxes.Length == 0)
+                return;
+
+            int capacity = 0;
+            foreach (CardStackContainer box in boxes)
+                capacity += box.Capacity;
+
+            string where = boxes.Length == 1 ? "The box holds" : $"The {boxes.Length} boxes hold";
+
+            EditorGUILayout.HelpBox(
+                duplicateTotal > capacity
+                    ? $"{where} {capacity} cards, but the sets ask for {duplicateTotal} " +
+                      "duplicates. Some would have nowhere to go - grow the box or lower the share."
+                    : $"{where} {capacity} cards; the sets ask for {duplicateTotal}.",
+                duplicateTotal > capacity ? MessageType.Error : MessageType.None);
+        }
+
+        private static void RemoveExtraCopies(int duplicates)
+        {
+            if (duplicates <= 0)
+            {
+                EditorUtility.DisplayDialog(
+                    "Nothing to remove", "No card is in the scene more than once.", "OK");
+                return;
+            }
+
+            bool confirmed = EditorUtility.DisplayDialog(
+                "Remove extra copies",
+                $"Delete {duplicates} card copies, leaving one of each in the scene?\n\n" +
+                "The copy carrying extra components is kept, so the authored endgame card stays.",
+                "Remove", "Cancel");
+
+            if (confirmed)
+                CardPlacer.RemoveExtraCopies();
         }
 
         private void DrawSettings()

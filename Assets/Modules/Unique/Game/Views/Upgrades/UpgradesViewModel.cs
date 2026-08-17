@@ -198,6 +198,9 @@ namespace Vesolovsky.Game.Views
                 case CollectionObjective.ObjectiveKind.CompleteAnySets:
                     return $"Fully complete {objective.Count} sets to unlock this ability";
 
+                case CollectionObjective.ObjectiveKind.StoreDuplicates:
+                    return $"Put {objective.Count} duplicates away in the box to unlock this ability";
+
                 default:
                     return string.Empty;
             }
@@ -206,7 +209,7 @@ namespace Vesolovsky.Game.Views
         private static string Remaining(CollectionObjective objective, int required, int completed)
         {
             int remaining = Mathf.Max(0, required - completed);
-            string unit = objective.CountsPages ? "page" : "set";
+            string unit = objective.UnitName;
 
             if (remaining != 1)
                 unit += "s";

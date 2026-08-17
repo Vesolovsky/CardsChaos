@@ -28,6 +28,9 @@ namespace Vesolovsky.Game.Upgrades
 
             /// <summary>Any <see cref="count"/> pages completed, across every set.</summary>
             CompletePages,
+
+            /// <summary>Any <see cref="count"/> duplicates put away in the duplicate boxes.</summary>
+            StoreDuplicates,
         }
 
         [SerializeField] private ObjectiveKind kind;
@@ -35,7 +38,7 @@ namespace Vesolovsky.Game.Upgrades
         [Tooltip("The sets that must be completed. Used only by 'Complete Specific Sets'.")]
         [SerializeField] private List<CardSetDefinition> sets = new List<CardSetDefinition>();
 
-        [Tooltip("How many sets or pages must be completed. Used by the two count-based kinds.")]
+        [Tooltip("How many sets, pages or duplicates are asked for. Used by the count-based kinds.")]
         [SerializeField] private int count = 1;
 
         public ObjectiveKind Kind => kind;
@@ -45,8 +48,27 @@ namespace Vesolovsky.Game.Upgrades
         /// <summary>The authored count for the count-based kinds; unused by specific-sets.</summary>
         public int Count => count;
 
-        /// <summary>Whether the objective is counted in pages rather than sets.</summary>
-        public bool CountsPages => kind == ObjectiveKind.CompletePages;
+        /// <summary>
+        /// The singular noun the objective is counted in - what the task row puts after its
+        /// remaining number. A new kind that counts something else names it here.
+        /// </summary>
+        public string UnitName
+        {
+            get
+            {
+                switch (kind)
+                {
+                    case ObjectiveKind.CompletePages:
+                        return "page";
+
+                    case ObjectiveKind.StoreDuplicates:
+                        return "duplicate";
+
+                    default:
+                        return "set";
+                }
+            }
+        }
 
         /// <summary>How many completed sets or pages the objective asks for in total.</summary>
         public int Required =>
@@ -83,6 +105,9 @@ namespace Vesolovsky.Game.Upgrades
                 case ObjectiveKind.CompletePages:
                     return Mathf.Min(progress.CompletedPageCount, count);
 
+                case ObjectiveKind.StoreDuplicates:
+                    return Mathf.Min(progress.StoredDuplicateCount, count);
+
                 default:
                     return 0;
             }
@@ -112,6 +137,9 @@ namespace Vesolovsky.Game.Upgrades
 
                 case ObjectiveKind.CompletePages:
                     return progress.CompletedPageCount >= count;
+
+                case ObjectiveKind.StoreDuplicates:
+                    return progress.StoredDuplicateCount >= count;
 
                 default:
                     return false;

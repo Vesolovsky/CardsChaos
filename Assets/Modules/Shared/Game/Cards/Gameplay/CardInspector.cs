@@ -13,6 +13,15 @@ namespace CardsChaos.Cards
 
         /// <summary>Opens the close-up on the selected card. False when there is nothing to show.</summary>
         bool TryOpen();
+
+        /// <summary>
+        /// Steps the close-up onto the neighbouring card in hand, the same move the wheel makes.
+        /// False when the close-up is not open - there is nothing to step from.
+        /// </summary>
+        bool Step(int delta);
+
+        /// <summary>Leaves the close-up and puts the card back in hand. Harmless when not open.</summary>
+        void Close();
     }
 
     [System.Serializable]
@@ -102,6 +111,21 @@ namespace CardsChaos.Cards
             _light?.Show(_card.FaceLuminance);
 
             return true;
+        }
+
+        public bool Step(int delta)
+        {
+            if (!IsInspecting || delta == 0)
+                return false;
+
+            Switch(delta > 0 ? 1 : -1);
+            return true;
+        }
+
+        public void Close()
+        {
+            if (IsInspecting)
+                Exit();
         }
 
         public void Tick()

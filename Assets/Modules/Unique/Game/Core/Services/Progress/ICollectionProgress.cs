@@ -34,6 +34,13 @@ namespace Vesolovsky.Game.Services.Progress
         /// <summary>How many sets have been completed in full.</summary>
         int CompletedSetCount { get; }
 
+        /// <summary>
+        /// The most duplicates ever put away in the duplicate box at one time. Permanent in the
+        /// same sense as the page tally: taking a card back out of a box does not undo the work, so
+        /// a task counted in duplicates cannot come unfinished.
+        /// </summary>
+        int StoredDuplicateCount { get; }
+
         /// <summary>Whether every page of the given set has been completed.</summary>
         bool IsSetCompleted(string setId);
     }

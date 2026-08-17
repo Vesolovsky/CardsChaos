@@ -20,10 +20,18 @@ namespace Vesolovsky.Game.Views.Album
     {
         [SerializeField] private Image cardImage;
 
+        [Tooltip("The material a duplicate is drawn with - the same grey twin a misplaced card gets " +
+                 "in its slot, M_Card_UI_Gray. Left empty, a duplicate is drawn in full colour.")]
+        [SerializeField] private Material duplicateMaterial;
+
         private AlbumDragController _drag;
         private IAlbumCardInspector _inspector;
         private Tween _positionTween;
         private Tween _rotationTween;
+
+        // The image's own material as the prefab set it up, so a card drawn grey can be given its
+        // colour back when its twin leaves the album or the other copy is thrown.
+        private Material _cardMaterial;
 
         // A press that turns into a drag must not also inspect on release. The event system
         // usually suppresses that click itself, but a short drag back to where it started can
@@ -39,11 +47,19 @@ namespace Vesolovsky.Game.Views.Album
 
         public RectTransform Rect => (RectTransform)transform;
 
+        private void Awake() => _cardMaterial = cardImage.material;
+
         public void Initialize(AlbumDragController drag, IAlbumCardInspector inspector, Card worldCard)
         {
             _drag = drag;
             _inspector = inspector;
             WorldCard = worldCard;
+
+            // The album draws the hand as its own flat pile, but the grey is the room card's state:
+            // following it rather than working the rule out again keeps the two views agreeing even
+            // as filing a card changes which copy in hand is the spare.
+            worldCard.ShadedChanged += OnWorldCardShadedChanged;
+            ApplyShade(worldCard.IsShaded);
 
             CardIdentity identity = worldCard.Identity;
             if (identity == null)
@@ -162,6 +178,15 @@ namespace Vesolovsky.Game.Views.Album
         // notices and destroys this object.
         void IAlbumCardSource.OnCardTaken() { }
 
+        private void OnWorldCardShadedChanged(Card card) => ApplyShade(card.IsShaded);
+
+        private void ApplyShade(bool shaded)
+        {
+            cardImage.material = shaded && duplicateMaterial != null
+                ? duplicateMaterial
+                : _cardMaterial;
+        }
+
         private void StopTweens()
         {
             if (_positionTween.isAlive)
@@ -171,6 +196,12 @@ namespace Vesolovsky.Game.Views.Album
                 _rotationTween.Stop();
         }
 
-        private void OnDestroy() => StopTweens();
+        private void OnDestroy()
+        {
+            if (WorldCard != null)
+                WorldCard.ShadedChanged -= OnWorldCardShadedChanged;
+
+            StopTweens();
+        }
     }
 }

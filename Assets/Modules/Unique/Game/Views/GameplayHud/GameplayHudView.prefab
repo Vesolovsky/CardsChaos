@@ -3878,6 +3878,22 @@ MonoBehaviour:
     HoldDuration: 5
     OneTime: 0
     Disableable: 0
+  - Id: 9
+    Text: This card is already in the duplicates box
+    ActionName: 
+    Icon: {fileID: 0}
+    StartDelay: 0
+    HoldDuration: 3
+    OneTime: 0
+    Disableable: 0
+  - Id: 10
+    Text: This card is not a duplicate!
+    ActionName: 
+    Icon: {fileID: 0}
+    StartDelay: 0
+    HoldDuration: 3
+    OneTime: 0
+    Disableable: 0
   fadeInDuration: 0.4
   fadeOutDuration: 0.5
   gapDuration: 0.3

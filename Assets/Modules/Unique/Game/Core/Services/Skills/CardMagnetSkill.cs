@@ -101,7 +101,8 @@ namespace Vesolovsky.Game.Services.Skills
             var candidates = new List<Card>();
             foreach (Card card in Object.FindObjectsByType<Card>(FindObjectsSortMode.None))
             {
-                if (card == null || card.IsHeld || card.Identity == null || card.Identity.SetId != setId)
+                if (card == null || card.IsHeld || CardStackContainer.IsStored(card) ||
+                    card.Identity == null || card.Identity.SetId != setId)
                     continue;
 
                 candidates.Add(card);

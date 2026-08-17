@@ -9,8 +9,9 @@ namespace CardsChaos.Cards
 {
     /// <summary>
     /// Mouse and keyboard driver for everything outside the close-up: the Interact action either
-    /// picks a card up off the floor or opens the one in hand, Throw discards the selected card,
-    /// Toggle Hand spreads the hand out and the wheel walks through it.
+    /// picks a card up off the floor or opens the one in hand, Throw discards the selected card (or
+    /// stores it while a container slot is targeted), Toggle Hand spreads the hand out and the
+    /// wheel walks through it.
     ///
     /// A fanned-out card can be chosen two ways - pointed at, or reached with the wheel - and the
     /// choice sticks either way, so the cursor is free to wander off without the hand forgetting
@@ -29,6 +30,10 @@ namespace CardsChaos.Cards
         private readonly ICardOutlinePresenter _outline;
         private readonly IWorldInteractionLock _worldLock;
 
+        // Optional: the duplicate rewards live in the game module, and the card table is expected
+        // to work in a test scene that has no upgrade system at all.
+        private readonly IDuplicateCards _duplicates;
+
         private readonly InputAction _throw;
         private readonly InputAction _toggleHand;
         private readonly InputAction _interact;
@@ -43,13 +48,15 @@ namespace CardsChaos.Cards
             ICardInspector inspector,
             ICardOutlinePresenter outline,
             IWorldInteractionLock worldLock,
-            IInputActions input)
+            IInputActions input,
+            [InjectOptional] IDuplicateCards duplicates)
         {
             _cameraService = cameraService;
             _hand = hand;
             _inspector = inspector;
             _outline = outline;
             _worldLock = worldLock;
+            _duplicates = duplicates;
 
             _throw = input.Find(GameInputActions.Throw);
             _toggleHand = input.Find(GameInputActions.ToggleHand);
@@ -88,9 +95,77 @@ namespace CardsChaos.Cards
             // that stops the pickup below - it needs a target - and hides the card's hover outline,
             // while Throw, Toggle Hand and the wheel still work off the keyboard as before.
             bool pointerOverUi = EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
-            Aim(pointerOverUi ? null : FindCardUnderCursor(mouse));
+            bool interactPressed = _interact != null && _interact.WasPressedThisFrame();
+            bool throwPressed = _throw != null && _throw.WasPressedThisFrame();
 
-            if (_interact != null && _interact.WasPressedThisFrame() && _target != null)
+            Ray cursorRay = !pointerOverUi
+                ? _cameraService.SceenPointToRay(mouse.position.ReadValue())
+                : default;
+            RaycastHit cursorHit = default;
+            bool hasWorldHit = !pointerOverUi && TryFindWorldHit(cursorRay, out cursorHit);
+            Card cursorCard = hasWorldHit
+                ? cursorHit.collider.GetComponentInParent<Card>()
+                : null;
+
+            bool containerOwnsPointer = false;
+            Card selected = _hand.SelectedCard;
+
+            if (!pointerOverUi && selected != null)
+            {
+                // The open part of a basket has no collider of its own. Its component intersects
+                // the same cursor ray at each stack's actual landing height, while the ordinary
+                // physics hit guards against selecting a container hidden behind another object.
+                // A hit on the basket or one of its child cards belongs to that basket and is not
+                // an obstruction.
+                float obstructionDistance = hasWorldHit
+                    ? cursorHit.distance
+                    : float.PositiveInfinity;
+                CardStackContainer obstructionOwner = hasWorldHit
+                    ? cursorHit.collider.GetComponentInParent<CardStackContainer>()
+                    : null;
+
+                if (CardStackContainer.TryFindTarget(
+                        cursorRay,
+                        obstructionDistance,
+                        obstructionOwner,
+                        out CardStackContainer container,
+                        out CardStackContainer.SlotTarget slot))
+                {
+                    containerOwnsPointer = true;
+
+                    // A stack remains an ordinary source of cards even while another card is
+                    // selected in hand. Physics gives us its topmost collider, so LMB naturally
+                    // peels the stack one card at a time instead of the container swallowing the
+                    // click after the first pickup.
+                    bool pointsAtStoredCard = cursorCard != null &&
+                                              !cursorCard.IsHeld &&
+                                              cursorCard.transform.IsChildOf(container.transform);
+                    Aim(pointsAtStoredCard ? cursorCard : null);
+
+                    bool pickedFromStack = false;
+                    if (!throwPressed && interactPressed && pointsAtStoredCard)
+                    {
+                        pickedFromStack = _hand.PickUp(cursorCard);
+                        if (pickedFromStack)
+                            Aim(null);
+                    }
+
+                    if (slot.IsValid)
+                    {
+                        // F is contextual: over a legal container slot it stores the selected
+                        // card; everywhere else the same action keeps its ordinary throw meaning.
+                        if (throwPressed)
+                            container.TryStore(_hand, selected, slot);
+                        else if (!pickedFromStack)
+                            container.ShowGhost(selected, slot, _cameraService.MainCamera);
+                    }
+                }
+            }
+
+            if (!containerOwnsPointer)
+                Aim(pointerOverUi ? null : cursorCard);
+
+            if (!containerOwnsPointer && interactPressed && _target != null)
             {
                 if (_target.IsHeld)
                     _inspector.TryOpen();
@@ -98,9 +173,13 @@ namespace CardsChaos.Cards
                     Aim(null);
             }
 
-            if (_throw != null && _throw.WasPressedThisFrame())
+            if (throwPressed && !containerOwnsPointer)
             {
-                _hand.ThrowSelected();
+                // A free throw of a duplicate is filed for the player once the reward is owned -
+                // but only a free one. Aiming at a box is handled above, and there the player is
+                // choosing the slot themselves, which is a choice the reward must not take away.
+                if (_duplicates == null || !_duplicates.TryAutoStore(_hand, _hand.SelectedCard))
+                    _hand.ThrowSelected();
 
                 // The thrown card is very likely still under the cursor. Forgetting it here lets
                 // the next frame notice it again as a floor card instead of retaining stale aim.
@@ -119,17 +198,16 @@ namespace CardsChaos.Cards
             }
         }
 
-        private Card FindCardUnderCursor(Mouse mouse)
+        private static bool TryFindWorldHit(Ray ray, out RaycastHit hit)
         {
-            Ray ray = _cameraService.SceenPointToRay(mouse.position.ReadValue());
-
             // Triggers count here: a card in hand is one, so that it can be pointed at without
             // barging the floor around as it rides along with the camera.
-            if (!Physics.Raycast(ray, out RaycastHit hit, MaxPickDistance, Physics.DefaultRaycastLayers,
-                    QueryTriggerInteraction.Collide))
-                return null;
-
-            return hit.collider.GetComponentInParent<Card>();
+            return Physics.Raycast(
+                ray,
+                out hit,
+                MaxPickDistance,
+                Physics.DefaultRaycastLayers,
+                QueryTriggerInteraction.Collide);
         }
 
         private void Aim(Card card)

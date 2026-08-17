@@ -26,6 +26,14 @@ namespace Vesolovsky.Game.Services.Album
 
         private Dictionary<string, Dictionary<int, CardRef>> _pages;
 
+        // How many copies of each card the album is holding, across every page and slot. Kept
+        // beside the pages rather than derived from them because "is this card already filed" is
+        // asked for every card in hand on every album move, and walking a thousand slots for each
+        // would be a scan a frame. A count, not a set: the player can file both copies of a card,
+        // one of them in a slot it does not belong in, and taking one back out must not make the
+        // other disappear from the tally.
+        private Dictionary<CardRef, int> _held;
+
         [Inject]
         public LocalCardAlbum(ISaveService<GameSave> saveService, ISaveCoordinator saveCoordinator)
         {
@@ -49,8 +57,55 @@ namespace Vesolovsky.Game.Services.Album
                     return new Dictionary<string, Dictionary<int, CardRef>>();
 
                 _pages = LoadPages();
+                _held = CountHeld(_pages);
                 return _pages;
             }
+        }
+
+        // Built from the pages, so it can never be out of step with them on load; kept in step
+        // afterwards by Place and Take, the only two ways a card enters or leaves the album.
+        private Dictionary<CardRef, int> Held
+        {
+            get
+            {
+                _ = Pages;
+                return _held ??= new Dictionary<CardRef, int>();
+            }
+        }
+
+        private static Dictionary<CardRef, int> CountHeld(
+            Dictionary<string, Dictionary<int, CardRef>> pages)
+        {
+            var held = new Dictionary<CardRef, int>();
+
+            foreach (Dictionary<int, CardRef> slots in pages.Values)
+            {
+                foreach (CardRef card in slots.Values)
+                {
+                    if (!card.IsValid)
+                        continue;
+
+                    held.TryGetValue(card, out int count);
+                    held[card] = count + 1;
+                }
+            }
+
+            return held;
+        }
+
+        private void Hold(CardRef card, int delta)
+        {
+            if (!card.IsValid)
+                return;
+
+            Dictionary<CardRef, int> held = Held;
+            held.TryGetValue(card, out int count);
+            count += delta;
+
+            if (count > 0)
+                held[card] = count;
+            else
+                held.Remove(card);
         }
 
         public CardRef GetPlacement(string pageSetId, int slotIndex)
@@ -93,6 +148,7 @@ namespace Vesolovsky.Game.Services.Album
             }
 
             slots[slotIndex] = card;
+            Hold(card, 1);
             Flush(pageSetId);
         }
 
@@ -109,8 +165,14 @@ namespace Vesolovsky.Game.Services.Album
             if (slots.Count == 0)
                 Pages.Remove(pageSetId);
 
+            Hold(card, -1);
             Flush(pageSetId);
             return card;
+        }
+
+        public bool Contains(CardRef card)
+        {
+            return card.IsValid && Held.ContainsKey(card);
         }
 
         public int CountCorrect(string pageSetId)

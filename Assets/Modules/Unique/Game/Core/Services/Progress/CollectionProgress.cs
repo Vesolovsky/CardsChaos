@@ -70,6 +70,15 @@ namespace Vesolovsky.Game.Services.Progress
             }
         }
 
+        /// <summary>
+        /// Read straight off the tally the stats service keeps in the save rather than counted
+        /// here. The containers are scene objects and this tally has to answer the same outside the
+        /// room; the save is the one place both sides already meet. Injecting the stats service
+        /// instead would close a loop - it reaches the upgrade service, which reaches this.
+        /// </summary>
+        public int StoredDuplicateCount =>
+            _saveService.CurrentSave?.PlayerStats?.PeakDuplicatesStored ?? 0;
+
         public bool IsSetCompleted(string setId)
         {
             CardSetDefinition set = _catalog.FindSet(setId);

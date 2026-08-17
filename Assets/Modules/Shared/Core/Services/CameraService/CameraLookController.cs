@@ -26,7 +26,8 @@ namespace Vesolovsky.Core.Services
     /// The pointer is needed for picking cards, so it is only taken for the length of the drag
     /// and put back exactly where it was let go of.
     /// </summary>
-    public class CameraLookController : IInitializable, ITickable, IDisposable, ICameraHeading
+    public class CameraLookController : IInitializable, ITickable, IDisposable, ICameraHeading,
+        ICameraPoseOverride
     {
         private readonly ICameraService _cameraService;
         private readonly IWorldInteractionLock _worldLock;
@@ -126,6 +127,18 @@ namespace Vesolovsky.Core.Services
             Camera camera = _cameraService.MainCamera;
             if (camera != null)
                 Apply(camera);
+        }
+
+        /// <summary>
+        /// Takes the tilt as well as the heading, for a tool that has posed the camera itself and
+        /// needs this controller to agree with where the camera now is - see
+        /// <see cref="ICameraPoseOverride"/>. Gameplay never calls it: the authored tilt captured in
+        /// <see cref="Initialize"/> is the tilt for the whole game.
+        /// </summary>
+        public void SetPose(float yawDegrees, float pitchDegrees)
+        {
+            _pitch = pitchDegrees;
+            SetHeading(yawDegrees);
         }
 
         private void Apply(Camera camera)

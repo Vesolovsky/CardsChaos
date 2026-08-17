@@ -8,6 +8,12 @@ namespace Vesolovsky.Game.Upgrades
     {
         ExtraCardSlot,
         WiderVision,
+
+        /// <summary>
+        /// "Déjà vu": a card in hand whose twin is already filed in the album is drawn grey, the
+        /// same way a misplaced card reads in the album. Read live by the duplicate service.
+        /// </summary>
+        DuplicateSight,
     }
 
     /// <summary>
@@ -53,5 +59,11 @@ namespace Vesolovsky.Game.Upgrades
         /// are nearby. Read live by the HUD.
         /// </summary>
         LevitatePulse,
+
+        /// <summary>
+        /// "Muscle memory": a duplicate thrown with nothing aimed at flies itself into a duplicate
+        /// box. Read live by the duplicate service; aiming at a box still places by hand.
+        /// </summary>
+        AutoStoreThrownDuplicates,
     }
 }
