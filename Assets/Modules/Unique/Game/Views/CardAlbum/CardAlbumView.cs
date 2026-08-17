@@ -36,6 +36,10 @@ namespace Vesolovsky.Game.Views
 
         [SerializeField] private AlbumSetButton setButtonPrefab;
 
+        [Tooltip("The list the set buttons scroll inside. Leave empty to take the one the buttons " +
+                 "container already sits in.")]
+        [SerializeField] private ScrollRect setButtonsScroll;
+
         [Header("Pages")]
         [SerializeField] private AlbumPageStrip pages;
 
@@ -100,6 +104,11 @@ namespace Vesolovsky.Game.Views
         private InputAction _toggleAction;
         private InputAction _flipCardAction;
         private AlbumSetButton _openSet;
+
+        // The scroll view found above the buttons container when none was authored. NonSerialized
+        // because Unity keeps private serializable fields across an edit-to-play domain reload, and
+        // a cache filled in play mode has no business surviving into the next one.
+        [System.NonSerialized] private ScrollRect _resolvedSetButtonsScroll;
 
         // What the collection label currently reads, so the punch only fires when the number
         // actually moves - filing the wrong card raises the change event without changing the
@@ -418,6 +427,7 @@ namespace Vesolovsky.Game.Views
                 ViewModel.Open();
 
             OpenSet(button);
+            ScrollToOpenSet();
             pages.GoToPage(pageIndex, immediately: true);
         }
 
@@ -442,6 +452,72 @@ namespace Vesolovsky.Game.Views
             // just filed, so a change in the number is something the player earned.
             if (_openSet != null && _openSet.Set.SetId == setId)
                 SetCollectionProgress(_openSet.Set, punch: true);
+        }
+
+        /// <summary>
+        /// Brings the open set's button into view in the category list.
+        ///
+        /// The list is long enough to scroll and keeps wherever it was left, so a set reached with
+        /// the wheel, with Smart Album Open, or simply left open from the last time would otherwise
+        /// come back with the glow sitting somewhere off screen. Called when the album opens and
+        /// whenever a set is opened from outside the list.
+        /// </summary>
+        private void ScrollToOpenSet()
+        {
+            ScrollRect scroll = SetButtonsScroll;
+            if (scroll == null || _openSet == null || !_openSet.gameObject.activeInHierarchy)
+                return;
+
+            RectTransform content = scroll.content;
+            RectTransform viewport = scroll.viewport != null
+                ? scroll.viewport
+                : scroll.transform as RectTransform;
+
+            if (content == null || viewport == null)
+                return;
+
+            // The album is shown and hidden rather than rebuilt, so on the first open the list has
+            // never been laid out and every rect still reads as zero. Settle it before measuring.
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+
+            float scrollable = content.rect.height - viewport.rect.height;
+            if (scrollable <= 0f)
+                return;
+
+            // How far the button's middle sits below the top of the content, turned into the
+            // normalized position that puts it in the middle of the window. Clamped, so the sets at
+            // either end simply pin the list to that end instead of scrolling past it.
+            var button = (RectTransform)_openSet.transform;
+            Vector3 centre = button.TransformPoint(button.rect.center);
+            float belowTop = content.rect.yMax - content.InverseTransformPoint(centre).y;
+            float offset = belowTop - viewport.rect.height * 0.5f;
+
+            // Any glide left over from the player's own scrolling would drag the list straight back
+            // off the set we just brought up.
+            scroll.velocity = Vector2.zero;
+            scroll.verticalNormalizedPosition = 1f - Mathf.Clamp01(offset / scrollable);
+        }
+
+        /// <summary>
+        /// The set list's scroll view: the authored one, or the one the buttons container sits in.
+        /// Found once and kept, so nothing has to be wired for the list to follow the open set.
+        /// </summary>
+        private ScrollRect SetButtonsScroll
+        {
+            get
+            {
+                if (setButtonsScroll != null)
+                    return setButtonsScroll;
+
+                if (_resolvedSetButtonsScroll == null && setButtonsContainer != null)
+                {
+                    _resolvedSetButtonsScroll =
+                        setButtonsContainer.GetComponentInParent<ScrollRect>(includeInactive: true);
+                }
+
+                return _resolvedSetButtonsScroll;
+            }
         }
 
         /// <summary>
@@ -519,6 +595,9 @@ namespace Vesolovsky.Game.Views
                 // Holding the final card opens the album straight into its endgame state instead of
                 // the normal layout. Re-evaluated on every open, so a normal open stays normal.
                 ApplyEndgameMode();
+
+                // After the endgame swap, so the list is only measured while it is actually up.
+                ScrollToOpenSet();
 
                 Show(destroyCancellationToken).Forget();
             }

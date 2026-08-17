@@ -3,7 +3,9 @@ using CardsChaos.Cards;
 using UnityEngine;
 using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.Services;
+using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Upgrades;
+using Vesolovsky.Game.Views.GameplayHud;
 using Zenject;
 
 namespace Vesolovsky.Game.Services.Skills
@@ -13,9 +15,10 @@ namespace Vesolovsky.Game.Services.Skills
     /// spell before they fall - unless the player plucks them out of the air first.
     ///
     /// Finding the cards and deciding what still counts is the targeting service's job; this only
-    /// starts a <see cref="LevitatingCard"/> on each, which then runs its own float and fall. With
-    /// nothing in reach it declines, so - like the magnet with nothing to pull - the skill charges
-    /// no cooldown for a cast that raised nothing.
+    /// starts a <see cref="LevitatingCard"/> on each, which then runs its own float and fall. Cast
+    /// with nothing in reach it still counts: the spell goes off, raises nothing, says so, and the
+    /// cooldown runs anyway - the cast is spent. That is deliberate, and unlike the magnet, which
+    /// declines a pull that would move nothing.
     ///
     /// It is unlocked by the "Is this magic?..." task rather than bought, and has a single level;
     /// the skill service reads its unlock off that task (see the skill definition's UnlockedBy).
@@ -28,6 +31,7 @@ namespace Vesolovsky.Game.Services.Skills
         private readonly ILevitateTargeting _targeting;
         private readonly LevitateSettings _settings;
         private readonly IAudioService _audioService;
+        private readonly IHudHints _hudHints;
 
         [Inject]
         public LevitateSkill(
@@ -36,7 +40,8 @@ namespace Vesolovsky.Game.Services.Skills
             IWorldInteractionLock worldLock,
             ILevitateTargeting targeting,
             LevitateSettings settings,
-            IAudioService audioService)
+            IAudioService audioService,
+            [InjectOptional] IHudHints hudHints)
         {
             _hand = hand;
             _cameraService = cameraService;
@@ -44,6 +49,7 @@ namespace Vesolovsky.Game.Services.Skills
             _targeting = targeting;
             _settings = settings;
             _audioService = audioService;
+            _hudHints = hudHints;
         }
 
         public SkillId Id => SkillId.Levitate;
@@ -51,16 +57,23 @@ namespace Vesolovsky.Game.Services.Skills
         public bool CanActivate()
         {
             // Not while the album or a close-up holds the room, and only with a card to read a set
-            // from. Whether anything is actually near enough is left to Activate, so an empty cast
-            // simply raises nothing and costs no cooldown.
+            // from. Whether anything is actually near enough is not a condition: casting into an
+            // empty room is allowed, and costs the player the cast.
             return !_worldLock.IsLocked && _hand.SelectedCard != null;
         }
 
         public bool Activate(SkillDefinition definition, int level)
         {
             List<Card> targets = _targeting.FindTargets();
+
+            // A cast with nothing to raise is still a cast. Reporting success is what puts the
+            // skill on cooldown, so the player spends it rather than being quietly refused - and
+            // the hint says why nothing happened, so a spent cast never reads as a dead key.
             if (targets.Count == 0)
-                return false;
+            {
+                _hudHints?.Raise(HintId.LevitateNothingNearby);
+                return true;
+            }
 
             Camera camera = _cameraService.MainCamera;
 

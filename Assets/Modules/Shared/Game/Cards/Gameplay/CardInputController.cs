@@ -137,13 +137,17 @@ namespace CardsChaos.Cards
                     // selected in hand. Physics gives us its topmost collider, so LMB naturally
                     // peels the stack one card at a time instead of the container swallowing the
                     // click after the first pickup.
-                    bool pointsAtStoredCard = cursorCard != null &&
-                                              !cursorCard.IsHeld &&
-                                              cursorCard.transform.IsChildOf(container.transform);
-                    Aim(pointsAtStoredCard ? cursorCard : null);
+                    //
+                    // Any card the ray found counts, not only one filed into a slot: the open
+                    // interior has no collider of its own, so a card that was simply thrown into
+                    // the box lies loose in there under the same ray. Refusing it because it is not
+                    // parented to the container left such a card unreachable for as long as the
+                    // player was holding another one.
+                    bool pointsAtCard = cursorCard != null && !cursorCard.IsHeld;
+                    Aim(pointsAtCard ? cursorCard : null);
 
                     bool pickedFromStack = false;
-                    if (!throwPressed && interactPressed && pointsAtStoredCard)
+                    if (!throwPressed && interactPressed && pointsAtCard)
                     {
                         pickedFromStack = _hand.PickUp(cursorCard);
                         if (pickedFromStack)

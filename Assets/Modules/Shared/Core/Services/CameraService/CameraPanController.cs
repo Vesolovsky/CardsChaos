@@ -76,6 +76,21 @@ namespace Vesolovsky.Core.Services
         public bool SprintUnlocked { get; set; }
 
         /// <summary>
+        /// How fast the camera walks, in world units per second. Starts at the authored
+        /// <see cref="CameraPanSettings.Speed"/> and is raised by the game's Move Speed upgrade -
+        /// a plain number for the same reason <see cref="SprintUnlocked"/> is a plain flag. The
+        /// sprint multiplier still applies on top, so a faster walk means a faster sprint.
+        /// </summary>
+        public float Speed { get; set; }
+
+        /// <summary>
+        /// The walking speed as authored, before any upgrade. What an applier falls back to when
+        /// the upgrade is unbought, so the base lives on the settings and is not copied into the
+        /// upgrade's own levels.
+        /// </summary>
+        public float BaseSpeed => _settings.Speed;
+
+        /// <summary>
         /// Horizontal world-space distance the camera actually moved on the last <see cref="Tick"/> -
         /// what the sweep travelled, so a step stopped short by a wall reports the shorter distance,
         /// and a locked or idle frame reports zero. This is the mover's own account of the frame,
@@ -104,6 +119,8 @@ namespace Vesolovsky.Core.Services
             _settings = settings;
             _audioService = audioService;
             _sprint = input.Find(GameInputActions.Sprint);
+
+            Speed = settings.Speed;
         }
 
         public void Tick()
@@ -136,7 +153,7 @@ namespace Vesolovsky.Core.Services
             // Sprint scales the target speed while its action is held, so the ease still carries the
             // camera up to and down from the faster pace rather than snapping between the two.
             bool sprinting = SprintUnlocked && _sprint != null && _sprint.IsPressed();
-            float speed = sprinting ? _settings.Speed * _settings.SprintMultiplier : _settings.Speed;
+            float speed = sprinting ? Speed * _settings.SprintMultiplier : Speed;
 
             Vector3 target = ReadDirection(keyboard, pivot) * speed;
 

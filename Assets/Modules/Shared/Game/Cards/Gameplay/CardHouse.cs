@@ -18,7 +18,8 @@ namespace CardsChaos.Cards
     /// cards scattered, which no longer match their authored poses and so never come down again.
     ///
     /// The cards are authored by <see cref="CardEditor.CardHouseBuilder"/>; the collapse is fired
-    /// from <see cref="CardHand.PickUp"/> the instant a member is taken.
+    /// from <see cref="CardHand.PickUp"/> the instant a member is taken, and from
+    /// <see cref="OnStruck"/> when a card thrown across the room hits the house hard enough.
     /// </summary>
     [AddComponentMenu("CardsChaos/Card House")]
     public class CardHouse : MonoBehaviour
@@ -63,6 +64,18 @@ namespace CardsChaos.Cards
         // Minimum combine makes the card's low friction win over the table's, whatever that is.
         private const float CollapseFriction = 0.1f;
         private static PhysicMaterial _slick;
+
+        // How fast a card has to be travelling when it hits the house to bring it down. A thrown
+        // card leaves the hand at over a metre a second and picks up more on the way, while a card
+        // bedding in against the house as it settles, or one nudged along the table, stays well
+        // under - so a real throw topples the house and a card coming to rest beside it does not.
+        private const float ToppleImpactSpeed = 0.8f; // metres/second
+
+        // A shove given to the one card that was hit, along the throw and level with the floor. The
+        // rest of the house comes down under gravity alone, as it does on a pickup; this is what
+        // makes the difference read as knocked over rather than as the house choosing that moment
+        // to fall. Small, because the collapse is meant to be slow and watchable either way.
+        private const float ToppleKick = 0.35f; // metres/second
 
         [SerializeField] private List<Member> _members = new List<Member>();
 
@@ -124,6 +137,67 @@ namespace CardsChaos.Cards
             // longer in their authored arrangement, so this is just an ordinary floor pickup.
             if (IsWhole())
                 Collapse(taken);
+        }
+
+        /// <summary>
+        /// Called when a card in flight hits one of this house's members, with the blow as a
+        /// velocity - which way it came and how fast. A glancing touch leaves the house standing
+        /// and, unlike a pickup, does not spend it: a card that merely rolls up against the house
+        /// must not quietly disarm the collapse. A hard enough hit brings the whole thing down.
+        /// </summary>
+        public void OnStruck(Card struck, Vector3 blow)
+        {
+            if (_spent)
+                return;
+
+            if (blow.magnitude < ToppleImpactSpeed)
+                return;
+
+            _spent = true;
+
+            // Already broken, or loaded already collapsed - the cards no longer stand in their
+            // authored arrangement, so this was just one card knocking into another on the floor.
+            if (!IsWhole())
+                return;
+
+            Collapse(null);
+
+            // The struck card now has a body of its own (Collapse gave it one), so the blow can be
+            // passed on to it - the contact itself was against a static collider and pushed nothing.
+            if (struck != null && struck.TryGetComponent(out Rigidbody body) && !body.isKinematic)
+                body.velocity += blow.normalized * ToppleKick;
+        }
+
+        /// <summary>
+        /// Called once by the world restore, after every card is back where the save left it.
+        ///
+        /// A house saved intact loads intact and is left armed. One saved already down loads with
+        /// its members scattered, and this is where it is retired: they are cut free of the house
+        /// root and forget it, exactly as <see cref="Collapse"/> left them last session, so a
+        /// collapsed house comes back as a heap of ordinary cards rather than as a house that only
+        /// looks broken.
+        /// </summary>
+        public void SettleAfterRestore()
+        {
+            if (_spent || IsWhole())
+                return;
+
+            _spent = true;
+
+            foreach (Member member in _members)
+            {
+                Card card = member.Card;
+                if (card == null)
+                    continue;
+
+                card.House = null;
+
+                // Only what is still sitting under the house root is cut loose. A member the save
+                // put back into the player's hand, or filed into a duplicate box, has already been
+                // parented where it belongs, and pulling it out of there would undo the restore.
+                if (card.transform.IsChildOf(transform))
+                    card.transform.SetParent(null, worldPositionStays: true);
+            }
         }
 
         private bool IsWhole()

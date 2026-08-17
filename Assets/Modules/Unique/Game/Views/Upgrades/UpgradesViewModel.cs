@@ -24,6 +24,9 @@ namespace Vesolovsky.Game.Views
     /// </summary>
     public class UpgradesViewModel : ViewModel, IUpgradesViewModel
     {
+        // Rich-text colour the set names in a task line are written in - the album's warm gold.
+        private const string SetNameColor = "#C39258";
+
         private readonly IUpgradeService _upgrades;
         private readonly ICollectionProgress _progress;
         private readonly IWalletService _wallet;
@@ -183,13 +186,22 @@ namespace Vesolovsky.Game.Views
             _worldHandle = null;
         }
 
-        private static string Describe(CollectionObjective objective)
+        private string Describe(CollectionObjective objective)
         {
             switch (objective.Kind)
             {
                 case CollectionObjective.ObjectiveKind.CompleteSpecificSets:
-                    string names = JoinSetNames(objective.Sets);
-                    string unit = CountNonNull(objective.Sets) == 1 ? "set" : "sets";
+                    // Only what is still missing is named, so a task half done reads as the work
+                    // that is left rather than as a list the player has to check off themselves.
+                    List<CardSetDefinition> named = CollectSets(objective.Sets, onlyUnfinished: true);
+
+                    // Nothing left - the task is done. The line falls back to the whole list so it
+                    // still reads as a sentence while the row waits to be claimed.
+                    if (named.Count == 0)
+                        named = CollectSets(objective.Sets, onlyUnfinished: false);
+
+                    string names = JoinSetNames(named);
+                    string unit = named.Count == 1 ? "set" : "sets";
                     return $"Fully complete {names} {unit} to unlock this ability";
 
                 case CollectionObjective.ObjectiveKind.CompletePages:
@@ -217,6 +229,35 @@ namespace Vesolovsky.Game.Views
             return $"{remaining} {unit} remaining";
         }
 
+        /// <summary>
+        /// The sets an objective names, optionally thinned to the ones still unfinished. Nulls are
+        /// dropped either way, so the caller can count the result as the number it puts in the text.
+        /// </summary>
+        private List<CardSetDefinition> CollectSets(
+            IReadOnlyList<CardSetDefinition> sets, bool onlyUnfinished)
+        {
+            var result = new List<CardSetDefinition>();
+            if (sets == null)
+                return result;
+
+            foreach (CardSetDefinition set in sets)
+            {
+                if (set == null)
+                    continue;
+
+                if (onlyUnfinished && _progress.IsSetCompleted(set.SetId))
+                    continue;
+
+                result.Add(set);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// The set names run together, each picked out in the album's warm gold and bolded so the
+        /// names stand off the rest of the sentence rather than dissolving into it.
+        /// </summary>
         private static string JoinSetNames(IReadOnlyList<CardSetDefinition> sets)
         {
             if (sets == null)
@@ -226,25 +267,10 @@ namespace Vesolovsky.Game.Views
             foreach (CardSetDefinition set in sets)
             {
                 if (set != null)
-                    names.Add(set.SetName);
+                    names.Add($"<b><color={SetNameColor}>{set.SetName}</color></b>");
             }
 
             return string.Join(", ", names);
-        }
-
-        private static int CountNonNull(IReadOnlyList<CardSetDefinition> sets)
-        {
-            if (sets == null)
-                return 0;
-
-            int count = 0;
-            foreach (CardSetDefinition set in sets)
-            {
-                if (set != null)
-                    count++;
-            }
-
-            return count;
         }
     }
 }

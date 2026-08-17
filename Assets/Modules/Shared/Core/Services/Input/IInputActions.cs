@@ -46,6 +46,7 @@ namespace Vesolovsky.Core.Services.Input
         public const string HandSort = "HandSort";
         public const string SmartAlbumOpen = "SmartAlbumOpen";
         public const string Levitate = "Levitate";
+        public const string Zoom = "Zoom";
 
         private static readonly string[] RebindableActionNamesInternal =
         {
@@ -60,6 +61,7 @@ namespace Vesolovsky.Core.Services.Input
             HandSort,
             SmartAlbumOpen,
             Levitate,
+            Zoom,
         };
 
         public static IReadOnlyList<string> RebindableActionNames { get; } =

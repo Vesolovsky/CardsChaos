@@ -29,6 +29,10 @@ namespace Vesolovsky.Game.Services.Progress
         private readonly ISaveService<GameSave> _saveService;
         private readonly ISaveCoordinator _saveCoordinator;
 
+        // Handed out while the save is still loading, so nothing has to guard against a null tally.
+        // Never written to: OnPageChanged is the only writer and it stands down until the save is in.
+        private static readonly HashSet<string> Empty = new HashSet<string>();
+
         private HashSet<string> _completedPages;
 
         [Inject]
@@ -51,7 +55,24 @@ namespace Vesolovsky.Game.Services.Progress
 
         // Built on first use rather than in the constructor: the container assembles this well
         // before the async save load has run, exactly as LocalCardAlbum does with its pages.
-        private HashSet<string> Completed => _completedPages ??= LoadCompleted();
+        private HashSet<string> Completed
+        {
+            get
+            {
+                if (_completedPages != null)
+                    return _completedPages;
+
+                // If the async save load has not run yet, answer "nothing finished" but do NOT
+                // cache it: the upgrades screen builds its task rows at scene start and asks this
+                // straight away, and caching there would freeze the tally empty for the whole
+                // session - every completed set reading as untouched and every finished task as
+                // still to do. Rebuild on the next access, once CurrentSave is in.
+                if (_saveService.CurrentSave == null)
+                    return Empty;
+
+                return _completedPages = LoadCompleted();
+            }
+        }
 
         public int CompletedPageCount => Completed.Count;
 
@@ -102,6 +123,12 @@ namespace Vesolovsky.Game.Services.Progress
 
         private void OnPageChanged(string setId)
         {
+            // Nothing can be filed before the save is in, and without one there is nowhere to
+            // record a completed page - so a change this early is left alone rather than written
+            // into the shared empty tally the getter hands out until then.
+            if (_saveService.CurrentSave == null)
+                return;
+
             CardSetDefinition set = _catalog.FindSet(setId);
             if (set == null)
                 return;

@@ -102,6 +102,7 @@ namespace Vesolovsky.Game.Services.Upgrades
             // are ready for the startup push the bootstrap sends once the save is in.
             Container.BindInterfacesTo<CardSlotUpgradeApplier>().AsSingle().NonLazy();
             Container.BindInterfacesTo<SprintUpgradeApplier>().AsSingle().NonLazy();
+            Container.BindInterfacesTo<MoveSpeedUpgradeApplier>().AsSingle().NonLazy();
 
             // The one reward that acts rather than is read: it pays out skill points on claim, so it
             // must be listening for that claim from the start.

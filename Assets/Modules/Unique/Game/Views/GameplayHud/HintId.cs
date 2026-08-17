@@ -39,5 +39,12 @@ namespace Vesolovsky.Game.Views.GameplayHud
 
         /// <summary>This card exists only once, so it belongs in the album, not in the box.</summary>
         NotADuplicate,
+
+        /// <summary>
+        /// Levitate was cast with no set-mate of the selected card near enough to raise. New ids go
+        /// on the end: the values are what the HUD prefab stores against its authored hints, so
+        /// inserting one in the middle would slide every entry after it onto the wrong hint.
+        /// </summary>
+        LevitateNothingNearby,
     }
 }

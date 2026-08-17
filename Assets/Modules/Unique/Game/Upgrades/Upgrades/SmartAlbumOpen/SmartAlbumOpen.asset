@@ -19,19 +19,20 @@ MonoBehaviour:
   skillId: 1
   activationAction: {fileID: -646311109329717399, guid: 8cff13d2b1c787347bf206f8968e49ed,
     type: 3}
+  unlockedBy: {fileID: 0}
   levels:
   - cost: 1
     value: 0
     cooldown: 90
-  - cost: 2
-    value: 0
-    cooldown: 70
   - cost: 3
     value: 0
+    cooldown: 70
+  - cost: 5
+    value: 0
     cooldown: 50
-  - cost: 4
+  - cost: 7
     value: 0
     cooldown: 45
-  - cost: 5
+  - cost: 10
     value: 0
     cooldown: 30

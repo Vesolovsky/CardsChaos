@@ -34,6 +34,10 @@ namespace Vesolovsky.Core.Services
         private readonly CameraLookSettings _settings;
         private readonly IGameSettingsService _gameSettings;
 
+        // Optional: the camera rig is expected to work in a scene with no zoom bound at all, and
+        // without one every turn is simply at full sensitivity.
+        private readonly ICameraZoom _zoom;
+
         private float _yaw;
         private float _pitch;
         private bool _dragging;
@@ -44,11 +48,13 @@ namespace Vesolovsky.Core.Services
             ICameraService cameraService,
             IWorldInteractionLock worldLock,
             CameraLookSettings settings,
+            [InjectOptional] ICameraZoom zoom = null,
             [InjectOptional] IGameSettingsService gameSettings = null)
         {
             _cameraService = cameraService;
             _worldLock = worldLock;
             _settings = settings;
+            _zoom = zoom;
             _gameSettings = gameSettings;
 
             if (_gameSettings == null)
@@ -109,7 +115,11 @@ namespace Vesolovsky.Core.Services
             if (delta == 0f)
                 return;
 
-            _yaw += (_settings.Invert ? -delta : delta) * _settings.Sensitivity;
+            // Slowed in proportion to how far the view is zoomed in: a narrowed view covers less
+            // room per degree, so at full sensitivity the same flick of the hand would swing it
+            // right past whatever the player leaned in to look at.
+            float sensitivity = _settings.Sensitivity * (_zoom?.LookScale ?? 1f);
+            _yaw += (_settings.Invert ? -delta : delta) * sensitivity;
 
             Apply(camera);
         }

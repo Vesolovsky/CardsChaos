@@ -710,6 +710,10 @@ namespace CardsChaos.Cards
         /// </summary>
         private void OnCollisionEnter(Collision collision)
         {
+            // Before the sound guard below, which stands down after the first thwack of a flight -
+            // a card can well bounce once on the table and only then reach the house.
+            TryTopple(collision);
+
             if (_landSoundPlayed || _audioService == null || IsHeld ||
                 _body == null || _body.isKinematic)
                 return;
@@ -723,6 +727,32 @@ namespace CardsChaos.Cards
             // hit, off a pooled source parented to the audio root - never to this card - so it
             // survives the card being picked up or filed a moment later.
             _audioService.Play(AudioSFXKey.CardLand, collision.GetContact(0).point);
+        }
+
+        /// <summary>
+        /// Hands a hit on a standing house of cards over to that house, so a card thrown at one
+        /// brings it down the same way lifting a card out of it does. Only a card actually in
+        /// flight can do this - a held card is a kinematic trigger and a resting one has no body,
+        /// so neither reports collisions - and the house itself decides whether the blow was hard
+        /// enough to matter.
+        /// </summary>
+        private void TryTopple(Collision collision)
+        {
+            if (IsHeld || _body == null || _body.isKinematic)
+                return;
+
+            if (!collision.collider.TryGetComponent(out Card struck) || struck.House == null)
+                return;
+
+            // The direction of the blow taken from where the two cards are rather than from the
+            // contact normal, whose sign is not worth relying on, and flattened: a house is pushed
+            // over sideways, never driven into the table.
+            Vector3 direction = struck.transform.position - transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude < 0.0000001f)
+                return;
+
+            struck.House.OnStruck(struck, direction.normalized * collision.relativeVelocity.magnitude);
         }
 
         private void OnDestroy()

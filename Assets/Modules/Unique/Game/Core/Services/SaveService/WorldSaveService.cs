@@ -323,6 +323,8 @@ namespace Vesolovsky.Game.Services.Save
             // Whatever is left in byRef is a card the save never mentioned - new content added since
             // the save was written. Left where the scene authored it.
 
+            SettleHouses();
+
             ApplyPlayerPose(world);
         }
 
@@ -448,9 +450,34 @@ namespace Vesolovsky.Game.Services.Save
         private static void PlaceOnGround(Card card, Vector3 position, Quaternion rotation)
         {
             card.StopAnimation();
-            card.transform.SetParent(null, worldPositionStays: true);
+
+            // A card standing in a house of cards keeps its place under that house. The house reads
+            // "am I still whole" off each member's pose in its own local space, so cutting the card
+            // loose here - as every other ground card is - left every loaded house permanently
+            // uncollapsible: its members' local poses were suddenly world poses and could never
+            // match again. Restoring the world pose in place re-derives the same local pose the
+            // card was saved at, so a house left standing loads standing and still comes down.
+            // A house that was already down is cut loose afterwards, by SettleHouses.
+            if (card.House == null)
+                card.transform.SetParent(null, worldPositionStays: true);
+
             card.transform.SetPositionAndRotation(position, rotation);
             card.FreezeInPlace();
+        }
+
+        /// <summary>
+        /// Lets every house of cards look at the room the save just rebuilt and decide whether it is
+        /// still standing. Run once the last card is in place, because a house cannot tell until
+        /// all of its members are where the save wants them.
+        /// </summary>
+        private static void SettleHouses()
+        {
+            foreach (CardHouse house in
+                     UnityEngine.Object.FindObjectsByType<CardHouse>(FindObjectsSortMode.None))
+            {
+                if (house != null)
+                    house.SettleAfterRestore();
+            }
         }
 
         private void ApplyPlayerPose(WorldState world)

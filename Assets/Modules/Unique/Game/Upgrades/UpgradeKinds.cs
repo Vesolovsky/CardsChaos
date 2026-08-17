@@ -14,6 +14,13 @@ namespace Vesolovsky.Game.Upgrades
         /// same way a misplaced card reads in the album. Read live by the duplicate service.
         /// </summary>
         DuplicateSight,
+
+        /// <summary>
+        /// How fast the player walks the room. Each level is a whole walking speed in world units
+        /// per second, replacing the camera's authored one; level 0 leaves that authored speed
+        /// alone. New kinds go on the end - the values are what the upgrade assets store.
+        /// </summary>
+        MoveSpeed,
     }
 
     /// <summary>

@@ -3894,6 +3894,14 @@ MonoBehaviour:
     HoldDuration: 3
     OneTime: 0
     Disableable: 0
+  - Id: 11
+    Text: No cards from this set were nearby
+    ActionName: 
+    Icon: {fileID: 0}
+    StartDelay: 0
+    HoldDuration: 3
+    OneTime: 0
+    Disableable: 0
   fadeInDuration: 0.4
   fadeOutDuration: 0.5
   gapDuration: 0.3
