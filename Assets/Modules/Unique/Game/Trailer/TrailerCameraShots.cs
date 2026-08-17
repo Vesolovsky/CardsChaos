@@ -1,6 +1,8 @@
+#if UNITY_EDITOR || CARDSCHAOS_DEBUG_TOOLS
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.Services;
+using Vesolovsky.Core.Utils;
 using VInspector;
 using Zenject;
 
@@ -20,7 +22,7 @@ namespace Vesolovsky.Game.Trailer
     /// instead of being swung back to the scene's authored tilt by the first right-drag.
     /// </summary>
     [AddComponentMenu("CardsChaos/Trailer/Trailer Camera Shots")]
-    public class TrailerCameraShots : MonoBehaviour
+    public class TrailerCameraShots : MonoBehaviour, IDebugTool
     {
         // Alt+1 is the first shot and Alt+0 the tenth, the way a hotbar reads.
         private static readonly Key[] ShotKeys =
@@ -173,3 +175,4 @@ namespace Vesolovsky.Game.Trailer
         }
     }
 }
+#endif

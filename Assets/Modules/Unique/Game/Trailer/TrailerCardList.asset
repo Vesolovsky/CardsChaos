@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a7aae99f170763c4681a7ba22d8cd2f2, type: 3}
+  m_Name: TrailerCardList
+  m_EditorClassIdentifier: 
+  cards:
+  - {fileID: 6596457903472970562, guid: e96afabcd7754ab449ac2388ee952fb4, type: 3}
+  - {fileID: 1892316712667163614, guid: da6aebcca6ce7e741bb899394fb93ca3, type: 3}
+  - {fileID: 7662359049052179620, guid: 06e5c362810788440a9b78eb51f93748, type: 3}
+  - {fileID: 4958267321867013951, guid: 9ad8666d81f96cf44a9a1b89fcde0f3b, type: 3}
+  - {fileID: 8902752906356553577, guid: fa6d9a64f8ba4ea41aa1ae12d6146d1e, type: 3}
+  - {fileID: 449152114764431883, guid: d7438568d1e66b645b188a973c702063, type: 3}

@@ -1,8 +1,10 @@
+#if UNITY_EDITOR || CARDSCHAOS_DEBUG_TOOLS
 using System.Collections.Generic;
 using CardsChaos.Cards;
 using CardsChaos.Cards.Album;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Vesolovsky.Core.Utils;
 using VInspector;
 using Zenject;
 
@@ -26,7 +28,7 @@ namespace Vesolovsky.Game.Trailer
     /// and Alt+Insert appends whatever card is in hand to the list while you hunt for good ones.
     /// </summary>
     [AddComponentMenu("CardsChaos/Trailer/Trailer Card Reel")]
-    public class TrailerCardReel : MonoBehaviour
+    public class TrailerCardReel : MonoBehaviour, IDebugTool
     {
         [Tooltip("The run of cards to step through. Create one with " +
                  "Assets > Create > CardsChaos > Trailer > Card List.")]
@@ -314,3 +316,4 @@ namespace Vesolovsky.Game.Trailer
         }
     }
 }
+#endif

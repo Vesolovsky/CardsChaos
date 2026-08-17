@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || CARDSCHAOS_DEBUG_TOOLS
 using System.Collections.Generic;
 using CardsChaos.Cards;
 using UnityEngine;
@@ -45,3 +46,4 @@ namespace Vesolovsky.Game.Trailer
         }
     }
 }
+#endif

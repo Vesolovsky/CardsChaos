@@ -1,3 +1,4 @@
+#if UNITY_EDITOR || CARDSCHAOS_DEBUG_TOOLS
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -71,3 +72,4 @@ namespace Vesolovsky.Game.Trailer
         }
     }
 }
+#endif

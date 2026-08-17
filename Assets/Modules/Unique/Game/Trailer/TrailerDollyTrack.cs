@@ -1,5 +1,7 @@
+#if UNITY_EDITOR || CARDSCHAOS_DEBUG_TOOLS
 using System.Collections.Generic;
 using UnityEngine;
+using Vesolovsky.Core.Utils;
 
 namespace Vesolovsky.Game.Trailer
 {
@@ -17,7 +19,7 @@ namespace Vesolovsky.Game.Trailer
     /// <see cref="TrailerDolly"/> is what actually rides it.
     /// </summary>
     [AddComponentMenu("CardsChaos/Trailer/Trailer Dolly Track")]
-    public class TrailerDollyTrack : MonoBehaviour
+    public class TrailerDollyTrack : MonoBehaviour, IDebugTool
     {
         public enum LookMode
         {
@@ -321,3 +323,4 @@ namespace Vesolovsky.Game.Trailer
         }
     }
 }
+#endif

@@ -1,7 +1,9 @@
+#if UNITY_EDITOR || CARDSCHAOS_DEBUG_TOOLS
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.Services;
+using Vesolovsky.Core.Utils;
 using VInspector;
 using Zenject;
 
@@ -20,7 +22,7 @@ namespace Vesolovsky.Game.Trailer
     /// curve is what softens the start and the stop.
     /// </summary>
     [AddComponentMenu("CardsChaos/Trailer/Trailer Dolly")]
-    public class TrailerDolly : MonoBehaviour
+    public class TrailerDolly : MonoBehaviour, IDebugTool
     {
         [Tooltip("The rails to ride. Any object with a Trailer Dolly Track on it.")]
         [SerializeField] private TrailerDollyTrack track;
@@ -248,3 +250,4 @@ namespace Vesolovsky.Game.Trailer
         }
     }
 }
+#endif

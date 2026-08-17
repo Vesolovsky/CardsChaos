@@ -1,9 +1,11 @@
+#if UNITY_EDITOR || CARDSCHAOS_DEBUG_TOOLS
 using System.Collections.Generic;
 using CardsChaos.Cards;
 using CardsChaos.Cards.Album;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.Services.Wallet;
+using Vesolovsky.Core.Utils;
 using Vesolovsky.Game.Services.Skills;
 using Vesolovsky.Game.Services.Upgrades;
 using Vesolovsky.Game.Upgrades;
@@ -28,7 +30,7 @@ namespace Vesolovsky.Game
     /// filing it by hand - and raises the same album event, so the triggers fire exactly as in play.
     /// </summary>
     [AddComponentMenu("CardsChaos/Debug/Cheats")]
-    public class Cheats : MonoBehaviour
+    public class Cheats : MonoBehaviour, IDebugTool
     {
         private const int SkillPointsPerPress = 100;
 
@@ -403,3 +405,4 @@ namespace Vesolovsky.Game
         private bool Ready() => _album != null && _cardCatalog != null;
     }
 }
+#endif
