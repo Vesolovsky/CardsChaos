@@ -62,6 +62,14 @@ namespace Vesolovsky.Game.Services.Save
         public int PeakDuplicatesStored { get; set; }
 
         /// <summary>
+        /// The most originals ever correctly filed in the album at one moment - the album half of
+        /// <see cref="PeakCorrectlyPlaced"/> on its own, with boxed duplicates left out. Kept apart
+        /// because the album milestones are counted in filed cards only, and a player who had boxed
+        /// a few hundred duplicates would otherwise cross them without filing that many cards.
+        /// </summary>
+        public int PeakAlbumCorrect { get; set; }
+
+        /// <summary>
         /// Isolated copy for the off-thread save write, so serializing on a background thread never
         /// reads a field gameplay is mutating on the main thread. All fields are value types, so a
         /// flat field copy is a full deep copy.
@@ -81,6 +89,7 @@ namespace Vesolovsky.Game.Services.Save
                 CorrectlyPlacedCards = CorrectlyPlacedCards,
                 TotalCards = TotalCards,
                 PeakDuplicatesStored = PeakDuplicatesStored,
+                PeakAlbumCorrect = PeakAlbumCorrect,
             };
         }
     }

@@ -21,13 +21,25 @@ namespace Vesolovsky.Core.Services.Save
         public async UniTask Initialize()
         {
             _currentSave = await LoadData();
-            if (_currentSave == null || SaveRequireReset()) // so it's first player game
+
+            if (_currentSave == null) // no file on disk yet - the player's first game
             {
                 _currentSave = CreateInitialSave();
+                return;
             }
+
+            Migrate(_currentSave);
         }
 
-        protected abstract bool SaveRequireReset();
+        /// <summary>
+        /// Brings a save written by an older build up to what this one expects, in place.
+        ///
+        /// This is the seam that replaced "throw the save away whenever the build version moves".
+        /// That was only ever tolerable before release: a shipped game cannot discard a player's
+        /// progress to avoid dealing with an old file, and with cloud sync on it would discard the
+        /// cloud copy too. Every format change from here on is a step inside this method.
+        /// </summary>
+        protected abstract void Migrate(T save);
 
         protected abstract T CreateInitialSave();
 

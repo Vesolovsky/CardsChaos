@@ -20,7 +20,7 @@ namespace Vesolovsky.Game.Utils
         public const string SELECTED_LOCALE_PLAYER_PREF = "selected-locale";
         public const string MAIN_MENU_SCENE_NAME = "MainMenu";
 
-        public static AppId_t STEAM_APP_ID => (AppId_t)0;
+        public static AppId_t STEAM_APP_ID => (AppId_t)5063140;
 
         public static ulong DISCORD_APP_ID => 0;
         public static string STEAM_URL => $"https://store.steampowered.com/app/{STEAM_APP_ID}/";

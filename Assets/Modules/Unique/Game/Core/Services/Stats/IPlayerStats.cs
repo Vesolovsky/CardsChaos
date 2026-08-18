@@ -46,6 +46,15 @@ namespace Vesolovsky.Game.Services.Stats
         /// <summary>The most cards ever correctly filed at one moment - the best progress reached.</summary>
         int PeakCorrectlyPlaced { get; }
 
+        /// <summary>
+        /// The album half of <see cref="PeakCorrectlyPlaced"/> on its own: the most originals ever
+        /// correctly filed in the album at one moment, boxed duplicates left out.
+        /// </summary>
+        int PeakAlbumCorrect { get; }
+
+        /// <summary>The most duplicates ever put away in the duplicate box at one moment.</summary>
+        int PeakDuplicatesStored { get; }
+
         // --- Collection snapshot, saved ---
 
         /// <summary>Every original and its one allowed duplicate - the collection denominator.</summary>

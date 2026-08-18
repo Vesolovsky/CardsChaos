@@ -172,11 +172,34 @@ namespace Vesolovsky.Game.Services.Save
             };
         }
 
-        protected override bool SaveRequireReset()
+        /// <summary>
+        /// Carries a save written by an older build forward.
+        ///
+        /// There is deliberately no back-filling of missing collections here. Every field added
+        /// since the format began is read as "absent" by whichever service owns it, and each of
+        /// those has its own considered answer for what an old save should mean:
+        /// <see cref="Vesolovsky.Game.Services.Progress.CollectionProgress"/> seeds its page tally
+        /// from what is already correctly filed, silently, so pages finished before there was a
+        /// reward to earn do not suddenly pay one out; the stats block and the letter lists simply
+        /// start empty. Filling those in from here would quietly override all of it.
+        ///
+        /// So all this does today is record which build last wrote the file. A future format change
+        /// that genuinely needs work adds a step above the stamp, keyed off the version it reads.
+        /// </summary>
+        protected override void Migrate(GameSave save)
         {
-            bool isSaveOutdated = CurrentSave.BuildVersion != BuildVersion.CURRENT_VERSION;
+            if (save.BuildVersion == BuildVersion.CURRENT_VERSION)
+                return;
 
-            return isSaveOutdated;
+            // Future migrations go here, branching on the version the file is coming from, before
+            // the stamp below moves it forward.
+
+            string from = string.IsNullOrEmpty(save.BuildVersion) ? "(unknown)" : save.BuildVersion;
+            Debug.Log(
+                $"[{nameof(GameSaveService)}] Save written by build '{from}' carried forward to " +
+                $"'{BuildVersion.CURRENT_VERSION}'.");
+
+            save.BuildVersion = BuildVersion.CURRENT_VERSION;
         }
 
         /// <summary>

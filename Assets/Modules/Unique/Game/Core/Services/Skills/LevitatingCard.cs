@@ -49,7 +49,7 @@ namespace Vesolovsky.Game.Services.Skills
             // still levitates; it just takes the house down with it.
             if (_card.House != null)
             {
-                _card.House.OnMemberPickedUp(_card);
+                _card.House.OnMemberPickedUp(_card, HouseCollapseCause.Levitate);
                 _card.House = null;
             }
 

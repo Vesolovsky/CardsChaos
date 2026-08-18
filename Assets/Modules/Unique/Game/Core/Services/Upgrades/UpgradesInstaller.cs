@@ -1,4 +1,5 @@
 using UnityEngine;
+using Vesolovsky.Game.Services.Achievements;
 using Vesolovsky.Game.Services.Duplicates;
 using Vesolovsky.Game.Services.Hud;
 using Vesolovsky.Game.Services.Pause;
@@ -109,6 +110,13 @@ namespace Vesolovsky.Game.Services.Upgrades
             Container.BindInterfacesTo<SkillPointGrantApplier>().AsSingle().NonLazy();
 
             Container.BindInterfacesTo<UpgradeEffectsBootstrap>().AsSingle().NonLazy();
+
+            // Awards the Steam achievements. It belongs here rather than in an installer of its own
+            // because every condition it watches is bound in this file or beside it - the progress
+            // tally, the stats, the upgrade service - and it needs no authored settings, so a
+            // separate component on the scene context would be one more thing to wire for nothing.
+            // NonLazy: it has to be listening from the first frame, and nothing resolves it.
+            Container.BindInterfacesTo<AchievementTracker>().AsSingle().NonLazy();
         }
     }
 }

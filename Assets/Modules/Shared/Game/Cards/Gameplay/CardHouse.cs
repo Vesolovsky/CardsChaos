@@ -1,8 +1,26 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace CardsChaos.Cards
 {
+    /// <summary>
+    /// What brought a house of cards down. The house itself does not care - the collapse is the same
+    /// physics either way - but it is the only place that knows, so it reports it and anything that
+    /// wants to tell a pickup from a spell from a thrown card reads it off the collapse.
+    /// </summary>
+    public enum HouseCollapseCause
+    {
+        /// <summary>A member was lifted out of the house, by hand or into a container.</summary>
+        PickedUp,
+
+        /// <summary>A member was raised out of the house by the Levitate skill.</summary>
+        Levitate,
+
+        /// <summary>A card thrown across the room hit the house hard enough to topple it.</summary>
+        StruckByCard,
+    }
+
     /// <summary>
     /// A built house of cards - a fixed set of cards standing in one authored arrangement.
     ///
@@ -77,6 +95,17 @@ namespace CardsChaos.Cards
         // to fall. Small, because the collapse is meant to be slow and watchable either way.
         private const float ToppleKick = 0.35f; // metres/second
 
+        /// <summary>
+        /// Raised the moment a standing house actually comes down, with the house and what brought
+        /// it down. Fires once per house, ever - a spent house never collapses again.
+        ///
+        /// Static because the listeners are services with no reference to any particular house: the
+        /// houses are authored into the scene and there is nothing that owns the set of them. The
+        /// same shape as <see cref="CardStackContainer.ContentsChanged"/>, and with the same duty on
+        /// a listener to unsubscribe when it is disposed.
+        /// </summary>
+        public static event Action<CardHouse, HouseCollapseCause> Collapsed;
+
         [SerializeField] private List<Member> _members = new List<Member>();
 
         // Runtime latch. Deliberately not serialized: on a fresh load it starts false, and the pose
@@ -125,8 +154,12 @@ namespace CardsChaos.Cards
         /// Called the instant a member is picked up, before it is reparented into the hand. If the
         /// house is still whole the other members are released into flight; either way the house is
         /// spent afterwards and never fires again.
+        ///
+        /// <paramref name="cause"/> is how the card left the house - a plain lift by default, or
+        /// <see cref="HouseCollapseCause.Levitate"/> when a spell raised it. It changes nothing about
+        /// the collapse; it is only carried through to <see cref="Collapsed"/>.
         /// </summary>
-        public void OnMemberPickedUp(Card taken)
+        public void OnMemberPickedUp(Card taken, HouseCollapseCause cause = HouseCollapseCause.PickedUp)
         {
             if (_spent)
                 return;
@@ -136,7 +169,7 @@ namespace CardsChaos.Cards
             // Already broken earlier this session, or loaded already collapsed - the cards are no
             // longer in their authored arrangement, so this is just an ordinary floor pickup.
             if (IsWhole())
-                Collapse(taken);
+                Collapse(taken, cause);
         }
 
         /// <summary>
@@ -160,7 +193,7 @@ namespace CardsChaos.Cards
             if (!IsWhole())
                 return;
 
-            Collapse(null);
+            Collapse(null, HouseCollapseCause.StruckByCard);
 
             // The struck card now has a body of its own (Collapse gave it one), so the blow can be
             // passed on to it - the contact itself was against a static collider and pushed nothing.
@@ -220,7 +253,7 @@ namespace CardsChaos.Cards
             return _members.Count > 0;
         }
 
-        private void Collapse(Card taken)
+        private void Collapse(Card taken, HouseCollapseCause cause)
         {
             foreach (Member member in _members)
             {
@@ -248,12 +281,16 @@ namespace CardsChaos.Cards
                 body.maxDepenetrationVelocity = DepenetrationSpeed;
                 body.drag = FallDrag;
                 body.angularDrag = TumbleDrag;
-                body.angularVelocity += Random.insideUnitSphere * ToppleSpin;
+                body.angularVelocity += UnityEngine.Random.insideUnitSphere * ToppleSpin;
                 body.WakeUp();
             }
 
             if (taken != null)
                 taken.House = null;
+
+            // Announced after every member is in flight, so a listener that looks at the room sees
+            // the collapse already under way rather than a house still standing.
+            Collapsed?.Invoke(this, cause);
         }
 
         /// <summary>

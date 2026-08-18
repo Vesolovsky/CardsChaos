@@ -1,7 +1,7 @@
 using Steamworks;
 using UnityEngine;
+using Vesolovsky.Core.Services.Steam;
 using Vesolovsky.Core.UISystem.UIComponents;
-using Vesolovsky.Game;
 
 namespace Vesolovsky.Core
 {
@@ -24,7 +24,10 @@ namespace Vesolovsky.Core
         }
         private void OpenURL()
         {
-            if (SteamworksInstaller.IsSteamInitialized)
+            // The static read rather than an injected ISteamService: this component is dropped into
+            // UI prefabs that are not always built through a Zenject factory, so there is no context
+            // guaranteed to inject it - and whether Steam is running is process state anyway.
+            if (SteamService.IsRunning)
             {
                 SteamFriends.ActivateGameOverlayToWebPage(URL);
             }

@@ -285,18 +285,28 @@ namespace Vesolovsky.Game.Services.Stats
                     duplicates++;
             }
 
+            // Kept before the duplicates are folded in: the album milestones are counted in filed
+            // cards alone, so they need the album half on its own as well as the combined figure.
+            int albumCorrect = correct;
+
             correct += duplicates;
 
             bool peakRose = correct > stats.PeakCorrectlyPlaced;
             bool duplicatePeakRose = duplicates > stats.PeakDuplicatesStored;
+            bool albumPeakRose = albumCorrect > stats.PeakAlbumCorrect;
             bool snapshotMoved = correct != stats.CorrectlyPlacedCards || total != stats.TotalCards;
-            if (!peakRose && !duplicatePeakRose && !snapshotMoved)
+            if (!peakRose && !duplicatePeakRose && !albumPeakRose && !snapshotMoved)
                 return;
 
             stats.CorrectlyPlacedCards = correct;
             stats.TotalCards = total;
             if (peakRose)
                 stats.PeakCorrectlyPlaced = correct;
+
+            // The same one-way rule as the other two peaks: taking a card back out of the album
+            // does not undo the milestone it crossed on the way in.
+            if (albumPeakRose)
+                stats.PeakAlbumCorrect = albumCorrect;
 
             // The duplicate task is measured against the high-water mark, so emptying a box later
             // cannot take a claimed reward - or a nearly finished task - back off the player.
@@ -305,7 +315,8 @@ namespace Vesolovsky.Game.Services.Stats
 
             _saveCoordinator.MarkDirty();
             Log($"Collection {correct}/{total} (remaining {Mathf.Max(0, total - correct)}, " +
-                $"peak {stats.PeakCorrectlyPlaced}, boxed duplicates {duplicates}, " +
+                $"peak {stats.PeakCorrectlyPlaced}, album {albumCorrect}, " +
+                $"peak {stats.PeakAlbumCorrect}, boxed duplicates {duplicates}, " +
                 $"peak {stats.PeakDuplicatesStored})");
             Changed?.Invoke();
         }
@@ -342,6 +353,8 @@ namespace Vesolovsky.Game.Services.Stats
         public double DistanceTraveled => Stats?.DistanceTraveled ?? 0d;
         public double DistanceSprinted => Stats?.DistanceSprinted ?? 0d;
         public int PeakCorrectlyPlaced => Stats?.PeakCorrectlyPlaced ?? 0;
+        public int PeakAlbumCorrect => Stats?.PeakAlbumCorrect ?? 0;
+        public int PeakDuplicatesStored => Stats?.PeakDuplicatesStored ?? 0;
 
         // --- IPlayerStats: collection snapshot reads (straight from the save) ---
 
