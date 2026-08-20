@@ -39,6 +39,7 @@ namespace Vesolovsky.Game.Services.Achievements
         private readonly IUpgradeService _upgrades;
         private readonly UpgradeCatalog _upgradeCatalog;
         private readonly ILetterCollection _letters;
+        private readonly IEndgameRecord _endgame;
 
         private readonly CancellationTokenSource _loadCts = new CancellationTokenSource();
 
@@ -53,7 +54,8 @@ namespace Vesolovsky.Game.Services.Achievements
             IPlayerStats stats,
             IUpgradeService upgrades,
             UpgradeCatalog upgradeCatalog,
-            [InjectOptional] ILetterCollection letters)
+            [InjectOptional] ILetterCollection letters,
+            [InjectOptional] IEndgameRecord endgame)
         {
             _achievements = achievements;
             _saveService = saveService;
@@ -63,6 +65,7 @@ namespace Vesolovsky.Game.Services.Achievements
             _upgrades = upgrades;
             _upgradeCatalog = upgradeCatalog;
             _letters = letters;
+            _endgame = endgame;
         }
 
         public void Initialize()
@@ -89,6 +92,7 @@ namespace Vesolovsky.Game.Services.Achievements
             _stats.Changed -= OnStatsChanged;
             _upgrades.Changed -= OnUpgradesChanged;
             if (_letters != null) _letters.Collected -= OnLetterCollected;
+            if (_endgame != null) _endgame.Recorded -= OnEndgameRecorded;
         }
 
         private async UniTaskVoid SubscribeWhenLoaded(CancellationToken token)
@@ -108,6 +112,7 @@ namespace Vesolovsky.Game.Services.Achievements
             _stats.Changed += OnStatsChanged;
             _upgrades.Changed += OnUpgradesChanged;
             if (_letters != null) _letters.Collected += OnLetterCollected;
+            if (_endgame != null) _endgame.Recorded += OnEndgameRecorded;
             _subscribed = true;
 
             // Catch up on everything this save already satisfies. Anything Steam has recorded is
@@ -117,6 +122,7 @@ namespace Vesolovsky.Game.Services.Achievements
             EvaluateCounts();
             EvaluateLetters();
             EvaluateUpgrades();
+            EvaluateEndgame(_endgame?.Summary);
         }
 
         // --- Live sources ---
@@ -128,6 +134,8 @@ namespace Vesolovsky.Game.Services.Achievements
         private void OnUpgradesChanged(UpgradeDefinition _) => EvaluateUpgrades();
 
         private void OnLetterCollected(LetterId _) => EvaluateLetters();
+
+        private void OnEndgameRecorded(EndgameSummary summary) => EvaluateEndgame(summary);
 
         private void OnHouseCollapsed(CardHouse house, HouseCollapseCause cause)
         {
@@ -267,6 +275,24 @@ namespace Vesolovsky.Game.Services.Achievements
             }
 
             return anyBuyable;
+        }
+
+        /// <summary>
+        /// The speed run. Read off the frozen ending rather than the live clock, because the
+        /// playtime counter keeps running after the last card goes in - the player is free to walk
+        /// back into the room, and the credits themselves take a while. Only the tally as it stood
+        /// at the moment the game was finished can answer how long it took to finish.
+        ///
+        /// Called both when an ending is recorded and once on load, so a game finished in time
+        /// while Steam was closed - or finished before this achievement existed - is still awarded.
+        /// </summary>
+        private void EvaluateEndgame(EndgameSummary summary)
+        {
+            if (summary?.Stats == null)
+                return;
+
+            if (summary.Stats.PlaytimeSeconds < GameAchievements.SwiftCollectorMaxSeconds)
+                _achievements.Unlock(AchievementId.SwiftCollector);
         }
 
         // --- Awarding ---

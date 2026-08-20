@@ -51,5 +51,8 @@ namespace Vesolovsky.Game.Services.Achievements
 
         /// <summary>Every buyable skill at its top level.</summary>
         AllSkillsMaxed,
+
+        /// <summary>The whole collection finished inside the time limit.</summary>
+        SwiftCollector,
     }
 }

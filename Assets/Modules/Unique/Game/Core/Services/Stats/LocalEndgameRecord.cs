@@ -18,6 +18,15 @@ namespace Vesolovsky.Game.Services.Stats
     /// </summary>
     public interface IEndgameRecord
     {
+        /// <summary>
+        /// Raised once, with the ending that was just written down, at the moment the game is
+        /// finished. Never raised again - a second ending is refused, so neither is a second
+        /// announcement - and never raised for an ending loaded back from a past session, which is
+        /// news to nobody. Something that has to react to a save that was already finished should
+        /// read <see cref="Summary"/> on load instead.
+        /// </summary>
+        event Action<EndgameSummary> Recorded;
+
         /// <summary>The frozen ending, or null while the game has not been finished.</summary>
         EndgameSummary Summary { get; }
 
@@ -38,6 +47,8 @@ namespace Vesolovsky.Game.Services.Stats
     /// </summary>
     public class LocalEndgameRecord : IEndgameRecord
     {
+        public event Action<EndgameSummary> Recorded;
+
         private readonly ISaveService<GameSave> _saveService;
         private readonly ISaveCoordinator _saveCoordinator;
 
@@ -75,6 +86,10 @@ namespace Vesolovsky.Game.Services.Stats
                       $"{save.Endgame.CompletedAt:dd:MM:yyyy} with " +
                       $"{save.Endgame.Stats.CorrectlyPlacedCards}/{save.Endgame.Stats.TotalCards} " +
                       "cards placed.");
+
+            // Announced last, so a listener sees the ending already written into the save and
+            // already marked for the next write - not one half-way through being recorded.
+            Recorded?.Invoke(save.Endgame);
         }
     }
 }

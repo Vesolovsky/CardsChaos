@@ -31,6 +31,16 @@ namespace Vesolovsky.Game.Services.Achievements
         /// <summary>The endgame set, whose single card finishes the collection.</summary>
         public const string EndgameSetId = "TheCollector";
 
+        /// <summary>
+        /// How long the whole collection may take and still count as swift, in seconds.
+        ///
+        /// Measured against the save's playtime, which is time spent in the room with the clock
+        /// running - a paused game and time sitting in the menus do not count towards it. So this
+        /// is four hours of actually playing, which is a little more generous than four hours of
+        /// having the game open.
+        /// </summary>
+        public const double SwiftCollectorMaxSeconds = 4 * 60 * 60;
+
         // --- Steam API names ---
 
         // These are the strings on the Steamworks partner site. Change one here and it must be
@@ -53,6 +63,7 @@ namespace Vesolovsky.Game.Services.Achievements
                 { AchievementId.AllDuplicates, "DUPLICATES_ALL" },
                 { AchievementId.AllTasks, "TASKS_ALL" },
                 { AchievementId.AllSkillsMaxed, "SKILLS_MAXED" },
+                { AchievementId.SwiftCollector, "SWIFT_COLLECTOR" },
             };
 
         // --- Set groupings ---
