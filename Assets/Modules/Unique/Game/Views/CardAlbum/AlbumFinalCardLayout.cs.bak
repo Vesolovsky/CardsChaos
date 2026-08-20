@@ -264,7 +264,7 @@ namespace Vesolovsky.Game.Views.Album
                 (cardsPickedUpText, $"Cards picked up: {s?.CardsPickedUp ?? 0L}"),
                 (thrownCardsText, $"Cards thrown: {s?.CardsThrown ?? 0L}"),
                 (skillsUsedText, $"Skills used: {s?.SkillsUsed ?? 0L}"),
-                (timePlayedText, $"Playtime: {StatsFormat.Playtime(s?.PlaytimeSeconds ?? 0d)}"),
+                (timePlayedText, $"Playtime: {FormatTime(s?.PlaytimeSeconds ?? 0d)}"),
                 (sessionsPlayedText, $"Sessions played: {s?.SessionsPlayed ?? 0L}"),
                 (distanceTraveledText, $"Distance traveled: {FormatDistance(s?.DistanceTraveled ?? 0d)}"),
                 (peakCorrectlyPlacedText, $"Correctly placed streak: {s?.PeakCorrectlyPlaced ?? 0}"),

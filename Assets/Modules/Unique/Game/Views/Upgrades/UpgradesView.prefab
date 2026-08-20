@@ -920,7 +920,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 400, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8186205416318913638
 CanvasRenderer:
@@ -1108,7 +1108,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.0009765625, y: 0.000030517578}
+  m_AnchoredPosition: {x: -0.0009765625, y: 0}
   m_SizeDelta: {x: -55, y: -30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &565566859240785924
@@ -1154,7 +1154,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6090816180938438008}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -1581,6 +1581,7 @@ GameObject:
   - component: {fileID: 5089681329326646006}
   - component: {fileID: 1428835131098768324}
   - component: {fileID: 7123684923376616300}
+  - component: {fileID: 1880870668334177830}
   m_Layer: 5
   m_Name: UpgradesPanel
   m_TagString: Untagged
@@ -1656,6 +1657,26 @@ MonoBehaviour:
   step: 200
   duration: 0.25
   ease: 6
+--- !u!114 &1880870668334177830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7777664784035351454}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c948e6711dd8d54d9093e30c2e8b0b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  scrollRect: {fileID: 1428835131098768324}
+  speed: 120
+  smoothing: 0.6
+  startDelay: 0.5
+  startFromTop: 1
+  toggleKey:
+    modifier: 2
+    key: 33
 --- !u!1 &7910354693385781438
 GameObject:
   m_ObjectHideFlags: 0
@@ -1844,7 +1865,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -39.200012, y: 0}
+  m_AnchoredPosition: {x: -39.19995, y: 0}
   m_SizeDelta: {x: 3, y: -120}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &4569494746622303270
@@ -2335,6 +2356,7 @@ GameObject:
   - component: {fileID: 159474438419655113}
   - component: {fileID: 6422979206198179870}
   - component: {fileID: 8584088223504477582}
+  - component: {fileID: 156697455611364753}
   m_Layer: 5
   m_Name: GetSkillPointLabel
   m_TagString: Untagged
@@ -2471,5 +2493,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe7ff9aced6ffe94c9b46d929f807b23, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  charactersPerSecond: 30
-  maxDuration: 1.5
+  charactersPerSecond: 5
+  maxDuration: 3
+--- !u!114 &156697455611364753
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9150780647214940877}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9bb28b6ae645a744b5b526e0d452e49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lines:
+  - Earn 1 skill point for each completed page
+  - Complete a whole set to get 2 skill points
+  holdDuration: 4
+  gapDuration: 0

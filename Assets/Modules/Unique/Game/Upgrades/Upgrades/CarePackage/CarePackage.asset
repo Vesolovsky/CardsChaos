@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: CarePackage
   displayName: Care Package
-  description: Grants 3 skill points
+  description: Grants 5 skill points
   icon: {fileID: 21300000, guid: 2496fb064eb03994a8b3ba4f240bff9a, type: 3}
   kind: 3
   objective:

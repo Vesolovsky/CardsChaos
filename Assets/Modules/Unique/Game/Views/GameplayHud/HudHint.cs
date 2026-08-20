@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using PrimeTween;
+using RoboRyanTron.SearchableEnum;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -61,6 +62,11 @@ namespace Vesolovsky.Game.Views.GameplayHud
                      "nudges and skill-ready calls. Off for a hint that must always show whatever the " +
                      "setting says, like a letter arriving.")]
             public bool Disableable = true;
+
+            [Tooltip("On for a hint that matters more than the rest: it breathes gently the whole " +
+                     "time it is up, which catches the eye of a player looking somewhere else. " +
+                     "Use it sparingly - if every hint pulses, none of them stands out.")]
+            public bool Important;
         }
 
         [Header("Display")]
@@ -83,6 +89,21 @@ namespace Vesolovsky.Game.Views.GameplayHud
         [Tooltip("Quiet gap between one hint fading out and the next fading in.")]
         [SerializeField] private float gapDuration = 0.3f;
 
+        [Header("Important hints")]
+        [Tooltip("What an important hint pulses. Left empty it pulses the whole hint - whatever " +
+                 "object the CanvasGroup above is on.")]
+        [SerializeField] private RectTransform pulseTarget;
+
+        [Tooltip("How far an important hint swells at the top of its breath. Small: this is meant " +
+                 "to be caught at the edge of vision, not to wave at the player.")]
+        [SerializeField, Min(1f)] private float pulseScale = 1.05f;
+
+        [Tooltip("Seconds for one half of the pulse - out, then back. Slow enough to read as " +
+                 "breathing rather than as a flicker.")]
+        [SerializeField, Min(0f)] private float pulseDuration = 0.6f;
+
+        [SerializeField, SearchableEnum] private Ease pulseEase = Ease.InOutSine;
+
         private readonly Queue<HintDefinition> _queue = new Queue<HintDefinition>();
 
         // One-time hints already shown this scene, so they are never shown again.
@@ -95,6 +116,13 @@ namespace Vesolovsky.Game.Views.GameplayHud
         private Func<string, string> _keyDisplayResolver;
         private bool _running;
         private bool _enabled = true;
+
+        // NonSerialized because Unity keeps private fields across an edit-to-play domain reload,
+        // and a live tween handle and a scale captured in a previous play session have no business
+        // surviving into the next one.
+        [NonSerialized] private Tween _pulse;
+        [NonSerialized] private Vector3 _pulseRestScale = Vector3.one;
+        [NonSerialized] private bool _pulseRestCaptured;
 
         /// <summary>
         /// Wires the way to turn an action name into its current key label, so a hint that names a
@@ -218,10 +246,76 @@ namespace Vesolovsky.Game.Views.GameplayHud
 
             await Tween.Alpha(group, 1f, fadeInDuration).WithCancellation(ct);
 
-            if (definition.HoldDuration > 0f)
-                await UniTask.Delay(TimeSpan.FromSeconds(definition.HoldDuration), cancellationToken: ct);
+            try
+            {
+                if (definition.Important)
+                    StartPulse();
 
-            await Tween.Alpha(group, 0f, fadeOutDuration).WithCancellation(ct);
+                if (definition.HoldDuration > 0f)
+                    await UniTask.Delay(TimeSpan.FromSeconds(definition.HoldDuration), cancellationToken: ct);
+
+                // The pulse is deliberately still running through the fade: stopping it first
+                // would snap the hint back to size in full view, and the snap is the one part of
+                // a breath nobody should see. Behind a finished fade it costs nothing.
+                await Tween.Alpha(group, 0f, fadeOutDuration).WithCancellation(ct);
+            }
+            finally
+            {
+                StopPulse();
+            }
+        }
+
+        /// <summary>
+        /// Sets an important hint breathing. Infinite rather than a fixed number of beats: the
+        /// hint holds for as long as it was authored to, and the pulse belongs to that whole time
+        /// rather than to a count of its own.
+        /// </summary>
+        private void StartPulse()
+        {
+            Transform target = PulseTarget;
+            if (target == null || pulseScale <= 1f || pulseDuration <= 0f)
+                return;
+
+            // Captured while the hint is at rest, then restored before any re-trigger, so a pulse
+            // interrupted mid-breath never leaves the hint stuck a little large.
+            StopPulse();
+
+            if (!_pulseRestCaptured)
+            {
+                _pulseRestScale = target.localScale;
+                _pulseRestCaptured = true;
+            }
+
+            _pulse = Tween.Scale(target, _pulseRestScale * pulseScale, pulseDuration, pulseEase,
+                cycles: -1, cycleMode: CycleMode.Yoyo);
+        }
+
+        private void StopPulse()
+        {
+            if (_pulse.isAlive)
+                _pulse.Stop();
+
+            if (!_pulseRestCaptured)
+                return;
+
+            Transform target = PulseTarget;
+            if (target != null)
+                target.localScale = _pulseRestScale;
+        }
+
+        /// <summary>
+        /// What breathes. The authored target when there is one, otherwise the object the hint is
+        /// faded by - which is the hint as a whole, icon and words together.
+        /// </summary>
+        private Transform PulseTarget
+        {
+            get
+            {
+                if (pulseTarget != null)
+                    return pulseTarget;
+
+                return group != null ? group.transform : transform;
+            }
         }
 
         private void Apply(HintDefinition definition)

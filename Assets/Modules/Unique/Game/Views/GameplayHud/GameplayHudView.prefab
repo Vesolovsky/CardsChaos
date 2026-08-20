@@ -3787,7 +3787,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: -100}
   m_SizeDelta: {x: 0, y: 354.0418}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &3458986301343716804
@@ -3814,6 +3814,7 @@ MonoBehaviour:
     HoldDuration: 3
     OneTime: 1
     Disableable: 1
+    Important: 0
   - Id: 0
     Text: <b>[RMB]</b> + Drag to rotate camera
     ActionName: 
@@ -3822,6 +3823,7 @@ MonoBehaviour:
     HoldDuration: 3
     OneTime: 1
     Disableable: 1
+    Important: 0
   - Id: 3
     Text: Card Magnet is ready - press <b>[{0}]</b> to use it
     ActionName: CardMagnet
@@ -3830,6 +3832,7 @@ MonoBehaviour:
     HoldDuration: 1
     OneTime: 0
     Disableable: 0
+    Important: 0
   - Id: 5
     Text: Hand Sort is ready - press <b>[{0}]</b> to use it
     ActionName: HandSort
@@ -3838,6 +3841,7 @@ MonoBehaviour:
     HoldDuration: 1
     OneTime: 0
     Disableable: 0
+    Important: 0
   - Id: 4
     Text: Smart Album Open is ready - press <b>[{0}]</b> to use it
     ActionName: SmartAlbumOpen
@@ -3846,6 +3850,7 @@ MonoBehaviour:
     HoldDuration: 1
     OneTime: 0
     Disableable: 0
+    Important: 0
   - Id: 2
     Text: Scroll the <b>mouse wheel</b> to cycle through your cards
     ActionName: 
@@ -3854,6 +3859,7 @@ MonoBehaviour:
     HoldDuration: 3
     OneTime: 1
     Disableable: 1
+    Important: 0
   - Id: 6
     Text: Levitate is ready - press <b>[{0}]</b> to use it
     ActionName: Levitate
@@ -3862,6 +3868,7 @@ MonoBehaviour:
     HoldDuration: 1
     OneTime: 0
     Disableable: 0
+    Important: 0
   - Id: 7
     Text: New letter arrived near one of the doors
     ActionName: 
@@ -3870,6 +3877,7 @@ MonoBehaviour:
     HoldDuration: 5
     OneTime: 0
     Disableable: 0
+    Important: 1
   - Id: 8
     Text: Final card arrived near one of the doors
     ActionName: 
@@ -3878,6 +3886,7 @@ MonoBehaviour:
     HoldDuration: 5
     OneTime: 0
     Disableable: 0
+    Important: 1
   - Id: 9
     Text: This card is already in the duplicates box
     ActionName: 
@@ -3886,6 +3895,7 @@ MonoBehaviour:
     HoldDuration: 3
     OneTime: 0
     Disableable: 0
+    Important: 0
   - Id: 10
     Text: This card is not a duplicate!
     ActionName: 
@@ -3894,6 +3904,7 @@ MonoBehaviour:
     HoldDuration: 3
     OneTime: 0
     Disableable: 0
+    Important: 0
   - Id: 11
     Text: No cards from this set were nearby
     ActionName: 
@@ -3902,9 +3913,14 @@ MonoBehaviour:
     HoldDuration: 3
     OneTime: 0
     Disableable: 0
+    Important: 0
   fadeInDuration: 0.4
   fadeOutDuration: 0.5
   gapDuration: 0.3
+  pulseTarget: {fileID: 0}
+  pulseScale: 1.05
+  pulseDuration: 0.6
+  pulseEase: 4
 --- !u!225 &7603753079528657389
 CanvasGroup:
   m_ObjectHideFlags: 0

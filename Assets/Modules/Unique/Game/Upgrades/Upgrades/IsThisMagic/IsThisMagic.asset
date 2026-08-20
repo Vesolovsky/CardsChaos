@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: IsThisMagic
   displayName: Is this magic?...
-  description: Unlocks Levitate - raise up to 8 card's set-mates off the ground
+  description: Unlocks Levitate - raise up to 10 card's set-mates off the ground
   icon: {fileID: 21300000, guid: b999d67d6f8b5114f886ad6f67cf8af9, type: 3}
   kind: 5
   objective:

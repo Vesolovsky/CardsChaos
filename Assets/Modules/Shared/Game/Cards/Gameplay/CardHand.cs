@@ -445,6 +445,16 @@ namespace CardsChaos.Cards
                 ? AudioSFXKey.HandToFan
                 : AudioSFXKey.HandToPile);
 
+            // The pile has one rule about the selection: the card on top is the one the player is
+            // looking at, which is why turning the stack over takes the selection with it. Coming
+            // back from the fan with a card from along the spread still selected would break that,
+            // leaving the lift on a card buried in the stack - so the top takes it back.
+            //
+            // Claimed rather than selected, and before the relayout below, so the lift is part of
+            // the move the cards are about to make instead of a second one issued on top of it.
+            if (_layout == CardHandLayout.Pile && _cards.Count > 0)
+                Claim(_cards[0]);
+
             Transform anchor = ActiveAnchor;
             if (anchor == null)
                 return;

@@ -76,7 +76,6 @@ namespace Vesolovsky.Core.UISystem.UIComponents
         public void SetImmediate(string value)
         {
             StopTween();
-            RevealDuration = 0f;
             Text.text = value ?? string.Empty;
             Text.maxVisibleCharacters = int.MaxValue;
         }

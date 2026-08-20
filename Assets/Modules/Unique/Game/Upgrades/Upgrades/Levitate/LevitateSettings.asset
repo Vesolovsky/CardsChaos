@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0afade49cb9cdb40a9ab5313bdbe898, type: 3}
   m_Name: LevitateSettings
   m_EditorClassIdentifier: 
-  radius: 1
-  maxCards: 8
+  radius: 1.25
+  maxCards: 10
   riseHeight: 0.35
   riseDuration: 0.25
   hoverDuration: 5

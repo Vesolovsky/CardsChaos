@@ -4,8 +4,10 @@ using Cysharp.Threading.Tasks;
 using PrimeTween;
 using RoboRyanTron.SearchableEnum;
 using UnityEngine;
+using Vesolovsky.Core.Audio;
 using Vesolovsky.Core.UISystem.Animations;
 using Vesolovsky.Core.Utils;
+using Zenject;
 
 namespace Vesolovsky.Game.Views.MainMenu
 {
@@ -65,9 +67,21 @@ namespace Vesolovsky.Game.Views.MainMenu
         [SerializeField] private float exitStagger = 0.04f;
         [SerializeField, SearchableEnum] private Ease exitEase = Ease.InCubic;
 
+        [Header("Sound")]
+        [Tooltip("Played once, as the deal sets off. One sound for the whole spread rather than " +
+                 "one per card: seven of anything this close together fuse into a single crack " +
+                 "however they are spaced, and the hand already has a sound for exactly this - a " +
+                 "fistful of cards being spread out. Set to None to deal silently.")]
+        [SerializeField, SearchableEnum] private AudioSFXKey dealStartSound = AudioSFXKey.HandToFan;
+
+        private IAudioService _audioService;
+
         private Sequence _sequence;
         private bool _isOpening;
         private bool _isClosing;
+
+        [Inject]
+        private void Inject(IAudioService audioService) => _audioService = audioService;
 
         private void Awake()
         {
@@ -119,6 +133,12 @@ namespace Vesolovsky.Game.Views.MainMenu
                 }
 
                 StopSequence();
+
+                // Once, as the whole spread sets off - the cards are one hand being fanned out,
+                // and that is one gesture rather than seven.
+                if (dealStartSound != AudioSFXKey.None)
+                    _audioService?.Play(dealStartSound);
+
                 _sequence = BuildSequence(entering: true);
 
                 await _sequence.WithCancellation(ct);

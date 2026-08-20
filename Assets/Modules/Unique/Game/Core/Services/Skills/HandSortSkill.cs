@@ -10,10 +10,11 @@ namespace Vesolovsky.Game.Services.Skills
     /// Tidies the cards in hand.
     ///
     /// Within a set the cards go in number order, lowest first. When the hand holds more than one
-    /// set, the sets are laid out by how many of their cards are in hand - the smallest run first,
-    /// then the next - so the hand reads as a series of tidy little stacks growing from the front.
-    /// Ties between equal-sized runs are broken by set id, only so the result is stable rather than
-    /// wandering from one press to the next.
+    /// set, the biggest run comes to the top and the rest follow in order of size - hold five of
+    /// one set, three of another and two of a third, and the five are what is under the cursor
+    /// when the sort finishes. That is the run most nearly worth filing, so it is the one put
+    /// within reach. Ties between equal-sized runs are broken by set id, only so the result is
+    /// stable rather than wandering from one press to the next.
     ///
     /// This is the one skill that also works inside the album, so it never checks the world lock.
     /// </summary>
@@ -56,10 +57,12 @@ namespace Vesolovsky.Game.Services.Skills
             foreach (List<Card> run in runs.Values)
                 run.Sort(CompareByNumber);
 
+            // Biggest run first: index 0 is the top of the hand, so descending by size puts the
+            // longest run where the player's hand already is.
             var ordered = new List<KeyValuePair<string, List<Card>>>(runs);
             ordered.Sort((a, b) =>
             {
-                int bySize = a.Value.Count.CompareTo(b.Value.Count);
+                int bySize = b.Value.Count.CompareTo(a.Value.Count);
                 return bySize != 0
                     ? bySize
                     : string.Compare(a.Key, b.Key, StringComparison.Ordinal);

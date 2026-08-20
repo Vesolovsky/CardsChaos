@@ -48,6 +48,11 @@ namespace Vesolovsky.Game.Views
                  "Filled in each time the menu opens from the saved collection snapshot.")]
         [SerializeField] private VText collectionProgressText;
 
+        [Tooltip("Reads \"Playtime: HH:MM:SS\" for this save - the same figure, written the same " +
+                 "way, as the one the closing spread shows when the game is finished. Refreshed " +
+                 "each time the menu opens; the clock does not run while it is up.")]
+        [SerializeField] private VText playtimeText;
+
         [Tooltip("Saves the room, hands it back, and returns to the main menu scene.")]
         [SerializeField] private VButton mainMenuButton;
 
@@ -179,8 +184,10 @@ namespace Vesolovsky.Game.Views
                 _pauseState.IsPaused = true;
 
             // The collection snapshot is kept in step with the album while the room is loaded, so
-            // by the time the menu can come up it is current; reading it on open is enough.
+            // by the time the menu can come up it is current; reading it on open is enough. The
+            // playtime clock stops while the game is paused, so the same is true of that.
             RefreshCollectionProgress();
+            RefreshPlaytime();
 
             AudioService.Play(AudioSFXKey.PauseOpen);
 
@@ -213,6 +220,19 @@ namespace Vesolovsky.Game.Views
 
             collectionProgressText.SetText(
                 $"Collection progress: {_playerStats.CorrectlyPlacedCards} / {_playerStats.TotalCards}");
+        }
+
+        /// <summary>
+        /// How long this save has been played, written exactly as the closing spread writes it.
+        /// The player needs to be able to see the clock as they go, not only once the game is
+        /// over - it is what a run measured against a time is played against.
+        /// </summary>
+        private void RefreshPlaytime()
+        {
+            if (playtimeText == null || _playerStats == null)
+                return;
+
+            playtimeText.SetText($"Time played: {StatsFormat.Playtime(_playerStats.PlaytimeSeconds)}");
         }
 
         private void QuitGame()

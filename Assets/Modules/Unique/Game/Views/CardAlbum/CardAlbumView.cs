@@ -55,9 +55,11 @@ namespace Vesolovsky.Game.Views
 
         [SerializeField] private VButton previousPageButton;
 
-        [Tooltip("Optional. Shuts the album, the same as Escape does. Worth having on the album " +
-                 "opened from the main menu, where there is no HUD button and no key the player " +
-                 "has been taught yet.")]
+        [Tooltip("Optional. Shuts the album, the same as Escape does. Only ever shown on the " +
+                 "album opened from the main menu, where there is no HUD button and no key the " +
+                 "player has been taught yet - in the room the album is a panel the player " +
+                 "toggles, and a button to close it would be clutter. Switched on and off from " +
+                 "code, so whether it is enabled in the prefab makes no difference.")]
         [SerializeField] private VButton closeButton;
 
         [Header("Hand")]
@@ -503,9 +505,16 @@ namespace Vesolovsky.Game.Views
             if (previousPageButton != null)
                 previousPageButton.Bind(pages.GoToPreviousPage);
 
-            // Routed through TryClose like every other way out, so the endgame seal refuses it too.
             if (closeButton != null)
+            {
+                // The room's album is closed with the key that opened it or the HUD button that
+                // did; only the menu's, which has neither, needs one of its own.
+                closeButton.gameObject.SetActive(_readOnly);
+
+                // Routed through TryClose like every other way out, so the endgame seal refuses
+                // it too.
                 closeButton.Bind(TryClose);
+            }
 
             RefreshPaging();
         }
