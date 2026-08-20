@@ -34,6 +34,22 @@ namespace Vesolovsky.Game.Views
         /// </summary>
         bool HoldsEndgameCard { get; }
 
+        /// <summary>
+        /// The album as a display case: cards can be looked at and turned over, never moved. What
+        /// the main menu's album is, and what the album falls back to wherever the room's half of
+        /// it - the hand, the card factory - is not present to make a move with.
+        /// </summary>
+        bool IsReadOnly { get; }
+
+        /// <summary>The final card as filed, or <see cref="CardRef.None"/> while it is still out there.</summary>
+        CardRef EndgameCard { get; }
+
+        /// <summary>
+        /// Whether the final card has been filed - the game finished. The read-only album opens on
+        /// the closing spread when it has.
+        /// </summary>
+        bool IsEndgameCardFiled { get; }
+
         /// <summary>The hand the pile is a view of.</summary>
         CardHand Hand { get; }
 

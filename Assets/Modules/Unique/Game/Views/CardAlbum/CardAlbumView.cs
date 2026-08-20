@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using CardsChaos.Cards;
+using CardsChaos.Cards.Album;
 using Cysharp.Threading.Tasks;
 using PrimeTween;
 using UniRx;
@@ -27,6 +28,11 @@ namespace Vesolovsky.Game.Views
     /// The view owns the wiring and nothing else. Which set is open and which page is showing are
     /// its business because they are about looking; what a card is and where it is allowed to go
     /// belong to the view model.
+    ///
+    /// The same album serves two places. In the room it is a panel the player toggles, holding the
+    /// room still while it is up. Opened from the main menu it is a display case instead: the hand
+    /// is not drawn, nothing can be dragged, and closing it means the view is gone rather than
+    /// hidden. Everything else - the sets, the pages, the close-up - is the one implementation.
     /// </summary>
     public class CardAlbumView : View<ICardAlbumViewModel>
     {
@@ -48,6 +54,11 @@ namespace Vesolovsky.Game.Views
         [SerializeField] private VButton nextPageButton;
 
         [SerializeField] private VButton previousPageButton;
+
+        [Tooltip("Optional. Shuts the album, the same as Escape does. Worth having on the album " +
+                 "opened from the main menu, where there is no HUD button and no key the player " +
+                 "has been taught yet.")]
+        [SerializeField] private VButton closeButton;
 
         [Header("Hand")]
         [SerializeField] private AlbumHandFan handPile;
@@ -115,6 +126,14 @@ namespace Vesolovsky.Game.Views
         // count, and that should not kick the label.
         private int _shownCollectionCount = -1;
 
+        // Read once, at setup, and then trusted: whether the room's half of the album exists is
+        // settled by which scene we are in and cannot change while the view is alive.
+        private bool _readOnly;
+
+        // A display-case album closes by destroying itself, and Escape can be pressed again while
+        // the closing animation is still running.
+        private bool _isUnloading;
+
         // The focus channel is optional so the album still builds while the upgrade system is
         // being wired up; Smart Album Open simply does nothing until its installer is present.
         [Inject]
@@ -136,10 +155,25 @@ namespace Vesolovsky.Game.Views
         {
             base.InitialViewSetup(viewInitData);
 
+            _readOnly = ViewModel.IsReadOnly;
+
             drag.Initialize(ViewModel, ViewModel.Artwork);
+            drag.SetInteractive(!_readOnly);
             inspector.Initialize(ViewModel.Artwork);
             pages.Initialize(drag, inspector, ViewModel.Album, ViewModel.Artwork);
-            handPile.Initialize(drag, inspector, ViewModel.Hand);
+
+            if (_readOnly)
+            {
+                // The pile is a view of the hand out in the room, and in the menu there is no
+                // room and no hand. Taken away rather than left empty: an empty pile invites a
+                // drag that could never land anywhere.
+                if (handPile != null)
+                    handPile.gameObject.SetActive(false);
+            }
+            else
+            {
+                handPile.Initialize(drag, inspector, ViewModel.Hand);
+            }
 
             BuildSetButtons();
             BindPagingButtons();
@@ -157,7 +191,14 @@ namespace Vesolovsky.Game.Views
 
             if (_input != null)
             {
-                _toggleAction = _input.Find(GameInputActions.ToggleAlbum);
+                // The room's album key toggles a panel the player carries around with them. The
+                // menu's album is not that: it was asked for by name and Escape is the way back
+                // out, so the key is left unbound there rather than quietly doing something the
+                // player has never been taught in a screen that never mentions it.
+                if (!_readOnly)
+                    _toggleAction = _input.Find(GameInputActions.ToggleAlbum);
+
+                // Turning a card over in the close-up works however the album was opened.
                 _flipCardAction = _input.Find(GameInputActions.FlipCard);
             }
 
@@ -169,6 +210,31 @@ namespace Vesolovsky.Game.Views
             // album has no notion yet of which one the player was last looking at.
             if (_setButtons.Count > 0)
                 OpenSet(_setButtons[0]);
+
+            if (_readOnly)
+                OpenAsDisplayCase();
+        }
+
+        /// <summary>
+        /// Brings the menu's album up. There is no room to ask and no toggle to wait for - it was
+        /// added to the screen to be looked at, so it is already open by the time anything else
+        /// runs, and the state is set here so Escape and the endgame check both read it correctly.
+        /// </summary>
+        private void OpenAsDisplayCase()
+        {
+            ViewModel.Open();
+
+            AudioService.Play(AudioSFXKey.AlbumOpen);
+
+            RefreshAlbumDisplay();
+
+            // A finished game opens on the closing spread rather than on the sets.
+            ApplyEndgameMode();
+
+            ScrollToOpenSet();
+
+            if (pages != null)
+                pages.SetFullResolutionEnabled(true);
         }
 
         private void Update()
@@ -284,6 +350,19 @@ namespace Vesolovsky.Game.Views
             if (finalLayout != null && finalLayout.IsSealed)
                 return;
 
+            // The menu's album is a view in its own right rather than a panel the room keeps
+            // around, so closing it means it is gone. Guarded because the close animation gives
+            // Escape a few more frames in which it would otherwise be pressed again.
+            if (_readOnly)
+            {
+                if (_isUnloading)
+                    return;
+
+                _isUnloading = true;
+                Unload().Forget();
+                return;
+            }
+
             ViewModel.Close();
         }
 
@@ -294,16 +373,59 @@ namespace Vesolovsky.Game.Views
         /// </summary>
         private void ApplyEndgameMode()
         {
-            bool endgame = finalLayout != null && ViewModel.HoldsEndgameCard;
+            if (finalLayout == null)
+            {
+                // No closing spread authored, so the normal album is the only thing there is.
+                if (normalLayout != null)
+                    normalLayout.SetActive(true);
+
+                return;
+            }
+
+            // Two ways into the closing spread. In the room it is the player walking in still
+            // holding the final card, with the ending ahead of them. From the menu it is the same
+            // spread kept as a memento of an ending that has already happened - so it comes up
+            // finished, without replaying itself, and offers a way through to the collection.
+            bool completed = _readOnly && ViewModel.IsEndgameCardFiled;
+            bool endgame = completed || (!_readOnly && ViewModel.HoldsEndgameCard);
 
             if (normalLayout != null)
                 normalLayout.SetActive(!endgame);
 
-            if (finalLayout != null)
-                finalLayout.gameObject.SetActive(endgame);
+            finalLayout.gameObject.SetActive(endgame);
 
-            if (endgame)
+            if (!endgame)
+                return;
+
+            if (completed)
+            {
+                CardRef finalCard = ViewModel.EndgameCard;
+
+                finalLayout.ShowCompleted(
+                    drag, inspector, ViewModel.EndgameSet, finalCard,
+                    ViewModel.Artwork.Resolve(finalCard), _playerStats, ShowCollection);
+            }
+            else
+            {
                 finalLayout.Initialize(drag, inspector, ViewModel.EndgameSet, _playerStats);
+            }
+        }
+
+        /// <summary>
+        /// Shuts the finished album's closing spread and lets the player through to the collection
+        /// behind it. Wired to the See Collection button, which only the menu's album has.
+        /// </summary>
+        private void ShowCollection()
+        {
+            if (finalLayout != null)
+                finalLayout.gameObject.SetActive(false);
+
+            if (normalLayout != null)
+                normalLayout.SetActive(true);
+
+            // The set list has been off screen the whole time, so nothing has ever measured it.
+            // Bringing the open set into view has to wait until it is actually up.
+            ScrollToOpenSet();
         }
 
         /// <summary>
@@ -380,6 +502,10 @@ namespace Vesolovsky.Game.Views
 
             if (previousPageButton != null)
                 previousPageButton.Bind(pages.GoToPreviousPage);
+
+            // Routed through TryClose like every other way out, so the endgame seal refuses it too.
+            if (closeButton != null)
+                closeButton.Bind(TryClose);
 
             RefreshPaging();
         }
@@ -577,6 +703,12 @@ namespace Vesolovsky.Game.Views
 
         private void OnIsOpenChanged(bool isOpen)
         {
+            // The display case is put up by whoever added the view and taken away by unloading it,
+            // so showing and hiding from here as well would race that and play the open animation
+            // twice. Its own setup is done once, in OpenAsDisplayCase.
+            if (_readOnly)
+                return;
+
             // UI Images are not camera-driven mip-streaming renderers. Explicitly keep only the
             // current album page sharp while it is on screen, and release it as soon as the album
             // closes so the world can use the budget.

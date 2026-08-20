@@ -147,8 +147,11 @@ namespace Vesolovsky.Game.Views.Album
 
         public void OnBeginDrag(PointerEventData eventData)
         {
-            if (eventData.button != PointerEventData.InputButton.Left)
+            if (_drag == null || !_drag.Interactive
+                || eventData.button != PointerEventData.InputButton.Left)
+            {
                 return;
+            }
 
             _draggedSincePress = true;
             _drag.Begin(this, eventData);

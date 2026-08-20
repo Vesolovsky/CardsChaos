@@ -1,3 +1,5 @@
+using System;
+
 namespace Vesolovsky.Game.Services.Save
 {
     /// <summary>
@@ -28,6 +30,16 @@ namespace Vesolovsky.Game.Services.Save
 
         /// <summary>Seconds spent in the room with the clock running (paused time does not count).</summary>
         public double PlaytimeSeconds { get; set; }
+
+        /// <summary>
+        /// The last moment the player was actually in the room, in their own local time. Kept in
+        /// step with <see cref="PlaytimeSeconds"/> - the same frames that count as playing are the
+        /// frames that move this - so it reads as when they stopped playing rather than when they
+        /// started, and time spent sitting in a menu never counts.
+        ///
+        /// Null on a save from before it was recorded, and on one that has never been played.
+        /// </summary>
+        public DateTime? LastPlayedAt { get; set; }
 
         /// <summary>Total horizontal distance the player has walked, in world units, sprint included.</summary>
         public double DistanceTraveled { get; set; }
@@ -83,6 +95,7 @@ namespace Vesolovsky.Game.Services.Save
                 SkillsUsed = SkillsUsed,
                 SessionsPlayed = SessionsPlayed,
                 PlaytimeSeconds = PlaytimeSeconds,
+                LastPlayedAt = LastPlayedAt,
                 DistanceTraveled = DistanceTraveled,
                 DistanceSprinted = DistanceSprinted,
                 PeakCorrectlyPlaced = PeakCorrectlyPlaced,

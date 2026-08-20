@@ -42,11 +42,6 @@ namespace Vesolovsky.Game.Services.Achievements
 
         private readonly CancellationTokenSource _loadCts = new CancellationTokenSource();
 
-        // What was last shown in an "X / Y" toast, so a stat that changes for another reason does
-        // not push the same number to Steam again.
-        private readonly Dictionary<AchievementId, int> _reportedProgress =
-            new Dictionary<AchievementId, int>();
-
         private bool _subscribed;
 
         [Inject]
@@ -277,29 +272,17 @@ namespace Vesolovsky.Game.Services.Achievements
         // --- Awarding ---
 
         /// <summary>
-        /// Awards a counted achievement once its number is reached, and otherwise keeps Steam's
-        /// "X / Y" toast up to date. The progress half only shows anything for an achievement that
-        /// has a progress stat set up on the partner site; without one Steam simply ignores it.
+        /// Awards a counted achievement the moment its number is reached, and does nothing at all
+        /// before then. Every achievement in the game is a single moment, never a running total -
+        /// so a condition still short of its target is not news, and reporting it would put a
+        /// notification on screen for every card the player files.
         /// </summary>
         private void Award(AchievementId id, int current, int required)
         {
-            if (required <= 0)
+            if (required <= 0 || current < required)
                 return;
 
-            if (current >= required)
-            {
-                _achievements.Unlock(id);
-                _reportedProgress.Remove(id);
-                return;
-            }
-
-            // Only when the number actually moved: the stats service raises Changed for throws and
-            // pickups too, and pushing the same figure on each would be a call a second.
-            if (_reportedProgress.TryGetValue(id, out int last) && last == current)
-                return;
-
-            _reportedProgress[id] = current;
-            _achievements.ReportProgress(id, current, required);
+            _achievements.Unlock(id);
         }
     }
 }

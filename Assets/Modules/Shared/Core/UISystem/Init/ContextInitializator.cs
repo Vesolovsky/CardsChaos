@@ -17,6 +17,16 @@ namespace Vesolovsky.Core.UISystem.Init
     /// <para>
     /// Should be binded and present in every context
     /// </para>
+    /// <para>
+    /// The parent it waits for is looked up through the whole ancestor chain rather than only the
+    /// container directly above it. A view's context sits under the scene context, which in
+    /// practice binds no initializator of its own, so an immediate-parent-only lookup found
+    /// nothing and the view initialized straight away - beside the project context's services
+    /// rather than after them. Anything a view read at setup that came from an async service (the
+    /// save, most of all) was then a race it usually lost on a cold start and always won on the
+    /// second scene, because the project context is initialized once and outlives the scene.
+    /// Nearest ancestor still wins, so a scene that does bind one is waited on instead.
+    /// </para>
     /// </summary>
     public class ContextInitializator : MonoBehaviour, IContextInitializator, IDisposable
     {
@@ -36,7 +46,7 @@ namespace Vesolovsky.Core.UISystem.Init
         public void Inject(
             [InjectOptional(Source = InjectSources.Local)] List<IAsyncInitializable> initializables,
             [InjectOptional(Source = InjectSources.Local)] IView contextView,
-            [InjectOptional(Source = InjectSources.Parent)] IContextInitializator parentInitializator)
+            [InjectOptional(Source = InjectSources.AnyParent)] IContextInitializator parentInitializator)
         {
             _initializables = initializables?.OrderBy(service => GetInitializationOrder(service.GetType())).ToList()
                 ?? new List<IAsyncInitializable>();

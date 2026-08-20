@@ -33,13 +33,6 @@ namespace Vesolovsky.Core.Services.Achievements
         void Unlock(string apiName);
 
         /// <summary>
-        /// Shows the "23 / 100" toast for a counted achievement, without awarding it. Purely
-        /// cosmetic - Steam ignores a report that is not higher than the last, and awarding is still
-        /// <see cref="Unlock"/>'s job.
-        /// </summary>
-        void ReportProgress(string apiName, int current, int required);
-
-        /// <summary>
         /// Testing hook: clears every achievement and stat on the platform for this user, so the
         /// unlock path can be walked again. Never reached from play.
         /// </summary>

@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Vesolovsky.Core.Services.Input;
 using Vesolovsky.Core.Services.Settings;
 using Zenject;
 
@@ -42,6 +43,12 @@ namespace Vesolovsky.Core.Services
         private float _pitch;
         private bool _dragging;
         private Vector2 _restorePosition;
+
+        // Whether the OS cursor was on before the drag hid it. Restored rather than forced back on,
+        // because a game drawing its own cursor (CustomCursor) keeps the OS one off for good, and
+        // switching it on even for the frame before that is undone flashes the hardware pointer at
+        // the centre of the screen - the very place the lock left it.
+        private bool _restoreCursorVisible;
 
         [Inject]
         public CameraLookController(
@@ -168,6 +175,7 @@ namespace Vesolovsky.Core.Services
                 return;
 
             _restorePosition = mouse.position.ReadValue();
+            _restoreCursorVisible = Cursor.visible;
             _dragging = true;
 
             Cursor.lockState = CursorLockMode.Locked;
@@ -182,11 +190,18 @@ namespace Vesolovsky.Core.Services
             _dragging = false;
 
             Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+
+            // Put back exactly what was there before, not an unconditional "on" - see the field.
+            Cursor.visible = _restoreCursorVisible;
 
             // Unlocking drops the pointer in the middle of the screen. Put it back on the card
             // the player was about to click before they decided to look around first.
             mouse.WarpCursorPosition(_restorePosition);
+
+            // The warp only reaches Mouse.position a frame or two later. Saying where it went lets
+            // a custom cursor draw there at once instead of drawing the stale reading first and
+            // then jumping - see PointerWarp.
+            PointerWarp.Announce(_restorePosition);
         }
     }
 }

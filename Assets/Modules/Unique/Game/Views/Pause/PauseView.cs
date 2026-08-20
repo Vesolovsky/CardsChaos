@@ -1,5 +1,6 @@
 using System;
 using Cysharp.Threading.Tasks;
+using RoboRyanTron.SceneReference;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Vesolovsky.Core.Audio;
@@ -47,8 +48,11 @@ namespace Vesolovsky.Game.Views
                  "Filled in each time the menu opens from the saved collection snapshot.")]
         [SerializeField] private VText collectionProgressText;
 
-        [Tooltip("Saves, then (future) returns to the main menu scene.")]
+        [Tooltip("Saves the room, hands it back, and returns to the main menu scene.")]
         [SerializeField] private VButton mainMenuButton;
+
+        [Tooltip("The scene the Main Menu button leads to. Must be in Build Settings.")]
+        [SerializeField] private SceneReference mainMenuScene;
 
         [Tooltip("Saves fully, then quits the game.")]
         [SerializeField] private VButton quitButton;
@@ -60,11 +64,17 @@ namespace Vesolovsky.Game.Views
         private IGameSettingsService _gameSettings;
         private DynamicViewsCanvas _dynamicViewsCanvas;
         private IPlayerStats _playerStats;
+        private ISceneTransition _sceneTransition;
 
         private IDisposable _worldHandle;
         private bool _isOpen;
         private bool _isOpeningSettings;
         private bool _isSaving;
+
+        // Set the moment the player commits to leaving for the menu, and only cleared if that
+        // turns out to be impossible. Escape stands down while it is set: the room is on its way
+        // out and there is nothing left here to pause.
+        private bool _isLeaving;
 
         // The room was free on the previous frame. Required as well as "free now" so a section that
         // releases the room on this very Escape does not hand the same press straight to the pause.
@@ -78,7 +88,8 @@ namespace Vesolovsky.Game.Views
             [InjectOptional] ISaveCoordinator saveCoordinator,
             [InjectOptional] IGameSettingsService gameSettings,
             [InjectOptional] DynamicViewsCanvas dynamicViewsCanvas,
-            [InjectOptional] IPlayerStats playerStats)
+            [InjectOptional] IPlayerStats playerStats,
+            [InjectOptional] ISceneTransition sceneTransition)
         {
             _worldLock = worldLock;
             _skillGate = skillGate;
@@ -87,6 +98,7 @@ namespace Vesolovsky.Game.Views
             _gameSettings = gameSettings;
             _dynamicViewsCanvas = dynamicViewsCanvas;
             _playerStats = playerStats;
+            _sceneTransition = sceneTransition;
         }
 
         protected override void InitialViewSetup(IViewInitData viewInitData)
@@ -118,6 +130,10 @@ namespace Vesolovsky.Game.Views
 
         private void Update()
         {
+            // The room is on its way out; there is nothing here left to pause or resume.
+            if (_isLeaving)
+                return;
+
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null)
                 return;
@@ -209,12 +225,59 @@ namespace Vesolovsky.Game.Views
 
         private async UniTask OpenMainMenu()
         {
+            if (_isLeaving)
+                return;
+
+            if (mainMenuScene == null || string.IsNullOrEmpty(mainMenuScene.SceneName))
+            {
+                Debug.LogError($"[{nameof(PauseView)}] No main menu scene assigned, so the Main " +
+                               "Menu button has nowhere to go.", this);
+
+                return;
+            }
+
+            _isLeaving = true;
+
             // The room's save contributors are torn down with the gameplay scene, so the world has
-            // to be captured while they are still alive - before any future scene load.
+            // to be captured while they are still alive - before the load below.
             if (_saveCoordinator != null)
                 await _saveCoordinator.SaveNow(force: true);
 
-            // TODO: load the main menu scene here once it exists.
+            // Hand the room back before leaving it, rather than trusting teardown order to do it.
+            // The muffle in particular is not the room's - the audio service lives on the project
+            // context and outlives this scene - so a menu reached through a pause that was never
+            // closed would come up with its music behind a low-pass filter.
+            Close();
+
+            await SceneViewsService.HideScene();
+
+            try
+            {
+                if (_sceneTransition != null)
+                    await _sceneTransition.FadeIn();
+
+                AsyncOperation operation = mainMenuScene.LoadSceneAsync();
+                await UniTask.WaitUntil(() => operation.isDone);
+
+                if (_sceneTransition != null)
+                    await _sceneTransition.FadeOut();
+            }
+            catch (Exception exception)
+            {
+                // Nearly always the menu scene missing from Build Settings. The HUD and the pause
+                // menu have already been taken away by this point, so leaving it there would strand
+                // the player looking at a room they can neither play nor leave - the menu is put
+                // back up instead, and the reason said out loud.
+                Debug.LogError($"[{nameof(PauseView)}] Could not reach the main menu scene " +
+                               $"'{mainMenuScene.SceneName}'; staying in the room.", this);
+
+                Debug.LogException(exception, this);
+
+                await SceneViewsService.ShowScene();
+
+                _isLeaving = false;
+                Open();
+            }
         }
 
         private async UniTask SaveProgress()

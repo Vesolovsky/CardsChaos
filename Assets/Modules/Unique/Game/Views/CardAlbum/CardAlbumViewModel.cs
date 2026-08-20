@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using CardsChaos.Cards;
 using CardsChaos.Cards.Album;
+using Cysharp.Threading.Tasks;
 using UniRx;
 using UnityEngine;
 using Vesolovsky.Core.Services;
@@ -13,6 +14,20 @@ using Zenject;
 
 namespace Vesolovsky.Game.Views
 {
+    /// <summary>
+    /// How the album was asked for. Left off entirely - which is what the gameplay scene does -
+    /// the album is the full thing the player files cards into.
+    /// </summary>
+    public sealed class CardAlbumViewModelInitData : IViewModelInitData
+    {
+        /// <summary>
+        /// The album as a display case rather than a workspace: every card that has been filed is
+        /// there to look at and turn over, and nothing can be moved. The main menu opens it this
+        /// way, where there is no room, no hand and nowhere for a card taken out to go.
+        /// </summary>
+        public bool ReadOnly { get; set; }
+    }
+
     /// <summary>
     /// The album's side of every move the player can make in it, and the one place that knows
     /// what filing a card actually costs.
@@ -36,10 +51,37 @@ namespace Vesolovsky.Game.Views
         private readonly ReactiveProperty<bool> _isOpen = new ReactiveProperty<bool>(false);
 
         private IDisposable _worldHandle;
+        private bool _readOnlyRequested;
 
         public event Action<string> AlbumChanged;
 
         public IReadOnlyReactiveProperty<bool> IsOpen => _isOpen;
+
+        /// <summary>
+        /// Whether the album may be changed at all.
+        ///
+        /// True either because it was asked for that way (the main menu) or because the pieces a
+        /// move needs are simply not in this scene: filing a card destroys an object in the room
+        /// and taking one back out builds a new one, so without a hand and a card factory there is
+        /// no honest way to do either. Read as a belt-and-braces check rather than trusting the
+        /// flag alone, because the failure it prevents is a null reference mid-drag.
+        /// </summary>
+        public bool IsReadOnly => _readOnlyRequested || _hand == null || _cardFactory == null;
+
+        /// <summary>
+        /// The final card as it sits in the endgame set's one slot, or <see cref="CardRef.None"/>
+        /// while it is still out in the world. Filed, it means the game has been finished.
+        /// </summary>
+        public CardRef EndgameCard
+        {
+            get
+            {
+                CardSetDefinition endgame = EndgameSet;
+                return endgame == null ? CardRef.None : _album.GetPlacement(endgame.SetId, 0);
+            }
+        }
+
+        public bool IsEndgameCardFiled => EndgameCard.IsValid;
 
         // Drawn from the order service rather than straight off the catalog, so the album lists its
         // sets shuffled by default and A-to-Z once Alphabetical Sets is claimed. The order is read
@@ -69,7 +111,7 @@ namespace Vesolovsky.Game.Views
             get
             {
                 CardSetDefinition endgame = EndgameSet;
-                if (endgame == null)
+                if (endgame == null || _hand == null)
                     return false;
 
                 foreach (Card card in _hand.Cards)
@@ -88,13 +130,17 @@ namespace Vesolovsky.Game.Views
 
         public CardArtworkResolver Artwork { get; }
 
+        // The room's half of the album - the hand a card is filed from, the factory that rebuilds
+        // one taken back out, the lock that holds the room still - is optional so the same view
+        // model can serve the menu's read-only album, where none of it exists. In the gameplay
+        // scene all three are bound and the album behaves exactly as it always has.
         [Inject]
         public CardAlbumViewModel(
             ICardCatalog catalog,
             ICardAlbum album,
-            CardHand hand,
-            ICardFactory cardFactory,
-            IWorldInteractionLock worldLock,
+            [InjectOptional] CardHand hand,
+            [InjectOptional] ICardFactory cardFactory,
+            [InjectOptional] IWorldInteractionLock worldLock,
             [InjectOptional] IAlbumSetOrder setOrder,
             [InjectOptional] IPlayerStats stats)
         {
@@ -110,19 +156,32 @@ namespace Vesolovsky.Game.Views
             _album.PageChanged += OnAlbumPageChanged;
         }
 
+        public override UniTask Initialize(IViewModelInitData viewModelInitData)
+        {
+            if (viewModelInitData is CardAlbumViewModelInitData initData)
+                _readOnlyRequested = initData.ReadOnly;
+
+            return base.Initialize(viewModelInitData);
+        }
+
         public void Open()
         {
             if (_isOpen.Value)
                 return;
 
-            // Do not open on top of something that already holds the room - a card close-up, the
-            // upgrades screen, the pause menu. Matches the upgrades screen's own guard.
-            if (_worldLock.IsLocked)
-                return;
+            // No room to take in the menu, so nothing to ask for and nothing to hold.
+            if (_worldLock != null)
+            {
+                // Do not open on top of something that already holds the room - a card close-up,
+                // the upgrades screen, the pause menu. Matches the upgrades screen's own guard.
+                if (_worldLock.IsLocked)
+                    return;
 
-            // Taken before the view is told, so the frame the album appears on is already a frame
-            // the room is not listening in.
-            _worldHandle = _worldLock.Acquire(this);
+                // Taken before the view is told, so the frame the album appears on is already a
+                // frame the room is not listening in.
+                _worldHandle = _worldLock.Acquire(this);
+            }
+
             _isOpen.Value = true;
         }
 
@@ -139,6 +198,11 @@ namespace Vesolovsky.Game.Views
 
         public bool TryFile(IAlbumCardSource source, AlbumCardSlot slot)
         {
+            // A display-case album refuses every move. The drag controller is switched off in that
+            // mode as well, so this is the second lock on the same door rather than the only one.
+            if (IsReadOnly)
+                return false;
+
             if (slot == null || !slot.IsUsable)
                 return false;
 
@@ -166,6 +230,9 @@ namespace Vesolovsky.Game.Views
 
         public bool TryReturnToHand(AlbumCardSlot slot)
         {
+            if (IsReadOnly)
+                return false;
+
             // Once originals and duplicate boxes are both complete the album is sealed - the game
             // is ending, so no card is ever lifted back out.
             if (IsCollectionComplete())
@@ -206,7 +273,7 @@ namespace Vesolovsky.Game.Views
 
         public void PromoteToTop(Card worldCard)
         {
-            if (worldCard != null)
+            if (worldCard != null && _hand != null)
                 _hand.BringToTop(worldCard);
         }
 

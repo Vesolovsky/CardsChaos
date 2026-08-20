@@ -1,8 +1,11 @@
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using PrimeTween;
 using RoboRyanTron.SceneReference;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using Vesolovsky.Core.Utils;
 using VInspector;
 
 namespace Vesolovsky.Game.SplashScreen
@@ -12,12 +15,22 @@ namespace Vesolovsky.Game.SplashScreen
     /// and shrinking to size, accelerating so it is moving fastest the instant it lands - then
     /// hits the ground with a single heavy impact (a squash on the logo plus a screenshake that
     /// jolts both the camera and the UI, like something huge just fell). Once the dust settles
-    /// the wordmark wipes in, and after a hold the whole lockup fades out and the next scene loads.
+    /// the wordmark wipes in, and it holds there until the next scene is ready to take over.
     ///
-    /// The whole thing is a single PrimeTween <see cref="Sequence"/> on unscaled time, so it is
+    /// The animation is a single PrimeTween <see cref="Sequence"/> on unscaled time, so it is
     /// immune to <see cref="Time.timeScale"/>. Because it is one sequence, a skip is just
-    /// <c>Complete()</c>: the sequence snaps to its end and the same finish callback loads the
-    /// next scene, so there is only one exit path.
+    /// <c>Complete()</c>: the sequence snaps to its end and the same finish callback runs the
+    /// hand-over, so there is only one exit path.
+    ///
+    /// Two things about it are shaped by builds rather than by the editor, where a splash tends to
+    /// look fine no matter what it does:
+    ///  - It does not start on the first frame. The engine is still finishing its own start-up
+    ///    then, and unscaled time advances by whatever a frame actually costs - so one start-up
+    ///    hitch would spend seconds of the animation in a single frame and the splash would be
+    ///    over before it was seen. It waits for a frame to look like a frame first.
+    ///  - The next scene loads underneath it, with activation held back, and the lockup stays on
+    ///    screen until that load is ready. Fading out the moment the animation ends just moves the
+    ///    same wait onto a blank screen, which is the one thing a splash exists to prevent.
     ///
     /// Why the screenshake is split in two: the lockup lives on a Screen Space - Overlay Canvas,
     /// which ignores the camera. Shaking the camera alone would jolt the world (the sparks) but
@@ -131,11 +144,26 @@ namespace Vesolovsky.Game.SplashScreen
         [Tooltip("Let any key / click / gamepad button skip straight to the end.")]
         [SerializeField] private bool allowSkip = true;
 
+        [Tooltip("How long the splash refuses to be skipped for, counted from when it starts " +
+                 "playing. Without it the second half of the double-click that launched the game " +
+                 "can land on the first frame and throw the splash away before it is ever seen.")]
+        [SerializeField, Min(0f)] private float skipLockoutSeconds = 0.5f;
+
+        // Where Unity parks an async load whose activation is held back. It never reaches 1 until
+        // the gate is opened, so this - not completion - is what "ready" means here.
+        private const float LoadReadyProgress = 0.9f;
+
         private RectTransform _logoTransform;
         private Vector3 _logoRestPosition;
         private Vector3 _logoRestEuler;
         private Sequence _sequence;
         private bool _finished;
+
+        // The next scene, loading behind the splash with its activation held back. Null when there
+        // is no next scene, or when the load could not be started at all.
+        private AsyncOperation _load;
+
+        private float _playStartedAt;
 
         private void Awake()
         {
@@ -175,7 +203,26 @@ namespace Vesolovsky.Game.SplashScreen
             Play();
         }
 
-        private void Start() => Play();
+        private void Start() => Begin(destroyCancellationToken).Forget();
+
+        /// <summary>
+        /// Starts the splash: the next scene begins loading behind it straight away, and the
+        /// animation waits for the engine to settle before it starts playing.
+        ///
+        /// Both halves are about the same thing - a splash exists to be the thing on screen while
+        /// the game loads. Loading first means the wait happens underneath the animation instead
+        /// of after it; waiting to start means the animation is not eaten by the very start-up
+        /// hitch it is there to cover.
+        /// </summary>
+        private async UniTaskVoid Begin(CancellationToken token)
+        {
+            BeginLoadingNextScene();
+
+            if (await Core.Utils.FrameTiming.WaitForSettledFrame(token))
+                return;
+
+            Play();
+        }
 
         /// <summary>Puts every animated property at its "before" value so nothing flashes on
         /// the first frame: the logo lifted up, tilted, scaled up and hidden.</summary>
@@ -270,19 +317,32 @@ namespace Vesolovsky.Game.SplashScreen
             _sequence.Insert(contactTime + delayBeforeText,
                 Tween.UIFillAmount(textImage, 0f, 1f, textFillDuration, textFillEase));
 
-            // --- Hold, then exit only if there's actually a scene to move on to. ---
+            // --- Hold on the finished lockup. ---
+            //
+            // The exit fade is deliberately NOT part of this sequence any more. It used to be
+            // chained on here, which meant the lockup faded out the instant the animation was done
+            // and the player then sat looking at an empty splash scene until the next one had
+            // finished loading. The fade now waits for the load - see OnSequenceFinished - so the
+            // logo is on screen right up to the moment the next scene takes over, which is the
+            // whole job of a splash. Keeping it out of the sequence is also what lets a skip stay
+            // a plain Complete(): the animation snaps to its end, and the exit runs after it
+            // either way.
             if (holdDuration > 0f)
                 _sequence.ChainDelay(holdDuration);
 
-            if (HasNextScene() && rootCanvasGroup != null && exitFadeDuration > 0f)
-                _sequence.Chain(Tween.Alpha(rootCanvasGroup, 1f, 0f, exitFadeDuration, exitFadeEase));
-
             _sequence.ChainCallback(this, static self => self.OnSequenceFinished());
+
+            _playStartedAt = Time.unscaledTime;
         }
 
         private void Update()
         {
             if (!allowSkip || !_sequence.isAlive)
+                return;
+
+            // A press that arrives before the splash has had a moment on screen is not the player
+            // choosing to skip it - it is the click that opened the game still arriving.
+            if (Time.unscaledTime - _playStartedAt < skipLockoutSeconds)
                 return;
 
             if (WasSkipPressed())
@@ -295,23 +355,74 @@ namespace Vesolovsky.Game.SplashScreen
                 return;
 
             _finished = true;
-            LoadNextScene();
+            Leave(destroyCancellationToken).Forget();
+        }
+
+        /// <summary>
+        /// Hands over to the next scene: wait until it is actually ready, fade the lockup out, and
+        /// only then let it through.
+        ///
+        /// The waiting is done with the logo still up. It is the one moment where doing nothing is
+        /// right - the alternative is a blank screen holding exactly the same wait.
+        /// </summary>
+        private async UniTaskVoid Leave(CancellationToken token)
+        {
+            // Nothing to move on to: hold on the finished lockup, as documented on nextScene.
+            if (_load == null)
+                return;
+
+            if (await UniTask.WaitUntil(() => _load.progress >= LoadReadyProgress, cancellationToken: token)
+                    .SuppressCancellationThrow())
+            {
+                return;
+            }
+
+            await FadeOutLockup(token);
+
+            // The gate opens. Unity swaps scenes on its own from here.
+            _load.allowSceneActivation = true;
+        }
+
+        private async UniTask FadeOutLockup(CancellationToken token)
+        {
+            if (rootCanvasGroup == null || exitFadeDuration <= 0f)
+            {
+                if (rootCanvasGroup != null)
+                    rootCanvasGroup.alpha = 0f;
+
+                return;
+            }
+
+            await Tween.Alpha(rootCanvasGroup, 1f, 0f, exitFadeDuration, exitFadeEase,
+                    useUnscaledTime: true)
+                .ToYieldInstruction()
+                .WithCancellation(token)
+                .SuppressCancellationThrow();
         }
 
         private bool HasNextScene() =>
             nextScene != null && !string.IsNullOrEmpty(nextScene.SceneName);
 
-        private void LoadNextScene()
+        /// <summary>
+        /// Puts the next scene on to load behind the splash, held at the gate.
+        ///
+        /// With activation held back Unity loads the scene and then parks it at 0.9 rather than
+        /// swapping the moment it is ready - which is what lets the splash decide when to hand
+        /// over instead of being cut off mid-animation by a fast load.
+        /// </summary>
+        private void BeginLoadingNextScene()
         {
             if (!HasNextScene())
                 return;
 
             try
             {
-                nextScene.LoadSceneAsync();
+                _load = nextScene.LoadSceneAsync();
+                _load.allowSceneActivation = false;
             }
             catch (SceneReference.SceneLoadException e)
             {
+                _load = null;
                 Debug.LogWarning($"Splash could not load the next scene: {e.Message}", this);
             }
         }

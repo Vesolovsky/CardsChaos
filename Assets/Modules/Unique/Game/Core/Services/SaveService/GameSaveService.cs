@@ -86,6 +86,13 @@ namespace Vesolovsky.Game.Services.Save
         public bool EpilogueCardReleased { get; set; }
 
         /// <summary>
+        /// The closing tally, frozen at the moment the final card was filed, plus the date it
+        /// happened. Null until the game has been finished - and null again on a new game.
+        /// See <see cref="EndgameSummary"/> for why it is a copy rather than a live read.
+        /// </summary>
+        public EndgameSummary Endgame { get; set; }
+
+        /// <summary>
         /// Deep copy for the off-thread write. Every collection is a fresh instance so the writer
         /// thread never shares one with gameplay code; the elements are safe to share because none
         /// of them (AlbumPlacement, the saved-card records) is mutated in place after it is created.
@@ -121,6 +128,7 @@ namespace Vesolovsky.Game.Services.Save
                     ? null
                     : new List<string>(PendingLetters),
                 EpilogueCardReleased = EpilogueCardReleased,
+                Endgame = Endgame?.Clone(),
             };
         }
 
@@ -169,6 +177,9 @@ namespace Vesolovsky.Game.Services.Save
                 CollectedLetters = new List<string>(),
                 PendingLetters = new List<string>(),
                 EpilogueCardReleased = false,
+
+                // No ending behind a game that has not been played.
+                Endgame = null,
             };
         }
 
@@ -231,6 +242,11 @@ namespace Vesolovsky.Game.Services.Save
             // No letters waiting, and the endgame card is back behind its door.
             CurrentSave.PendingLetters?.Clear();
             CurrentSave.EpilogueCardReleased = false;
+
+            // The ending belonged to the game that has just been thrown away. A new game has not
+            // been finished, so it has no closing tally and no completion date - and when it is
+            // finished, it will record its own.
+            CurrentSave.Endgame = null;
         }
     }
 }

@@ -211,11 +211,12 @@ MonoBehaviour:
   exitFadeDuration: 0.5
   exitFadeEase: 5
   nextScene:
-    Scene: {fileID: 102900000, guid: 2a8d516bc7ac68c4cabdae26a078d6b6, type: 3}
-    SceneName: GameplayScene
-    sceneIndex: 2
+    Scene: {fileID: 102900000, guid: a2e24f9d10983bc4fa878796ee16c940, type: 3}
+    SceneName: MainMenu
+    sceneIndex: 1
     sceneEnabled: 1
   allowSkip: 1
+  skipLockoutSeconds: 0.5
 --- !u!4 &27442609 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2470631334203695418, guid: 2028278088297426cb4458502e6358f4,

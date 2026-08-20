@@ -115,22 +115,6 @@ namespace Vesolovsky.Core.Services.Achievements
                 _pending.Add(apiName);
         }
 
-        public void ReportProgress(string apiName, int current, int required)
-        {
-            if (!IsAvailable || string.IsNullOrEmpty(apiName))
-                return;
-
-            // A finished or over-shot report is not progress, it is an award - and Steam refuses a
-            // progress call at or above the maximum anyway.
-            if (required <= 0 || current <= 0 || current >= required)
-                return;
-
-            if (_earned.Contains(apiName))
-                return;
-
-            SteamUserStats.IndicateAchievementProgress(apiName, (uint)current, (uint)required);
-        }
-
         public void DebugResetAll()
         {
             if (!IsAvailable)

@@ -34,6 +34,9 @@ namespace Vesolovsky.Game.UISystem
                 case LetterView:
                     return new LetterViewDefinition();
 
+                case MainMenuView:
+                    return new MainMenuViewDefinition();
+
                 default:
                     Debug.Log($"Can't create default View Definition. View of type: '{view.GetType()}' not handled.");
                     return null;
@@ -70,6 +73,9 @@ namespace Vesolovsky.Game.UISystem
 
                 case ViewName.Letter:
                     return new LetterViewDefinition();
+
+                case ViewName.MainMenu:
+                    return new MainMenuViewDefinition();
 
                 default:
                     Debug.Log($"Can't create default View Definition. ViewName: '{viewName}' not handled.");

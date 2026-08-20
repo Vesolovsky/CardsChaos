@@ -1,6 +1,7 @@
 using Vesolovsky.Core.Services.Save;
 using Vesolovsky.Game.Services.Album;
 using Vesolovsky.Game.Services.Save;
+using Vesolovsky.Game.Services.Stats;
 using Zenject;
 
 namespace Vesolovsky.Core.Services
@@ -23,6 +24,10 @@ namespace Vesolovsky.Core.Services
             // rather than with the scene that happens to draw it. Filed cards outlive the
             // gameplay scene.
             Container.BindInterfacesAndSelfTo<LocalCardAlbum>().AsSingle();
+
+            // Same reasoning: a finished game's closing tally is written into the save and read
+            // back from the main menu long after the room it happened in is gone.
+            Container.BindInterfacesAndSelfTo<LocalEndgameRecord>().AsSingle();
         }
     }
 }

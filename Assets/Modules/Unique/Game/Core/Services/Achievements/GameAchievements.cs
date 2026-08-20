@@ -112,13 +112,6 @@ namespace Vesolovsky.Game.Services.Achievements
             return service != null && service.IsUnlocked(ApiName(id));
         }
 
-        /// <summary>Shows the "X / Y" toast for a counted achievement, without awarding it.</summary>
-        public static void ReportProgress(
-            this IAchievementService service, AchievementId id, int current, int required)
-        {
-            service?.ReportProgress(ApiName(id), current, required);
-        }
-
         /// <summary>
         /// Checks the table against the shipped content: every achievement has a name, no two share
         /// one, and every set named in a group actually exists. Run once at startup, so a set

@@ -249,6 +249,7 @@ MonoBehaviour:
   cursorTexture: {fileID: 2800000, guid: 399a5eb64f193af49a412d145e4208cc, type: 3}
   height: 32
   hotspot: {x: 4, y: 3}
+  logWarpSettling: 0
 --- !u!1 &4800076008279667550
 GameObject:
   m_ObjectHideFlags: 0
@@ -460,8 +461,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   transitionAnimator: {fileID: 3999203686390910656}
-  transitionShapes:
-  - {fileID: 21300000, guid: b5a085aedbccf7c459923fea39e3a193, type: 3}
+  closingShapes:
+  - {fileID: 21300000, guid: 8d59f8f352eb21546bbb870716ea030c, type: 3}
+  openingShapes:
+  - {fileID: 21300000, guid: 95fd0643860c144458379ce4a8d5750a, type: 3}
   fadeDuration: 1
 --- !u!1001 &6916066557610379830
 PrefabInstance:

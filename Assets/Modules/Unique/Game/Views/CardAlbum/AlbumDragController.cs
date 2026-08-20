@@ -141,6 +141,13 @@ namespace Vesolovsky.Game.Views.Album
         /// <summary>True while a card is off the page and following the pointer.</summary>
         public bool IsDragging => _source != null;
 
+        /// <summary>
+        /// Whether cards may be picked up at all. Switched off for the album's read-only mode,
+        /// where there is nowhere for a card to go; the slots ask before they begin a gesture, so
+        /// a press on a card still reads as a plain click and opens the close-up.
+        /// </summary>
+        public bool Interactive { get; private set; } = true;
+
         [Inject]
         private void Inject(DiContainer container, IAudioService audioService)
         {
@@ -159,6 +166,8 @@ namespace Vesolovsky.Game.Views.Album
             _canvas = dragLayer.GetComponentInParent<Canvas>().rootCanvas;
         }
 
+        public void SetInteractive(bool interactive) => Interactive = interactive;
+
         /// <summary>
         /// The camera screen positions are relative to - null under a screen-space overlay
         /// canvas, which is what the conversion helpers expect there.
@@ -168,6 +177,9 @@ namespace Vesolovsky.Game.Views.Album
 
         public void Begin(IAlbumCardSource source, PointerEventData eventData)
         {
+            if (!Interactive)
+                return;
+
             // A second drag while one is in flight would orphan the first card's ghost, and with
             // it the source that is still waiting to hear what happened.
             if (IsDragging)

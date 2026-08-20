@@ -11,5 +11,6 @@ namespace Vesolovsky.Game.UISystem
         Pause = 444784,
         Settings = 305290,
         Letter = 643611,
+        MainMenu = 218004,
     }
 }

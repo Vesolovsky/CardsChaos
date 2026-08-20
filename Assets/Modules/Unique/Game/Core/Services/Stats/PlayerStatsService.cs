@@ -171,6 +171,13 @@ namespace Vesolovsky.Game.Services.Stats
 
             stats.PlaytimeSeconds += delta;
 
+            // Stamped on every counted frame rather than on a timer, so the value in memory is
+            // always the last instant the player was really playing. It does not mark the save
+            // dirty on its own - the throttle below does that for both figures - but the quit path
+            // serializes the live save, so a session that ends by closing the game still records
+            // the moment it ended rather than the last throttle tick before it.
+            stats.LastPlayedAt = DateTime.Now;
+
             // The continuous figures do not mark the save dirty every frame - that would thrash
             // autosave - so a periodic nudge makes sure a session that only ever stood still and
             // watched the clock still gets flushed on the next autosave rather than only at quit.

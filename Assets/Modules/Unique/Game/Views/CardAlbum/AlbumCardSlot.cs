@@ -314,9 +314,14 @@ namespace Vesolovsky.Game.Views.Album
         public void OnBeginDrag(PointerEventData eventData)
         {
             // Nothing to pick up, and no drag to start - without this the empty slot would eat
-            // the gesture and the player would be dragging a blank.
-            if (!IsUsable || IsEmpty || eventData.button != PointerEventData.InputButton.Left)
+            // the gesture and the player would be dragging a blank. A read-only album is the same
+            // case: the gesture must not even be marked as a drag, or the release would be
+            // swallowed instead of opening the card up close.
+            if (!IsUsable || IsEmpty || _drag == null || !_drag.Interactive
+                || eventData.button != PointerEventData.InputButton.Left)
+            {
                 return;
+            }
 
             _draggedSincePress = true;
             _drag.Begin(this, eventData);
