@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using CardsChaos.Cards;
 using UniRx;
 using UnityEngine;
@@ -27,6 +28,12 @@ namespace Vesolovsky.Game.Views
         // Rich-text colour the set names in a task line are written in - the album's warm gold.
         private const string SetNameColor = "#C39258";
 
+        // Between the number in force and the number on offer. Written as an escape rather than the
+        // character itself so the literal cannot be mangled by whatever encoding an editor decides
+        // to save this file in. If it ever renders as an empty box the row's font atlas has no
+        // U+2192 - either add the glyph to it, or make this "->".
+        private const string Arrow = "\u2192";
+
         private readonly IUpgradeService _upgrades;
         private readonly ICollectionProgress _progress;
         private readonly IWalletService _wallet;
@@ -37,9 +44,12 @@ namespace Vesolovsky.Game.Views
         private readonly ReactiveProperty<bool> _isOpen = new ReactiveProperty<bool>(false);
         private readonly ReactiveProperty<long> _skillPoints = new ReactiveProperty<long>(0);
 
-        // Built once from the catalog: only the buyable skills. A task-unlocked skill (Levitate)
-        // has no price and no shop row - it is earned through its task, which shows in the OneTimes
-        // list like every other one-time reward.
+        // Built once from the catalog: only what can actually be bought. A task-unlocked upgrade
+        // (Levitate, Déjà vu) has no price and no shop row - it is earned through its task, which
+        // shows in the OneTimes list like every other one-time reward.
+        private readonly List<PermanentUpgradeDefinition> _buyablePermanents =
+            new List<PermanentUpgradeDefinition>();
+
         private readonly List<SkillDefinition> _buyableSkills = new List<SkillDefinition>();
 
         private IDisposable _worldHandle;
@@ -48,7 +58,7 @@ namespace Vesolovsky.Game.Views
 
         public IReadOnlyReactiveProperty<long> SkillPoints => _skillPoints;
 
-        public IReadOnlyList<PermanentUpgradeDefinition> Permanents => _catalog.Permanents;
+        public IReadOnlyList<PermanentUpgradeDefinition> Permanents => _buyablePermanents;
 
         public IReadOnlyList<SkillDefinition> Skills => _buyableSkills;
 
@@ -69,6 +79,12 @@ namespace Vesolovsky.Game.Views
             _worldLock = worldLock;
             _skillGate = skillGate;
             _catalog = catalog;
+
+            foreach (PermanentUpgradeDefinition permanent in _catalog.Permanents)
+            {
+                if (permanent != null && !permanent.IsTaskUnlocked)
+                    _buyablePermanents.Add(permanent);
+            }
 
             foreach (SkillDefinition skill in _catalog.Skills)
             {
@@ -108,6 +124,62 @@ namespace Vesolovsky.Game.Views
         }
 
         public int GetLevel(LeveledUpgradeDefinition definition) => _upgrades.GetLevel(definition);
+
+        /// <summary>
+        /// The blurb for this row, with every number that a purchase would move written as
+        /// "now→after". A description writes {0} where its own number goes, {1} for its cooldown,
+        /// and both come back as that pair.
+        ///
+        /// Showing one number could not work. Quote the level on offer and the last two states of
+        /// an upgrade read identically - at 4/5 the offer is level 5 and at 5/5 there is nothing
+        /// past level 5 either, so "5 cards, 60s" means both "buy this" and "you have this". Quote
+        /// the level in force instead and the bottom collapses the same way: an unbought upgrade
+        /// is level 0, which reads "pull up to 0 cards". Showing the step makes every state
+        /// distinct on its own numbers, with no prefix needed to say which of the two it is.
+        ///
+        /// The ends are the exception, and only because there is genuinely nothing to compare
+        /// against: unbought there is no value in force, and maxed there is none on offer, so those
+        /// two show their single number.
+        ///
+        /// The cooldown is added here rather than authored into each skill's text: it is the same
+        /// phrase every time, and one of them saying it differently would be a bug nobody would
+        /// notice. Both it and the arrows are kept terse - these rows are not wide.
+        /// </summary>
+        public string GetDescription(LeveledUpgradeDefinition definition)
+        {
+            if (definition == null)
+                return string.Empty;
+
+            string description = definition.Description ?? string.Empty;
+
+            // No levels authored - there is no number to speak of, so the text stands as written.
+            if (definition.MaxLevel <= 0)
+                return description;
+
+            int owned = Mathf.Clamp(_upgrades.GetLevel(definition), 0, definition.MaxLevel);
+
+            // The level in force and the level on offer. They are the same level at either end,
+            // which is exactly what collapses the step back to a single number there.
+            int from = Mathf.Max(1, owned);
+            int to = Mathf.Clamp(owned + 1, 1, definition.MaxLevel);
+
+            string value = Step(definition.GetValue(from), definition.GetValue(to));
+
+            // Only skills wait to be used again. The cooldowns are the ones authored on the levels,
+            // not what the reduction rewards leave of them - the row is describing what these
+            // levels are, and folding Traveler in would make the same level read differently to two
+            // players looking at the same shop.
+            var skill = definition as SkillDefinition;
+            if (skill == null)
+                return Fill(definition, description, value, string.Empty);
+
+            string cooldown = Step(skill.GetCooldown(from), skill.GetCooldown(to));
+            description = Fill(definition, description, value, cooldown);
+
+            // One line, not two: some of these rows are narrow enough that a second line would be
+            // clipped, so the cooldown joins the sentence instead of sitting under it.
+            return $"{description}{Separator(description)}Cooldown: {cooldown}s";
+        }
 
         public int GetMaxLevel(LeveledUpgradeDefinition definition) =>
             definition != null ? definition.MaxLevel : 0;
@@ -176,6 +248,62 @@ namespace Vesolovsky.Game.Views
             if (type == CurrencyType.SkillPoints)
                 _skillPoints.Value = value;
         }
+
+        /// <summary>
+        /// Puts the level's numbers into the blurb. A description with no braces in it comes back
+        /// untouched, which is how an upgrade whose value would mean nothing on screen - a fog
+        /// radius, a walking speed - simply says what it does instead.
+        ///
+        /// A malformed description is reported and then shown as written rather than thrown: this
+        /// runs while the shop is being built, and one mistyped brace should cost that row its
+        /// numbers, not the whole screen.
+        /// </summary>
+        private static string Fill(
+            LeveledUpgradeDefinition definition, string description, string value, string cooldown)
+        {
+            try
+            {
+                return string.Format(description, value, cooldown);
+            }
+            catch (FormatException)
+            {
+                Debug.LogError(
+                    $"[{nameof(UpgradesViewModel)}] '{definition.Id}' has a description the level " +
+                    $"numbers cannot be put into: \"{description}\". Only {{0}} (the value) and " +
+                    "{1} (the cooldown) are available.", definition);
+
+                return description;
+            }
+        }
+
+        /// <summary>
+        /// One number when a purchase would not move it - or when there is no purchase left to make
+        /// - and "now→after" when it would. Collapsing the two-the-same case matters beyond tidiness:
+        /// "60→60s" would advertise an upgrade that changes nothing.
+        /// </summary>
+        private static string Step(float from, float to) =>
+            Mathf.Approximately(from, to)
+                ? Number(to)
+                : $"{Number(from)}{Arrow}{Number(to)}";
+
+        /// <summary>
+        /// What goes between the blurb and the cooldown. Descriptions are authored without a full
+        /// stop, so one is supplied - unless the author ended the sentence themselves, in which case
+        /// adding a second would be the only thing anyone noticed.
+        /// </summary>
+        private static string Separator(string description)
+        {
+            if (string.IsNullOrEmpty(description))
+                return string.Empty;
+
+            char last = description[description.Length - 1];
+            return last == '.' || last == '!' || last == '?' ? " " : ". ";
+        }
+
+        // Trailing zeroes dropped, and invariant so a comma decimal separator cannot creep in from
+        // the machine's locale: 1 stays "1" and 1.25 stays "1.25" wherever the game is played.
+        private static string Number(float value) =>
+            value.ToString("0.##", CultureInfo.InvariantCulture);
 
         private void RefreshSkillPoints() =>
             _skillPoints.Value = _wallet.GetRealCurrencyBalance(CurrencyType.SkillPoints);

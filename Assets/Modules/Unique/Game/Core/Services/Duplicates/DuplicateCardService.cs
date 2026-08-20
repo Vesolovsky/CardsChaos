@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using CardsChaos.Cards;
 using CardsChaos.Cards.Album;
+using Vesolovsky.Game.Services.Skills;
 using Vesolovsky.Game.Services.Upgrades;
 using Vesolovsky.Game.Upgrades;
 using Zenject;
@@ -20,10 +21,12 @@ namespace Vesolovsky.Game.Services.Duplicates
     /// The marking is sticky: a card that was kept stays kept for as long as it is in hand, so
     /// turning the pile over with the wheel does not walk the grey from one copy to the other.
     ///
-    /// Both rewards read live off the upgrade service, so buying or claiming one takes effect at
-    /// once. The shading is pushed rather than polled: only the handful of cards in hand can ever be
-    /// spare, and the three things that change the answer - the album gaining or losing a card, the
-    /// hand changing, an upgrade being bought - each re-run the same short pass.
+    /// The grey wash reads live off the upgrade service, so claiming Déjà vu's task takes effect at
+    /// once; filing a thrown spare away reads the Muscle Memory skill instead, and so is on only
+    /// while that skill is running. The shading is pushed rather than polled: only the handful of
+    /// cards in hand can ever be spare, and the three things that change the answer - the album
+    /// gaining or losing a card, the hand changing, an upgrade being claimed - each re-run the same
+    /// short pass.
     /// </summary>
     public class DuplicateCardService : IDuplicateCards, IInitializable, IDisposable
     {
@@ -31,6 +34,7 @@ namespace Vesolovsky.Game.Services.Duplicates
         private readonly CardHand _hand;
         private readonly UpgradeCatalog _catalog;
         private readonly IUpgradeService _upgrades;
+        private readonly ISkillService _skills;
 
         // The spares in hand, newest pass first. Kept as state because the marking is sticky and
         // because a card that stops being spare has to be told to drop the grey.
@@ -46,19 +50,23 @@ namespace Vesolovsky.Game.Services.Duplicates
             ICardAlbum album,
             CardHand hand,
             UpgradeCatalog catalog,
-            IUpgradeService upgrades)
+            IUpgradeService upgrades,
+            ISkillService skills)
         {
             _album = album;
             _hand = hand;
             _catalog = catalog;
             _upgrades = upgrades;
+            _skills = skills;
         }
 
+        // Asked at the moment of the throw rather than tracked, so the window closing mid-throw is
+        // simply a throw that lands on the floor - there is no state here to fall out of step.
         public bool AutoStoresThrownDuplicates =>
-            IsClaimed(OneTimeUpgradeKind.AutoStoreThrownDuplicates);
+            _skills != null && _skills.IsActive(SkillId.MuscleMemory);
 
-        /// <summary>Whether spares in hand are drawn grey - the bought half of the pair.</summary>
-        private bool ShadesSparesInHand => IsBought(PermanentUpgradeKind.DuplicateSight);
+        /// <summary>Whether spares in hand are drawn grey - Déjà vu, earned by boxing duplicates.</summary>
+        private bool ShadesSparesInHand => IsOwned(PermanentUpgradeKind.DuplicateSight);
 
         public void Initialize()
         {
@@ -130,7 +138,7 @@ namespace Vesolovsky.Game.Services.Duplicates
         }
 
         /// <summary>
-        /// Which thrown cards the reward files for the player. With the grey wash bought, exactly
+        /// Which thrown cards Muscle Memory files for the player. With the grey wash owned, exactly
         /// the card shown as spare - what you see is what happens, and throwing the kept copy is
         /// still an ordinary throw. Without it there is nothing on screen telling the two copies
         /// apart, so throwing either of them files one, and the second throw behaves normally
@@ -232,21 +240,17 @@ namespace Vesolovsky.Game.Services.Duplicates
             }
         }
 
-        private bool IsBought(PermanentUpgradeKind kind)
+        /// <summary>
+        /// Whether a permanent upgrade is owned. Déjà vu is earned rather than bought these days,
+        /// but the upgrade service folds that into the same level, so this needs no second case.
+        /// </summary>
+        private bool IsOwned(PermanentUpgradeKind kind)
         {
             if (_catalog == null || _upgrades == null)
                 return false;
 
             PermanentUpgradeDefinition definition = _catalog.FindPermanent(kind);
             return definition != null && _upgrades.GetLevel(definition) >= 1;
-        }
-
-        private bool IsClaimed(OneTimeUpgradeKind kind)
-        {
-            if (_catalog == null || _upgrades == null)
-                return false;
-
-            return _upgrades.IsUnlocked(_catalog.FindOneTime(kind));
         }
     }
 }

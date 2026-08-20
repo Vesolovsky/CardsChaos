@@ -85,6 +85,10 @@ namespace CardsChaos.Cards
         private MeshFilter _meshFilter;
         private MeshRenderer _renderer;
         private MaterialPropertyBlock _propertyBlock;
+
+        // The card's own material, captured before anything can swap it for the grey twin, so the
+        // way back is always the asset the prefab was authored with.
+        private Material _authoredMaterial;
         private System.IDisposable _heldArtworkMipRequest;
 
         // The layer the card was authored on, restored whenever it leaves the hand.
@@ -112,6 +116,17 @@ namespace CardsChaos.Cards
         /// held up close is being read, and the artwork is the point.
         /// </summary>
         public bool IsShaded { get; private set; }
+
+        /// <summary>
+        /// Whether this card is drawn drained of colour while it lies in the room - how a card whose
+        /// album slot is already filled is picked out from across the floor, once "They sense
+        /// more..." is claimed. The room's counterpart to <see cref="IsShaded"/>, and driven from
+        /// outside by the floor shading service.
+        ///
+        /// The two never overlap: a card in hand is not on the floor, and picking one up clears
+        /// this on the spot rather than waiting for the next pass.
+        /// </summary>
+        public bool IsFloorShaded { get; private set; }
 
         /// <summary>
         /// The house of cards this card was placed into, if any. Set by <see cref="CardHouse"/> and
@@ -144,6 +159,7 @@ namespace CardsChaos.Cards
             _renderer = GetComponent<MeshRenderer>();
             Identity = GetComponent<CardIdentity>();
             _defaultLayer = gameObject.layer;
+            _authoredMaterial = _renderer != null ? _renderer.sharedMaterial : null;
 
             // Joined here, left in OnDestroy: the registry is how the room answers "does this card
             // have a second copy", which is what a duplicate box will and will not take.
@@ -201,8 +217,29 @@ namespace CardsChaos.Cards
             ShadedChanged?.Invoke(this);
         }
 
+        /// <summary>
+        /// Turns the on-the-floor grey wash on or off. See <see cref="IsFloorShaded"/>.
+        ///
+        /// Unlike the in-hand wash this swaps the material rather than pushing a property block:
+        /// hundreds of cards can be greyed at once, and a property block on each of them would cost
+        /// the room its batching. See <see cref="CardGreyMaterials"/>.
+        /// </summary>
+        public void SetFloorShaded(bool shaded)
+        {
+            if (IsFloorShaded == shaded)
+                return;
+
+            IsFloorShaded = shaded;
+            ApplyFloorMaterial();
+        }
+
         public void AttachTo(Transform parent)
         {
+            // Off the floor and into the hand, where the in-hand wash decides the colour instead.
+            // Cleared here rather than left to the next shading pass so there is no frame in which
+            // a grey card is fanned out in front of the camera.
+            SetFloorShaded(false);
+
             // Picked up before it had settled, the card must not freeze itself while in hand.
             StopSettleWatch();
 
@@ -628,6 +665,24 @@ namespace CardsChaos.Cards
             int target = IsHeld ? heldLayer : _defaultLayer;
             if (gameObject.layer != target)
                 gameObject.layer = target;
+        }
+
+        /// <summary>
+        /// Points the renderer at the grey twin of its material, or back at the authored one. The
+        /// comparison keeps a re-assert from dirtying the renderer, which is what lets the shading
+        /// pass simply state the answer for every card rather than work out which ones moved.
+        /// </summary>
+        private void ApplyFloorMaterial()
+        {
+            if (_renderer == null || _authoredMaterial == null)
+                return;
+
+            Material target = IsFloorShaded
+                ? CardGreyMaterials.Grey(_authoredMaterial)
+                : _authoredMaterial;
+
+            if (target != null && _renderer.sharedMaterial != target)
+                _renderer.sharedMaterial = target;
         }
 
         private void ApplyMaterialOverrides()

@@ -33,7 +33,6 @@ namespace Vesolovsky.Game.Views
         private readonly IInputActions _input;
         private readonly IGameSettingsService _settings;
         private readonly ILevitateTargeting _levitateTargeting;
-        private readonly OneTimeUpgradeDefinition _levitatePulse;
 
         public event Action SkillsChanged;
         public event Action BindingsChanged;
@@ -68,7 +67,6 @@ namespace Vesolovsky.Game.Views
             _input = input;
             _settings = settings;
             _levitateTargeting = levitateTargeting;
-            _levitatePulse = catalog != null ? catalog.FindOneTime(OneTimeUpgradeKind.LevitatePulse) : null;
 
             _upgrades.Changed += OnUpgradesChanged;
             _skills.Activated += OnSkillActivated;
@@ -98,15 +96,19 @@ namespace Vesolovsky.Game.Views
 
         public bool ShouldPulseSkill(SkillId id)
         {
-            // Only Levitate pulses, only once the "They sense more..." reward is owned, only while
-            // the skill is actually ready to fire, and only when there is something near to raise.
-            if (id != SkillId.Levitate || _levitatePulse == null || _levitateTargeting == null)
+            // Only Levitate pulses, only while the skill is actually ready to fire, and only when
+            // there is something near to raise. It is part of having the skill rather than a reward
+            // on top of it, so nothing else gates it - the targeting is only polled for a button
+            // that is on screen, which means only for a player who owns Levitate.
+            if (id != SkillId.Levitate || _levitateTargeting == null)
                 return false;
 
-            return _upgrades.IsUnlocked(_levitatePulse)
-                   && _skills.IsReady(id)
-                   && _levitateTargeting.HasTargets();
+            return _skills.IsReady(id) && _levitateTargeting.HasTargets();
         }
+
+        public bool IsSkillActive(SkillId id) => _skills.IsActive(id);
+
+        public float GetSkillActiveRemaining(SkillId id) => _skills.GetActiveRemaining(id);
 
         public float GetSkillCooldownRemaining(SkillId id) => _skills.GetCooldownRemaining(id);
 

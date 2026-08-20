@@ -35,6 +35,7 @@ namespace Vesolovsky.Core.Audio
         // Skills
         SkillCardMagnet = 447093,
         SkillLevitate = 780162,
+        SkillMuscleMemory = 526804,
 
         // Progression
         RewardUnlock = 903472,

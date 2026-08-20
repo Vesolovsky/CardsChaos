@@ -9,15 +9,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 62d4a6ba80144e8459601fa13b5c2f30, type: 3}
-  m_Name: DejaVu
+  m_Script: {fileID: 11500000, guid: 785ef1c32e4e03d4da4fae0f8f181010, type: 3}
+  m_Name: DejaVuTask
   m_EditorClassIdentifier:
-  id: DejaVu
+  id: DejaVuTask
   displayName: Deja vu
   description: Cards in your hand that are duplicates become gray
   icon: {fileID: 21300000, guid: aaab6c3a60fb007488ab586058c68296, type: 3}
-  unlockedBy: {fileID: 11400000, guid: 7d21e6b40c9f4a35b8e1c7042fd93a68, type: 2}
-  kind: 2
-  levels:
-  - cost: 0
-    value: 1
+  kind: 7
+  objective:
+    kind: 3
+    sets: []
+    count: 150
+  value: 0

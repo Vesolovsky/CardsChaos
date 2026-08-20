@@ -42,10 +42,19 @@ namespace Vesolovsky.Game.Services.Upgrades
 
         private GameSave Save => _saveService.CurrentSave;
 
+        /// <summary>
+        /// The level an upgrade is effectively at: what the save says for a bought one, or - for a
+        /// task-unlocked upgrade - level 1 exactly while its task is claimed and 0 before. This is
+        /// the one place the two ways an upgrade can be owned are folded into a single number, so
+        /// every effect that reads a level gets the task-unlocked case without knowing about it.
+        /// </summary>
         public int GetLevel(LeveledUpgradeDefinition definition)
         {
             if (definition == null)
                 return 0;
+
+            if (definition.IsTaskUnlocked)
+                return IsUnlocked(definition.UnlockedBy) ? 1 : 0;
 
             Dictionary<string, int> levels = Save?.UpgradeLevels;
             return levels != null && levels.TryGetValue(definition.Id, out int level) ? level : 0;
@@ -54,6 +63,11 @@ namespace Vesolovsky.Game.Services.Upgrades
         public bool CanLevelUp(LeveledUpgradeDefinition definition)
         {
             if (definition == null)
+                return false;
+
+            // Earned, not bought: there is no level to buy at any price, and the shop does not list
+            // it. Guarded here as well so a stale row or a cheat cannot spend points on nothing.
+            if (definition.IsTaskUnlocked)
                 return false;
 
             int level = GetLevel(definition);

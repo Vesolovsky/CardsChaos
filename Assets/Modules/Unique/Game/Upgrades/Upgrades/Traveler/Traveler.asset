@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: Traveler
   displayName: Traveler
-  description: Every skill recharges 20% faster
+  description: Every skill's cooldown is 20% shorter
   icon: {fileID: 21300000, guid: e0d41e64101a5bd49a9d51ae602ad196, type: 3}
   kind: 4
   objective:

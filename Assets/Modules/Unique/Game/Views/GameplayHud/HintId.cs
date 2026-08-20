@@ -46,5 +46,8 @@ namespace Vesolovsky.Game.Views.GameplayHud
         /// inserting one in the middle would slide every entry after it onto the wrong hint.
         /// </summary>
         LevitateNothingNearby,
+
+        /// <summary>Shown when the Muscle memory skill has recovered and can be cast again.</summary>
+        MuscleMemoryReady,
     }
 }

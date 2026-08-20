@@ -56,10 +56,26 @@ namespace Vesolovsky.Game.Views
         /// <summary>Whether the skill is owned and off cooldown right now.</summary>
         bool IsSkillReady(SkillId id);
 
-        /// <summary>Seconds left on the skill's cooldown, or zero when ready.</summary>
+        /// <summary>
+        /// Whether a timed skill is switched on right now - Muscle Memory doing its work rather
+        /// than waiting to be cast again. Always false for the skills that act in one go.
+        /// </summary>
+        bool IsSkillActive(SkillId id);
+
+        /// <summary>Seconds the skill stays switched on for, or zero when it is not.</summary>
+        float GetSkillActiveRemaining(SkillId id);
+
+        /// <summary>
+        /// Seconds until the skill can be fired again - a spell still running plus the cooldown
+        /// behind it. Zero when ready.
+        /// </summary>
         float GetSkillCooldownRemaining(SkillId id);
 
-        /// <summary>Cooldown left as 1..0 of its full length - one when it starts, zero when ready.</summary>
+        /// <summary>
+        /// The wind-down of the phase the skill is in, as 1..0 of that phase's length. A timed
+        /// skill sweeps this twice - once as it works, once as it recovers - so the ring shows the
+        /// player how long the skill has left before it shows how long the wait has left.
+        /// </summary>
         float GetSkillCooldownNormalized(SkillId id);
 
         /// <summary>The skill's trigger key as display text, for the bracketed part of its hint.</summary>
@@ -67,9 +83,8 @@ namespace Vesolovsky.Game.Views
 
         /// <summary>
         /// Whether the skill's HUD button should pulse to say now is a good moment to use it. Only
-        /// the "They sense more..." reward drives this, and only for Levitate: it returns true while
-        /// that reward is owned, the skill is ready, and set-mates of the selected card are nearby.
-        /// Cheap to poll every frame.
+        /// Levitate does: it returns true while the skill is ready and set-mates of the selected
+        /// card are nearby. Cheap to poll every frame.
         /// </summary>
         bool ShouldPulseSkill(SkillId id);
 

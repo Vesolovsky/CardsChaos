@@ -56,8 +56,8 @@ namespace Vesolovsky.Game.Views.GameplayHud
         [Header("Attention pulse")]
         [Tooltip("What the attention pulse scales while it plays - best a dedicated glow or icon, so " +
                  "it does not tug the cooldown ring or fight the button's hover scale. Leave empty " +
-                 "to switch the pulse off; its logic still runs, it just shows nothing. The pulse " +
-                 "only ever plays for a skill whose 'sense nearby' reward is owned.")]
+                 "to switch the pulse off; its logic still runs, it just shows nothing. Only " +
+                 "Levitate pulses today - see the view model's ShouldPulseSkill.")]
         [SerializeField] private RectTransform pulseTarget;
 
         [Tooltip("Peak scale of the attention pulse.")]
@@ -66,9 +66,21 @@ namespace Vesolovsky.Game.Views.GameplayHud
         [Tooltip("Seconds for one full pulse in-and-out.")]
         [SerializeField] private float pulsePeriod = 0.9f;
 
+        [Header("Active window")]
+        [Tooltip("Switched on for exactly as long as a timed skill (Muscle memory) is doing its " +
+                 "work, and off again while it merely cools down - a glow or a ring behind the " +
+                 "icon. Leave empty for a skill that acts in one go; the button then behaves " +
+                 "exactly as it always did.")]
+        [SerializeField] private GameObject activeIndicator;
+
+        [Tooltip("The label while the skill is switched on, with {0} where the seconds left go. " +
+                 "Only used by a skill that has an active window.")]
+        [SerializeField] private string activeLabelFormat = "Active - {0}";
+
         private IGameplayHudViewModel _viewModel;
         private bool _hovered;
         private bool _wasReady;
+        private bool _wasActive;
         private int _shownSeconds = -1;
 
         private Tween _punch;
@@ -109,11 +121,13 @@ namespace Vesolovsky.Game.Views.GameplayHud
             }
 
             _wasReady = _viewModel.IsSkillReady(skillId);
+            _wasActive = _viewModel.IsSkillActive(skillId);
 
             if (button != null)
                 button.interactable = _wasReady;
 
             ApplyFill();
+            ApplyActiveIndicator();
             RefreshLabel();
         }
 
@@ -147,6 +161,19 @@ namespace Vesolovsky.Game.Views.GameplayHud
                     RefreshLabel();
             }
 
+            // The window closing is its own edge: the skill is not ready either side of it, so the
+            // check above never sees it, and the label has to stop saying "active".
+            bool active = _viewModel.IsSkillActive(skillId);
+            if (active != _wasActive)
+            {
+                _wasActive = active;
+                ApplyActiveIndicator();
+
+                // Forces the next countdown tick to redraw: the number is about to mean a different
+                // thing, and it may well be the same number it already shows.
+                _shownSeconds = -1;
+            }
+
             // The countdown only has to keep up while the player is watching it.
             if (!ready && _hovered)
                 UpdateCountdown();
@@ -155,9 +182,22 @@ namespace Vesolovsky.Game.Views.GameplayHud
         }
 
         /// <summary>
-        /// Runs the attention pulse exactly while the view model says this skill wants noticing - the
-        /// "They sense more..." reward, a ready Levitate and set-mates nearby - and stops it the
-        /// moment any of that stops being true.
+        /// Shows the active marker for exactly as long as a timed skill is doing its work. A button
+        /// with nothing wired here - every skill that acts in one go - is left entirely alone.
+        /// </summary>
+        private void ApplyActiveIndicator()
+        {
+            if (activeIndicator == null)
+                return;
+
+            bool active = _viewModel != null && _viewModel.IsSkillActive(skillId);
+            if (activeIndicator.activeSelf != active)
+                activeIndicator.SetActive(active);
+        }
+
+        /// <summary>
+        /// Runs the attention pulse exactly while the view model says this skill wants noticing - a
+        /// ready Levitate with set-mates nearby - and stops it the moment that stops being true.
         /// </summary>
         private void UpdatePulse()
         {
@@ -254,17 +294,29 @@ namespace Vesolovsky.Game.Views.GameplayHud
             }
         }
 
+        /// <summary>
+        /// The number under the cursor while the skill cannot be fired. A timed skill counts its
+        /// own window down first and says so, then falls back to the plain cooldown behind it - so
+        /// the label reads "still working" and "still waiting" as two different things rather than
+        /// running one long number through both.
+        /// </summary>
         private void UpdateCountdown()
         {
             if (label == null)
                 return;
 
-            int seconds = Mathf.CeilToInt(_viewModel.GetSkillCooldownRemaining(skillId));
+            bool active = _viewModel.IsSkillActive(skillId);
+
+            int seconds = Mathf.CeilToInt(active
+                ? _viewModel.GetSkillActiveRemaining(skillId)
+                : _viewModel.GetSkillCooldownRemaining(skillId));
+
             if (seconds == _shownSeconds)
                 return;
 
             _shownSeconds = seconds;
-            label.SetText(FormatCooldown(seconds));
+            string time = FormatCooldown(seconds);
+            label.SetText(active ? string.Format(activeLabelFormat, time) : time);
         }
 
         // 1:30 over a minute, just the seconds under it.

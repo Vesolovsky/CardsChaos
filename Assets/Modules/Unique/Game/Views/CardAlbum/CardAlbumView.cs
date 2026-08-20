@@ -184,6 +184,11 @@ namespace Vesolovsky.Game.Views
             drag.CardFiledCorrectly += pages.OnCardFiledCorrectly;
             ViewModel.AlbumChanged += OnAlbumChanged;
 
+            // "Set sense" marks the sets the player is carrying a card from, so the marking moves
+            // exactly when the hand does - filing a card, taking one back out, cycling the pile.
+            if (ViewModel.Hand != null)
+                ViewModel.Hand.Changed += RefreshSetPulses;
+
             if (_albumFocus != null)
                 _albumFocus.OpenRequested += OnAlbumFocusRequested;
 
@@ -673,6 +678,32 @@ namespace Vesolovsky.Game.Views
                 pages.RefreshAllSlots();
                 SetCollectionProgress(_openSet.Set, punch: false);
             }
+
+            RefreshSetPulses();
+        }
+
+        /// <summary>
+        /// States, for every set button, whether it should be breathing. Re-asserted wholesale
+        /// rather than tracked per card: the answer is one walk of the hand per set, the buttons
+        /// ignore an instruction they are already following, and there is nothing here to fall out
+        /// of step with the hand.
+        /// </summary>
+        private void RefreshSetPulses()
+        {
+            foreach (AlbumSetButton button in _setButtons)
+            {
+                if (button != null && button.Set != null)
+                    button.SetPulsing(ViewModel.ShouldPulseSet(button.Set.SetId));
+            }
+        }
+
+        private void StopSetPulses()
+        {
+            foreach (AlbumSetButton button in _setButtons)
+            {
+                if (button != null)
+                    button.SetPulsing(false);
+            }
         }
 
         private void RefreshPaging()
@@ -749,6 +780,10 @@ namespace Vesolovsky.Game.Views
                 if (inspector != null)
                     inspector.Close();
 
+                // Nothing should be left breathing behind a closed album; the next open re-states
+                // every button anyway.
+                StopSetPulses();
+
                 Hide(destroyCancellationToken).Forget();
             }
         }
@@ -762,7 +797,12 @@ namespace Vesolovsky.Game.Views
                 drag.CardFiledCorrectly -= pages.OnCardFiledCorrectly;
 
             if (ViewModel != null)
+            {
                 ViewModel.AlbumChanged -= OnAlbumChanged;
+
+                if (ViewModel.Hand != null)
+                    ViewModel.Hand.Changed -= RefreshSetPulses;
+            }
 
             if (_albumFocus != null)
                 _albumFocus.OpenRequested -= OnAlbumFocusRequested;

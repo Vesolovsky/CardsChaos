@@ -14,8 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: ExtraCardSlot
   displayName: Extra card slot
-  description: Increase how many cards you can hold at once
+  description: Hold up to {0} cards at once
   icon: {fileID: 21300000, guid: 327f3efbb6b440c43bd352a6ff3b1965, type: 3}
+  unlockedBy: {fileID: 0}
   kind: 0
   levels:
   - cost: 1

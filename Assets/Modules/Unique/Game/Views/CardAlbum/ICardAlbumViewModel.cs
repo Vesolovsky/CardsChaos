@@ -63,5 +63,13 @@ namespace Vesolovsky.Game.Views
 
         /// <summary>The X of a set button's "X / Y".</summary>
         int CountFiled(string setId);
+
+        /// <summary>
+        /// Whether a set's button down the left-hand side should breathe, because the player is
+        /// holding a card from it. Off entirely until the "Set sense" upgrade is bought, and always
+        /// off where there is no hand to read - the menu's display-case album. Cheap to ask for
+        /// every set whenever the hand changes.
+        /// </summary>
+        bool ShouldPulseSet(string setId);
     }
 }

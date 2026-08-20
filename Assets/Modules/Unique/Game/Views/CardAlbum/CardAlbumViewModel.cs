@@ -9,6 +9,7 @@ using Vesolovsky.Core.Services;
 using Vesolovsky.Core.UISystem;
 using Vesolovsky.Game.Services.Stats;
 using Vesolovsky.Game.Services.Upgrades;
+using Vesolovsky.Game.Upgrades;
 using Vesolovsky.Game.Views.Album;
 using Zenject;
 
@@ -47,6 +48,8 @@ namespace Vesolovsky.Game.Views
         private readonly IWorldInteractionLock _worldLock;
         private readonly IAlbumSetOrder _setOrder;
         private readonly IPlayerStats _stats;
+        private readonly IUpgradeService _upgrades;
+        private readonly PermanentUpgradeDefinition _setSense;
 
         private readonly ReactiveProperty<bool> _isOpen = new ReactiveProperty<bool>(false);
 
@@ -142,7 +145,9 @@ namespace Vesolovsky.Game.Views
             [InjectOptional] ICardFactory cardFactory,
             [InjectOptional] IWorldInteractionLock worldLock,
             [InjectOptional] IAlbumSetOrder setOrder,
-            [InjectOptional] IPlayerStats stats)
+            [InjectOptional] IPlayerStats stats,
+            [InjectOptional] IUpgradeService upgrades,
+            [InjectOptional] UpgradeCatalog upgradeCatalog)
         {
             _catalog = catalog;
             _album = album;
@@ -151,6 +156,13 @@ namespace Vesolovsky.Game.Views
             _worldLock = worldLock;
             _setOrder = setOrder;
             _stats = stats;
+            _upgrades = upgrades;
+
+            // Optional the same way the set order is: the menu's display-case album is built in a
+            // context with no upgrade system, and there it simply never pulses.
+            _setSense = upgradeCatalog != null
+                ? upgradeCatalog.FindPermanent(PermanentUpgradeKind.HandSetSense)
+                : null;
 
             Artwork = new CardArtworkResolver(catalog);
             _album.PageChanged += OnAlbumPageChanged;
@@ -195,6 +207,30 @@ namespace Vesolovsky.Game.Views
         }
 
         public int CountFiled(string setId) => _album.CountCorrect(setId);
+
+        /// <summary>
+        /// Whether a set's button should breathe - "Set sense", bought once, marking the sets the
+        /// player is carrying a card from. Any card from the set counts, filed twin or not: the
+        /// point is to find where what is in hand belongs, not to grade it.
+        /// </summary>
+        public bool ShouldPulseSet(string setId)
+        {
+            if (_hand == null || string.IsNullOrEmpty(setId) || !HasSetSense)
+                return false;
+
+            foreach (Card card in _hand.Cards)
+            {
+                if (card != null && card.Identity != null && card.Identity.SetId == setId)
+                    return true;
+            }
+
+            return false;
+        }
+
+        // Read live rather than cached: the upgrade can be bought while the album is closed, and
+        // the answer is one dictionary lookup behind a definition found once at construction.
+        private bool HasSetSense =>
+            _upgrades != null && _setSense != null && _upgrades.GetLevel(_setSense) >= 1;
 
         public bool TryFile(IAlbumCardSource source, AlbumCardSlot slot)
         {

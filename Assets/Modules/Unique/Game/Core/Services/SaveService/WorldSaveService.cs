@@ -235,6 +235,8 @@ namespace Vesolovsky.Game.Services.Save
                     SkillId = cd.Id.ToString(),
                     Remaining = cd.Remaining,
                     Total = cd.Total,
+                    ActiveRemaining = cd.ActiveRemaining,
+                    ActiveTotal = cd.ActiveTotal,
                 });
             }
 
@@ -508,7 +510,8 @@ namespace Vesolovsky.Game.Services.Save
                     continue;
 
                 if (Enum.TryParse(cd.SkillId, out SkillId id))
-                    _skills.RestoreCooldown(id, cd.Remaining, cd.Total);
+                    _skills.RestoreCooldown(
+                        id, cd.Remaining, cd.Total, cd.ActiveRemaining, cd.ActiveTotal);
                 else
                     Debug.LogWarning($"[{nameof(WorldSaveService)}] Save has an unknown skill '{cd.SkillId}'.");
             }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using CardsChaos.Cards.Album;
 
@@ -11,9 +12,21 @@ namespace CardsChaos.Cards
     /// written down is the scene itself - so it is read back by counting copies rather than stored
     /// a second time where it could drift. Cards join in Awake and leave in OnDestroy, which covers
     /// the ones the save spawns and the ones filing an album slot destroys.
+    ///
+    /// It doubles as the room's card list: <see cref="ForEach"/> walks every card there is, and
+    /// <see cref="Changed"/> says when that list has moved. Anything that has to keep a per-card
+    /// judgement up to date - which cards on the floor are spare, say - hangs off those rather than
+    /// scanning the scene for itself.
     /// </summary>
     public static class CardRegistry
     {
+        /// <summary>
+        /// Raised whenever a card joins or leaves the room. Deliberately carries nothing: the one
+        /// listener re-runs its whole pass, and a payload would only invite a partial update that
+        /// has to be kept in step with the full one.
+        /// </summary>
+        public static event Action Changed;
+
         private static readonly Dictionary<CardRef, List<Card>> ByRef =
             new Dictionary<CardRef, List<Card>>();
 
@@ -26,8 +39,11 @@ namespace CardsChaos.Cards
             if (!ByRef.TryGetValue(key, out List<Card> copies))
                 ByRef[key] = copies = new List<Card>();
 
-            if (!copies.Contains(card))
-                copies.Add(card);
+            if (copies.Contains(card))
+                return;
+
+            copies.Add(card);
+            Changed?.Invoke();
         }
 
         public static void Remove(Card card)
@@ -36,9 +52,13 @@ namespace CardsChaos.Cards
             if (!key.IsValid || !ByRef.TryGetValue(key, out List<Card> copies))
                 return;
 
-            copies.Remove(card);
+            if (!copies.Remove(card))
+                return;
+
             if (copies.Count == 0)
                 ByRef.Remove(key);
+
+            Changed?.Invoke();
         }
 
         /// <summary>How many physical copies of this card are in the room right now.</summary>
@@ -58,6 +78,57 @@ namespace CardsChaos.Cards
             }
 
             return alive;
+        }
+
+        /// <summary>
+        /// Hands every living card in the room to <paramref name="visit"/>, grouped by which card
+        /// it is so a caller deciding something per card face works it out once and applies it to
+        /// each copy. Cards awaiting destruction are skipped, the same way
+        /// <see cref="CountOf"/> skips them.
+        ///
+        /// Written as a callback rather than an IEnumerable so nothing has to allocate an
+        /// enumerator - this is walked over the room's whole card list, which is in the thousands.
+        /// </summary>
+        public static void ForEach(Action<CardRef, Card> visit)
+        {
+            if (visit == null)
+                return;
+
+            foreach (KeyValuePair<CardRef, List<Card>> entry in ByRef)
+            {
+                List<Card> copies = entry.Value;
+                for (int i = 0; i < copies.Count; i++)
+                {
+                    Card card = copies[i];
+                    if (card != null)
+                        visit(entry.Key, card);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Whether any card in the room satisfies <paramref name="match"/>, stopping at the first
+        /// that does. The early exit is the whole point: this answers questions asked several times
+        /// a second - is there anything near enough to levitate - where walking the rest of the
+        /// room after the answer is known would be the bulk of the cost.
+        /// </summary>
+        public static bool Any(Func<Card, bool> match)
+        {
+            if (match == null)
+                return false;
+
+            foreach (KeyValuePair<CardRef, List<Card>> entry in ByRef)
+            {
+                List<Card> copies = entry.Value;
+                for (int i = 0; i < copies.Count; i++)
+                {
+                    Card card = copies[i];
+                    if (card != null && match(card))
+                        return true;
+                }
+            }
+
+            return false;
         }
     }
 }

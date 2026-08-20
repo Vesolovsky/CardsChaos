@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: Playmaker
   displayName: Playmaker
-  description: Hand Sort recharges 20% faster
+  description: Hand Sort's cooldown is 20% shorter
   icon: {fileID: 21300000, guid: 456a1b0febb7a3746b8c9256537dfad2, type: 3}
   kind: 2
   objective:

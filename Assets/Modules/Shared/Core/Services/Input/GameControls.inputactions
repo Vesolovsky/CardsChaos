@@ -105,6 +105,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "MuscleMemory",
+                    "type": "Button",
+                    "id": "0f3c7b19-5d24-4a86-9c71-4e0d2b6f8a53",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "Zoom",
                     "type": "Button",
                     "id": "42179342-368f-4601-9a73-28c7893d8327",
@@ -233,6 +242,17 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "Levitate",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8d1f4a60-27b3-4c95-b0e8-1a6d5c93f742",
+                    "path": "<Keyboard>/5",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "MuscleMemory",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

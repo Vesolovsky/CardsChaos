@@ -12,6 +12,10 @@ namespace Vesolovsky.Game.Upgrades
         /// <summary>
         /// "Déjà vu": a card in hand whose twin is already filed in the album is drawn grey, the
         /// same way a misplaced card reads in the album. Read live by the duplicate service.
+        ///
+        /// Not bought: its definition is task-unlocked (see
+        /// <see cref="OneTimeUpgradeKind.UnlockDuplicateSight"/>), so it is owned exactly while
+        /// that task is claimed.
         /// </summary>
         DuplicateSight,
 
@@ -21,6 +25,12 @@ namespace Vesolovsky.Game.Upgrades
         /// alone. New kinds go on the end - the values are what the upgrade assets store.
         /// </summary>
         MoveSpeed,
+
+        /// <summary>
+        /// "Set sense": in the album, the set button of every set the player is holding a card from
+        /// breathes gently. Read live by the album view.
+        /// </summary>
+        HandSetSense,
     }
 
     /// <summary>
@@ -39,6 +49,14 @@ namespace Vesolovsky.Game.Upgrades
         /// <see cref="OneTimeUpgradeKind.UnlockLevitate"/>.
         /// </summary>
         Levitate,
+
+        /// <summary>
+        /// "Muscle memory": for a spell after it is cast, every duplicate thrown with nothing aimed
+        /// at flies itself into a duplicate box. A timed skill - see
+        /// <see cref="Vesolovsky.Game.Services.Skills.ITimedSkill"/> - whose levels lengthen the
+        /// spell and shorten the wait after it.
+        /// </summary>
+        MuscleMemory,
     }
 
     /// <summary>Which one-time upgrade a definition drives.</summary>
@@ -62,15 +80,17 @@ namespace Vesolovsky.Game.Upgrades
         UnlockLevitate,
 
         /// <summary>
-        /// "They sense more...": the Levitate HUD button pulses while set-mates of the selected card
-        /// are nearby. Read live by the HUD.
+        /// "They sense more...": a card lying in the room whose slot in the album is already filled
+        /// is drawn grey, so a spare can be picked out from across the floor. The room-side half of
+        /// <see cref="PermanentUpgradeKind.DuplicateSight"/>, and read live by the floor shading.
         /// </summary>
-        LevitatePulse,
+        FloorDuplicateSight,
 
         /// <summary>
-        /// "Muscle memory": a duplicate thrown with nothing aimed at flies itself into a duplicate
-        /// box. Read live by the duplicate service; aiming at a box still places by hand.
+        /// Unlocks "Déjà vu" (<see cref="PermanentUpgradeKind.DuplicateSight"/>) rather than
+        /// carrying an effect of its own: the permanent upgrade names this task as what unlocks it,
+        /// so claiming this is what turns the grey wash in hand on.
         /// </summary>
-        AutoStoreThrownDuplicates,
+        UnlockDuplicateSight,
     }
 }

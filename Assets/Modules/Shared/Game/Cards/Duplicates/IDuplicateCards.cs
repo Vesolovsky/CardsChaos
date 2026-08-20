@@ -13,7 +13,8 @@ namespace CardsChaos.Cards
     /// both copies and this is the second of them. That is the one drawn grey, and the one a throw
     /// files for the player.
     ///
-    /// Both rewards written against this are off until their upgrade is owned.
+    /// Both behaviours written against this are off until they are owned - the grey wash while Déjà
+    /// vu is unearned, the filing except while the Muscle Memory skill is running.
     /// </summary>
     public interface IDuplicateCards
     {
@@ -32,14 +33,14 @@ namespace CardsChaos.Cards
 
         /// <summary>
         /// Whether a freely thrown spare should fly itself into the duplicate box instead of onto
-        /// the floor. False until the reward that grants it has been claimed.
+        /// the floor. True only while the Muscle Memory skill is running.
         /// </summary>
         bool AutoStoresThrownDuplicates { get; }
 
         /// <summary>
-        /// Sends a card in hand to the duplicate box if the reward is owned, the card is a spare
-        /// and the box still has room. Returns false when any of that does not hold, and then the
-        /// card is left in hand for the ordinary throw to deal with.
+        /// Sends a card in hand to the duplicate box if Muscle Memory is running, the card is a
+        /// spare and the box still has room. Returns false when any of that does not hold, and then
+        /// the card is left in hand for the ordinary throw to deal with.
         /// </summary>
         bool TryAutoStore(CardHand hand, Card card);
     }

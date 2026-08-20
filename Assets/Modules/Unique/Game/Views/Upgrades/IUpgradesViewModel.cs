@@ -33,6 +33,15 @@ namespace Vesolovsky.Game.Views
 
         int GetLevel(LeveledUpgradeDefinition definition);
 
+        /// <summary>
+        /// The row's blurb, with every number a purchase would move written as the step it would
+        /// make - "4→5" - so that no two states of an upgrade read alike. At either end, where
+        /// there is nothing to step from or to, the single number stands alone. Skills also get
+        /// their cooldown appended. Re-read whenever the row redraws, because buying a level moves
+        /// the numbers on.
+        /// </summary>
+        string GetDescription(LeveledUpgradeDefinition definition);
+
         int GetMaxLevel(LeveledUpgradeDefinition definition);
 
         /// <summary>Cost of the next level, or 0 when the upgrade is maxed.</summary>

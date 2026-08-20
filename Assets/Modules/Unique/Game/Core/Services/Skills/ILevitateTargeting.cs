@@ -56,13 +56,14 @@ namespace Vesolovsky.Game.Services.Skills
 
             float radiusSqr = _settings.Radius * _settings.Radius;
 
-            foreach (Card card in Object.FindObjectsByType<Card>(FindObjectsSortMode.None))
+            // Walked off the registry rather than swept out of the scene: the registry already
+            // holds every card there is, and FindObjectsByType would allocate an array of the
+            // room's whole card list - a thousand-odd entries - to find the handful in reach.
+            CardRegistry.ForEach((_, card) =>
             {
-                if (!IsEligible(card, setId, eye, radiusSqr))
-                    continue;
-
-                targets.Add(card);
-            }
+                if (IsEligible(card, setId, eye, radiusSqr))
+                    targets.Add(card);
+            });
 
             targets.Sort((a, b) =>
                 HorizontalSqrDistance(a, eye).CompareTo(HorizontalSqrDistance(b, eye)));
@@ -94,13 +95,9 @@ namespace Vesolovsky.Game.Services.Skills
 
             float radiusSqr = _settings.Radius * _settings.Radius;
 
-            foreach (Card card in Object.FindObjectsByType<Card>(FindObjectsSortMode.None))
-            {
-                if (IsEligible(card, setId, eye, radiusSqr))
-                    return true;
-            }
-
-            return false;
+            // The pulse asks this several times a second for as long as Levitate is owned, so it
+            // stops at the first card that qualifies and never touches the scene graph.
+            return CardRegistry.Any(card => IsEligible(card, setId, eye, radiusSqr));
         }
 
         /// <summary>

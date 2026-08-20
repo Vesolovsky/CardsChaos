@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: Levitate
   displayName: Levitate
-  description: Raise up to 10 selected card's set-mates off the ground
+  description: Raise the selected card's set-mates off the ground
   icon: {fileID: 21300000, guid: b999d67d6f8b5114f886ad6f67cf8af9, type: 3}
   skillId: 3
   activationAction: {fileID: 445771091431983633, guid: 8cff13d2b1c787347bf206f8968e49ed,

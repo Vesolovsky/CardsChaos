@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: TheySenseMore
   displayName: They sense more...
-  description: Levitate's button glows whenever cards it could raise are near you
+  description: Duplicates on the floor turn gray
   icon: {fileID: 21300000, guid: ee724feb444298745825b1f6e275ccfb, type: 3}
   kind: 6
   objective:

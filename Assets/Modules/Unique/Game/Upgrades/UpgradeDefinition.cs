@@ -20,6 +20,14 @@ namespace Vesolovsky.Game.Upgrades
 
         [SerializeField] private string displayName;
 
+        [Tooltip("The blurb on the upgrades screen. For a leveled upgrade this may contain {0} - " +
+                 "the level's value - and {1} - its cooldown. Each comes out as the step a purchase " +
+                 "would make, '4→5', so write the sentence around a number that can be a pair: " +
+                 "'Pull up to {0} matching cards' reads correctly either way. Unbought and maxed " +
+                 "out there is only one level to quote, and it comes out as the bare number. Skills " +
+                 "get 'Cooldown: N s' appended on their own, so there is no need to write one. " +
+                 "Leave the braces out entirely for an upgrade whose value would mean nothing to a " +
+                 "player - a fog radius, a walking speed - and just say what it does.")]
         [TextArea]
         [SerializeField] private string description;
 

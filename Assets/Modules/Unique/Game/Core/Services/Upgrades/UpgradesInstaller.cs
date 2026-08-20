@@ -73,16 +73,22 @@ namespace Vesolovsky.Game.Services.Upgrades
             // time (currently the skill cooldowns).
             Container.Bind<IPauseState>().To<PauseState>().AsSingle();
 
-            // What counts as a duplicate, and the two rewards written against it. NonLazy so the
-            // grey wash is already listening to the album and the hand from the first frame - the
-            // card table resolves it optionally and would otherwise never bring it into being.
+            // What counts as a duplicate, and the grey wash on the cards in hand. NonLazy so it is
+            // already listening to the album and the hand from the first frame - the card table
+            // resolves it optionally and would otherwise never bring it into being.
             Container.BindInterfacesAndSelfTo<DuplicateCardService>().AsSingle().NonLazy();
+
+            // The same idea for the cards still lying in the room, behind the "They sense more..."
+            // reward. NonLazy for the same reason: nothing resolves it, and it has to be listening
+            // for the first card the save drops into the scene.
+            Container.BindInterfacesAndSelfTo<FloorDuplicateShading>().AsSingle().NonLazy();
 
             // Each handler is registered as an ISkillHandler; the service takes them as a list.
             Container.BindInterfacesAndSelfTo<CardMagnetSkill>().AsSingle();
             Container.BindInterfacesAndSelfTo<SmartAlbumOpenSkill>().AsSingle();
             Container.BindInterfacesAndSelfTo<HandSortSkill>().AsSingle();
             Container.BindInterfacesAndSelfTo<LevitateSkill>().AsSingle();
+            Container.BindInterfacesAndSelfTo<MuscleMemorySkill>().AsSingle();
 
             Container.BindInterfacesAndSelfTo<SkillService>().AsSingle();
             Container.BindInterfacesTo<SkillInputController>().AsSingle();

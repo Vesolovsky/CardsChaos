@@ -9,6 +9,9 @@ namespace Vesolovsky.Game.Upgrades
     /// A skill: a leveled upgrade the player triggers on purpose and then waits out a cooldown
     /// before triggering again. Buying the first level unlocks it; later levels sharpen it -
     /// usually a shorter cooldown, sometimes a stronger effect - through <see cref="Level"/>.
+    ///
+    /// A skill can also be earned rather than bought, by naming the task that unlocks it in
+    /// <see cref="LeveledUpgradeDefinition.UnlockedBy"/>.
     /// </summary>
     [CreateAssetMenu(
         menuName = "CardsChaos/Upgrades/Skill",
@@ -22,8 +25,8 @@ namespace Vesolovsky.Game.Upgrades
             public int cost;
 
             [Tooltip("The effect strength at this level. Meaning is per-skill - Card Magnet reads " +
-                     "it as how many cards to pull; skills whose only change is the cooldown leave " +
-                     "it at zero.")]
+                     "it as how many cards to pull, Muscle Memory as how many seconds it stays " +
+                     "active; skills whose only change is the cooldown leave it at zero.")]
             public float value;
 
             [Tooltip("Seconds before the skill can be used again after this level fires it.")]
@@ -37,29 +40,12 @@ namespace Vesolovsky.Game.Upgrades
                  "what the keyboard reads and the key the HUD shows in the skill's hint.")]
         [SerializeField] private InputActionReference activationAction;
 
-        [Tooltip("Leave empty for a normal, buyable skill. Set it to a one-time upgrade to make this " +
-                 "skill unlock by claiming that task instead of by spending skill points - the skill " +
-                 "is then hidden from the shop and is 'owned' exactly while the task is claimed. A " +
-                 "task-unlocked skill runs at its single level 1, so author one level below.")]
-        [SerializeField] private OneTimeUpgradeDefinition unlockedBy;
-
         [Tooltip("The levels, lowest first. Level 1 both unlocks the skill and is its first use.")]
         [SerializeField] private List<Level> levels = new List<Level>();
 
         public SkillId SkillId => skillId;
 
         public InputActionReference ActivationAction => activationAction;
-
-        /// <summary>
-        /// The task that unlocks this skill, or null for a skill bought with skill points. When set,
-        /// the skill is not shown in the shop and is unlocked - at level 1 - exactly while the task
-        /// is claimed. <see cref="Vesolovsky.Game.Services.Skills.ISkillService"/> is the one place
-        /// that turns this into an effective level.
-        /// </summary>
-        public OneTimeUpgradeDefinition UnlockedBy => unlockedBy;
-
-        /// <summary>Whether this skill is unlocked by a task rather than bought with skill points.</summary>
-        public bool IsTaskUnlocked => unlockedBy != null;
 
         public override int MaxLevel => levels.Count;
 

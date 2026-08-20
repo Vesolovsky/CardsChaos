@@ -60,12 +60,18 @@ namespace Vesolovsky.Game.Services.Save
     /// <summary>
     /// One skill's cooldown at save time. Skills that are ready are simply absent. The id is stored
     /// by name so reordering the SkillId enum never repoints a saved cooldown at the wrong skill.
+    ///
+    /// A timed skill saved mid-spell carries the rest of that spell too, so quitting with Muscle
+    /// Memory running comes back with it still running rather than already recovering. Absent in a
+    /// save written before timed skills existed, which reads as zero - plain cooldown.
     /// </summary>
     public sealed class SkillCooldownState
     {
         public string SkillId { get; set; }
         public float Remaining { get; set; }
         public float Total { get; set; }
+        public float ActiveRemaining { get; set; }
+        public float ActiveTotal { get; set; }
     }
 
     /// <summary>

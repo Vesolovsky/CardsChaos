@@ -15,8 +15,9 @@ namespace Vesolovsky.Game.Views.Upgrades
     ///
     /// It shows the upgrade's face and blurb, a track of diamonds for its levels, and a buy button
     /// whose cost updates as levels are bought. Buying is delegated to the view model; the row only
-    /// asks and then redraws itself from the result, so the level track and the cost stay honest
-    /// without anything else having to refresh it.
+    /// asks and then redraws itself from the result, so the level track, the cost and the blurb -
+    /// which quotes the numbers of the level being sold - stay honest without anything else having
+    /// to refresh it.
     /// </summary>
     [AddComponentMenu("CardsChaos/Upgrades/Skill Item")]
     public class UpgradeSkillItem : MonoBehaviour
@@ -24,6 +25,10 @@ namespace Vesolovsky.Game.Views.Upgrades
         private const string PermanentLabel = "Permanent";
         private const string SkillLabel = "Skill";
         private const string CompletedLabel = "Completed";
+
+        // What the buy button says once there is nothing left to buy. The label it started with is
+        // whatever the prefab authored, so the button is not told what to say until it is maxed.
+        private const string MaxedButtonLabel = "Maxed out";
 
         // The dimmed alpha the buy label drops to once the upgrade is maxed - 64 of 255.
         private const float DimLabelAlpha = 64f / 255f;
@@ -56,6 +61,7 @@ namespace Vesolovsky.Game.Views.Upgrades
         private IUpgradesViewModel _viewModel;
         private LeveledUpgradeDefinition _definition;
         private float _defaultLabelAlpha = 1f;
+        private string _defaultButtonLabel = string.Empty;
         private Action _onInsufficientPoints;
         private IAudioService _audioService;
 
@@ -80,11 +86,11 @@ namespace Vesolovsky.Game.Views.Upgrades
             if (nameText != null)
                 nameText.SetText(definition.DisplayName);
 
-            if (descriptionText != null)
-                descriptionText.SetText(definition.Description);
-
             if (upgradeButtonLabel != null)
+            {
                 _defaultLabelAlpha = upgradeButtonLabel.color.a;
+                _defaultButtonLabel = upgradeButtonLabel.text;
+            }
 
             BuildLevels(definition.MaxLevel);
 
@@ -111,6 +117,11 @@ namespace Vesolovsky.Game.Views.Upgrades
 
             if (levelText != null)
                 levelText.SetText($"Level {level}/{max}");
+
+            // Redrawn with the rest of the row, not just on bind: the blurb quotes the level being
+            // sold, so buying one has to move its numbers on to the level after it.
+            if (descriptionText != null)
+                descriptionText.SetText(_viewModel.GetDescription(_definition));
 
             for (int i = 0; i < _levels.Count; i++)
             {
@@ -144,6 +155,11 @@ namespace Vesolovsky.Game.Views.Upgrades
 
             if (upgradeButton != null)
                 upgradeButton.interactable = !maxed;
+
+            // The button stops offering something it cannot give: "Upgrade" is only honest while
+            // there is a level left, and the blurb drops its own "Upgrade to" on the same edge.
+            if (upgradeButtonLabel != null)
+                upgradeButtonLabel.SetText(maxed ? MaxedButtonLabel : _defaultButtonLabel);
 
             float alpha = maxed
                 ? DimLabelAlpha

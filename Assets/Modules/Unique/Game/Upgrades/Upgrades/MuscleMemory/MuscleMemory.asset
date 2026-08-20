@@ -9,17 +9,30 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 785ef1c32e4e03d4da4fae0f8f181010, type: 3}
+  m_Script: {fileID: 11500000, guid: 12f9e396e272e3940bf20bc587781eed, type: 3}
   m_Name: MuscleMemory
   m_EditorClassIdentifier: 
   id: MuscleMemory
   displayName: Muscle memory
-  description: Throwing a card that is a duplicate sends it straight to the box with
-    duplicates
+  description: Thrown duplicates fly to the box for {0} seconds
   icon: {fileID: 21300000, guid: ea1eb3e5ae5d97546a0a93035b3c70a8, type: 3}
-  kind: 7
-  objective:
-    kind: 3
-    sets: []
-    count: 200
-  value: 0
+  unlockedBy: {fileID: 0}
+  skillId: 4
+  activationAction: {fileID: -2696390320347541736, guid: 8cff13d2b1c787347bf206f8968e49ed,
+    type: 3}
+  levels:
+  - cost: 1
+    value: 3
+    cooldown: 140
+  - cost: 4
+    value: 5
+    cooldown: 110
+  - cost: 6
+    value: 7
+    cooldown: 80
+  - cost: 9
+    value: 10
+    cooldown: 60
+  - cost: 12
+    value: 15
+    cooldown: 45
