@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Vesolovsky.Core.Services.Save;
 using Vesolovsky.Game.Services.Save;
@@ -79,7 +80,18 @@ namespace Vesolovsky.Game.Services.Stats
 
             // The finale runs for the better part of half a minute and then loads the credits, so
             // this needs to be on its way to disk rather than waiting for a save that may never
-            // come. Marked dirty here; the write itself is the coordinator's business as always.
+            // come - and marking it dirty is not that. Nothing between here and the main menu
+            // writes: the finale loads Credits straight from its fade, Credits loads the menu, and
+            // the room's contributors are torn down on the way. That leaves the last stretch of
+            // play - the final cards filed, the ending itself - riding on the auto-save timer,
+            // which the player can lengthen or switch off entirely, and on a clean quit firing
+            // OnApplicationQuit. A game killed instead of quit would come back to the menu still
+            // a few cards short, with those cards lying on the floor of a room it had finished.
+            //
+            // So the write is forced here, at the one moment the game is over and the room is
+            // still standing to be captured with it. Fire-and-forget because nothing waits on the
+            // ending being on disk; the coordinator serializes a snapshot off the main thread and
+            // logs its own failures, and the finale's ~15 seconds of typing is time enough.
             _saveCoordinator.MarkDirty();
 
             Debug.Log($"[{nameof(LocalEndgameRecord)}] Ending recorded on " +
@@ -87,9 +99,11 @@ namespace Vesolovsky.Game.Services.Stats
                       $"{save.Endgame.Stats.CorrectlyPlacedCards}/{save.Endgame.Stats.TotalCards} " +
                       "cards placed.");
 
-            // Announced last, so a listener sees the ending already written into the save and
-            // already marked for the next write - not one half-way through being recorded.
+            // Announced before the write rather than after: the coordinator takes its snapshot
+            // synchronously, so anything a listener puts into the save has to be in it by then.
             Recorded?.Invoke(save.Endgame);
+
+            _saveCoordinator.SaveNow(force: true).Forget();
         }
     }
 }

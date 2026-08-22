@@ -15,8 +15,8 @@ namespace Vesolovsky.Game.Views
     /// Each button is its own little component (see the Hud* behaviours); the view's job is only to
     /// hand each one what it needs and to translate the hand's comings and goings into the counter's
     /// kick, its flinch, and the hints it raises on the shared <see cref="HudHint"/> queue - camera
-    /// rotation at the start, throwing on the first pickup, the wheel once the hand holds more than
-    /// one, and each skill as it becomes ready.
+    /// rotation at the start, the album on the first pickup, the wheel once the hand holds more
+    /// than one, throwing once the hand is full, and each skill as it becomes ready.
     /// </summary>
     public class GameplayHudView : View<IGameplayHudViewModel>
     {
@@ -163,9 +163,18 @@ namespace Vesolovsky.Game.Views
 
             RefreshCounts(punch: countMoved);
 
-            // The very first card off the floor earns the throw hint. The presenter only shows it
-            // once, so raising it on every gain is harmless.
+            // The very first card off the floor earns the album hint: a card in hand is the first
+            // moment the album is worth opening, and filing it is the whole game. The presenter
+            // only shows a one-time hint once, so raising it on every gain is harmless.
             if (gained)
+                hint?.Show(HintId.OpenAlbum);
+
+            // Throwing is taught when it first solves something - the hand filled to its last slot
+            // and no room for the next card - rather than on the first pickup, where it was an
+            // instruction with no problem behind it and crowded out the one lesson that mattered.
+            // Measured against the hand's own capacity rather than a fixed five, so a player who
+            // has bought a slot is taught when their hand is full rather than one card early.
+            if (gained && hand.SlotCount > 0 && count >= hand.SlotCount)
                 hint?.Show(HintId.ThrowCard);
 
             // The first time there is more than one card to choose between, teach the wheel. Same

@@ -1514,7 +1514,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Collection progress 9999/9999
+  m_text: 'Collection progress: 2000/2000'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8e92c7fba3789a94aa2b6203e9d4a3bf, type: 2}
   m_sharedMaterial: {fileID: -8119000159333799597, guid: 8e92c7fba3789a94aa2b6203e9d4a3bf,

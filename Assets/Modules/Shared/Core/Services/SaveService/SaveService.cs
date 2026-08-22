@@ -11,6 +11,8 @@ namespace Vesolovsky.Core.Services.Save
     {
         public event Action Saved;
 
+        public event Action Cleared;
+
         public static readonly string SAVED_FILE_PATH = Path.Combine(Application.persistentDataPath, "gameSave.json");
 
         private T _currentSave;
@@ -92,7 +94,26 @@ namespace Vesolovsky.Core.Services.Save
             Saved?.Invoke();
         }
 
-        public abstract void ClearSave();
+        /// <summary>
+        /// Wipes the in-memory save back to a new game and then says so.
+        ///
+        /// Not virtual, and the wiping itself is <see cref="ClearSaveData"/>: announcing the clear
+        /// is not optional. A copy of the save held somewhere else that never hears about this is
+        /// the finished game leaking into the new one, and that is a bug nobody sees until they
+        /// are already several rooms into a game that thinks it has been won.
+        /// </summary>
+        public void ClearSave()
+        {
+            ClearSaveData();
+            Cleared?.Invoke();
+        }
+
+        /// <summary>
+        /// Resets the live save object in place, field by field. Called by <see cref="ClearSave"/>,
+        /// which raises <see cref="Cleared"/> afterwards - so this only has to say what a new game
+        /// looks like.
+        /// </summary>
+        protected abstract void ClearSaveData();
 
         private static void EnsureDirectory()
         {

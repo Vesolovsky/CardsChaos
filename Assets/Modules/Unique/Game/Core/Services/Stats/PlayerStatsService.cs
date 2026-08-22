@@ -89,7 +89,11 @@ namespace Vesolovsky.Game.Services.Stats
                 _skills.Activated += OnSkillActivated;
 
             if (_album != null)
+            {
                 _album.PageChanged += OnPageChanged;
+                _album.CardPlaced += OnCardPlaced;
+                _album.CardTaken += OnCardTaken;
+            }
 
             CardStackContainer.ContentsChanged += OnContainerContentsChanged;
         }
@@ -106,7 +110,11 @@ namespace Vesolovsky.Game.Services.Stats
                 _skills.Activated -= OnSkillActivated;
 
             if (_album != null)
+            {
                 _album.PageChanged -= OnPageChanged;
+                _album.CardPlaced -= OnCardPlaced;
+                _album.CardTaken -= OnCardTaken;
+            }
 
             CardStackContainer.ContentsChanged -= OnContainerContentsChanged;
         }
@@ -245,6 +253,71 @@ namespace Vesolovsky.Game.Services.Stats
             RefreshCollection(stats);
         }
 
+        /// <summary>
+        /// Carries the no-mistakes run. A card in its own slot lengthens it and may lift the record;
+        /// a card in a slot it does not belong in ends it there and then.
+        ///
+        /// Only album placements reach here, which is the whole rule: boxing a spare is not filing,
+        /// and a box turning away a card it already holds is the game refusing a move rather than
+        /// the player getting one wrong - neither touches the run.
+        /// </summary>
+        private void OnCardPlaced(CardRef card, bool correct)
+        {
+            PlayerStatsData stats = Stats;
+            if (stats == null)
+                return;
+
+            if (!correct)
+            {
+                // Nothing to write when it was already nothing - two misfiles in a row are one
+                // broken run, not two.
+                if (stats.CorrectPlacementStreak == 0)
+                    return;
+
+                Log($"Misfiled {card} - streak of {stats.CorrectPlacementStreak} ends " +
+                    $"(best {stats.PeakCorrectPlacementStreak})");
+
+                stats.CorrectPlacementStreak = 0;
+                _saveCoordinator.MarkDirty();
+                return;
+            }
+
+            stats.CorrectPlacementStreak++;
+
+            if (stats.CorrectPlacementStreak > stats.PeakCorrectPlacementStreak)
+                stats.PeakCorrectPlacementStreak = stats.CorrectPlacementStreak;
+
+            // Marked dirty but not announced: the run is not drawn anywhere live, and the album
+            // move that got here already brings the collection snapshot round to raise Changed.
+            _saveCoordinator.MarkDirty();
+            Log($"Filed {card} - streak {stats.CorrectPlacementStreak} " +
+                $"(best {stats.PeakCorrectPlacementStreak})");
+        }
+
+        /// <summary>
+        /// Hands back the point a card earned when it is lifted out of the slot it earned it in.
+        /// Not a punishment and not a broken run - the same move undone, undoing the same point.
+        ///
+        /// This is what stops the run being wound up by hand. Without it, taking a filed card out
+        /// and dropping it straight back would read as another card filed, and a player with one
+        /// card and a free afternoon could run the record up as far as they liked. With it the
+        /// round trip is a wash, which is what it actually is: nothing new was filed.
+        ///
+        /// A card taken out of a slot it never belonged in gives nothing back, because it never
+        /// earned anything - it ended the previous run instead.
+        /// </summary>
+        private void OnCardTaken(CardRef card, bool wasCorrect)
+        {
+            PlayerStatsData stats = Stats;
+            if (stats == null || !wasCorrect || stats.CorrectPlacementStreak == 0)
+                return;
+
+            stats.CorrectPlacementStreak--;
+            _saveCoordinator.MarkDirty();
+            Log($"Took {card} back out - streak {stats.CorrectPlacementStreak} " +
+                $"(best {stats.PeakCorrectPlacementStreak})");
+        }
+
         private void OnContainerContentsChanged()
         {
             // Parenting can change many cards in one save-restore frame. Coalesce the burst into
@@ -347,7 +420,8 @@ namespace Vesolovsky.Game.Services.Stats
                    $"dist={s.DistanceTraveled:F2} sprint={s.DistanceSprinted:F2} " +
                    $"correct={s.CorrectlyPlacedCards}/{s.TotalCards} " +
                    $"remaining={Mathf.Max(0, s.TotalCards - s.CorrectlyPlacedCards)} " +
-                   $"peak={s.PeakCorrectlyPlaced}";
+                   $"peak={s.PeakCorrectlyPlaced} " +
+                   $"streak={s.CorrectPlacementStreak}/{s.PeakCorrectPlacementStreak}";
         }
 
         // --- IPlayerStats: cumulative reads ---
@@ -362,6 +436,7 @@ namespace Vesolovsky.Game.Services.Stats
         public int PeakCorrectlyPlaced => Stats?.PeakCorrectlyPlaced ?? 0;
         public int PeakAlbumCorrect => Stats?.PeakAlbumCorrect ?? 0;
         public int PeakDuplicatesStored => Stats?.PeakDuplicatesStored ?? 0;
+        public int PeakCorrectPlacementStreak => Stats?.PeakCorrectPlacementStreak ?? 0;
 
         // --- IPlayerStats: collection snapshot reads (straight from the save) ---
 

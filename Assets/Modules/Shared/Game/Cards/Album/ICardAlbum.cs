@@ -18,6 +18,24 @@ namespace CardsChaos.Cards.Album
         /// </summary>
         event Action<string> PageChanged;
 
+        /// <summary>
+        /// Raised each time a card is put down, with the card and whether it landed in its own
+        /// slot. <see cref="PageChanged"/> says a page moved; this says what the move was, which
+        /// is what a run of right answers has to be counted from.
+        ///
+        /// Rebuilding the album from the save on load does not raise it, since that never goes
+        /// through <see cref="Place"/>.
+        /// </summary>
+        event Action<CardRef, bool> CardPlaced;
+
+        /// <summary>
+        /// Raised each time a card is lifted back out, with the card and whether it had been
+        /// sitting in its own slot. The mirror of <see cref="CardPlaced"/>: a count kept from the
+        /// one has to hear the other, or taking a card out and putting it straight back would read
+        /// as two cards filed.
+        /// </summary>
+        event Action<CardRef, bool> CardTaken;
+
         /// <summary>The card in a slot, or <see cref="CardRef.None"/> when it is empty.</summary>
         CardRef GetPlacement(string pageSetId, int slotIndex);
 

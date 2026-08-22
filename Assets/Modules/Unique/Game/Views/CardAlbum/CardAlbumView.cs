@@ -279,7 +279,18 @@ namespace Vesolovsky.Game.Views
                 // Escape only ever closes. Bound the other way round it would fight every other
                 // panel that wants the same key to back out of itself. Refused once the endgame has
                 // sealed the album.
-                if (keyboard.escapeKey.wasPressedThisFrame)
+                //
+                // The right button closes as well, so the hand already resting on it - it turns the
+                // camera out in the room and backs out of a card close-up - has the same way out of
+                // the album. Only in the room: the menu's album was asked for by name and closing it
+                // destroys the view, so there it keeps Escape and its close button. The camera only
+                // ever starts a turn on a fresh press and it ticks before this view does, so by the
+                // time the room is listening again the press spent here is already stale.
+                bool closePressed = keyboard.escapeKey.wasPressedThisFrame
+                                    || (!_readOnly && Mouse.current != null
+                                        && Mouse.current.rightButton.wasPressedThisFrame);
+
+                if (closePressed)
                     TryClose();
             }
         }

@@ -82,6 +82,34 @@ namespace Vesolovsky.Game.Services.Save
         public int PeakAlbumCorrect { get; set; }
 
         /// <summary>
+        /// Cards filed into their own album slot in a row, without one going into a slot it does
+        /// not belong in. A run, not a tally: it climbs with every card that lands where it belongs
+        /// and drops to nothing the moment one does not.
+        ///
+        /// Deliberately unlike the peaks above, which only ever rise. Those measure how far the
+        /// collection got; this measures how long the player went without a mistake, and a mistake
+        /// that could not take it back would not be measuring anything. Only the album counts:
+        /// putting a spare in the duplicate box is not filing, and a box refusing a card it already
+        /// holds is not an error the player made.
+        ///
+        /// Lifting a card back out of its own slot gives its point back - the run drops by one
+        /// rather than ending. That is not a second way to lose it; it is the same move undone, and
+        /// it is what keeps the run honest. Counting only the way in would make taking one card out
+        /// and dropping it straight back read as another card filed, and the record would then say
+        /// nothing about the collection and everything about who was willing to sit there doing it.
+        ///
+        /// Carried in the save so a run survives closing the game - it is the same collection
+        /// being filed either side of a session.
+        /// </summary>
+        public int CorrectPlacementStreak { get; set; }
+
+        /// <summary>
+        /// The longest <see cref="CorrectPlacementStreak"/> ever reached. This is the one the
+        /// closing tally shows; the live run above is only what feeds it.
+        /// </summary>
+        public int PeakCorrectPlacementStreak { get; set; }
+
+        /// <summary>
         /// Isolated copy for the off-thread save write, so serializing on a background thread never
         /// reads a field gameplay is mutating on the main thread. All fields are value types, so a
         /// flat field copy is a full deep copy.
@@ -103,6 +131,8 @@ namespace Vesolovsky.Game.Services.Save
                 TotalCards = TotalCards,
                 PeakDuplicatesStored = PeakDuplicatesStored,
                 PeakAlbumCorrect = PeakAlbumCorrect,
+                CorrectPlacementStreak = CorrectPlacementStreak,
+                PeakCorrectPlacementStreak = PeakCorrectPlacementStreak,
             };
         }
     }

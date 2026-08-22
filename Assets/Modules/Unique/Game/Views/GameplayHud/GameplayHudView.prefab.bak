@@ -4328,7 +4328,7 @@ MonoBehaviour:
   icon: {fileID: 8503686424814186109}
   hints:
   - Id: 1
-    Text: Press <b>[{0}]</b> to throw a card
+    Text: Press <b>[F]</b> To throw a card
     ActionName: Throw
     Icon: {fileID: 0}
     StartDelay: 0
@@ -4437,7 +4437,7 @@ MonoBehaviour:
     Important: 0
   - Id: 12
     Text: Muscle memory is ready - press <b>[{0}]</b> to use it
-    ActionName: MuscleMemory
+    ActionName:
     Icon: {fileID: 0}
     StartDelay: 0
     HoldDuration: 1

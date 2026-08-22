@@ -219,7 +219,7 @@ namespace Vesolovsky.Game.Views
                 return;
 
             collectionProgressText.SetText(
-                $"Collection progress: {_playerStats.CorrectlyPlacedCards} / {_playerStats.TotalCards}");
+                $"Collection progress: {_playerStats.CorrectlyPlacedCards}/{_playerStats.TotalCards}");
         }
 
         /// <summary>

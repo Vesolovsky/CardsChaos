@@ -267,7 +267,7 @@ namespace Vesolovsky.Game.Views.Album
                 (timePlayedText, $"Playtime: {StatsFormat.Playtime(s?.PlaytimeSeconds ?? 0d)}"),
                 (sessionsPlayedText, $"Sessions played: {s?.SessionsPlayed ?? 0L}"),
                 (distanceTraveledText, $"Distance traveled: {FormatDistance(s?.DistanceTraveled ?? 0d)}"),
-                (peakCorrectlyPlacedText, $"Correctly placed streak: {s?.PeakCorrectlyPlaced ?? 0}"),
+                (peakCorrectlyPlacedText, $"Correctly placed streak: {s?.PeakCorrectPlacementStreak ?? 0}"),
                 // Invariant, so the colons stay colons: ':' in a date format is the culture's time
                 // separator, and on a machine whose locale uses '.' the line would come out in a
                 // shape nobody authored.

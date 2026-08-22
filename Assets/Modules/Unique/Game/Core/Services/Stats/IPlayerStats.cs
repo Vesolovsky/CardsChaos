@@ -55,6 +55,14 @@ namespace Vesolovsky.Game.Services.Stats
         /// <summary>The most duplicates ever put away in the duplicate box at one moment.</summary>
         int PeakDuplicatesStored { get; }
 
+        /// <summary>
+        /// The longest run of cards filed into their own album slot without one landing in a slot
+        /// it does not belong in - how long the player went without a misfile, rather than how far
+        /// they got. Boxing duplicates neither adds to a run nor breaks one, and a card lifted back
+        /// out gives its point back, so re-filing the same card cannot wind the record up.
+        /// </summary>
+        int PeakCorrectPlacementStreak { get; }
+
         // --- Collection snapshot, saved ---
 
         /// <summary>Every original and its one allowed duplicate - the collection denominator.</summary>

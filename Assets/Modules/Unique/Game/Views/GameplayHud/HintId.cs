@@ -10,7 +10,7 @@ namespace Vesolovsky.Game.Views.GameplayHud
         /// <summary>Shown once at the start: how to turn the camera.</summary>
         RotateCamera,
 
-        /// <summary>Shown the first time a card is picked up: how to throw it back down.</summary>
+        /// <summary>Shown the first time the hand is filled to its last slot: how to throw one back down.</summary>
         ThrowCard,
 
         /// <summary>Shown the first time the hand holds more than one card: the wheel cycles them.</summary>
@@ -49,5 +49,11 @@ namespace Vesolovsky.Game.Views.GameplayHud
 
         /// <summary>Shown when the Muscle memory skill has recovered and can be cast again.</summary>
         MuscleMemoryReady,
+
+        /// <summary>
+        /// Shown the first time a card is picked up: where that card is meant to end up. This is
+        /// the first thing a new player needs, so it takes the moment the throw hint used to have.
+        /// </summary>
+        OpenAlbum,
     }
 }

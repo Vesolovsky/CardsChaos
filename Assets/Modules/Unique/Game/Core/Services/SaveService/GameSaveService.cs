@@ -215,9 +215,11 @@ namespace Vesolovsky.Game.Services.Save
 
         /// <summary>
         /// Resets the in-memory save only. Persisting is the caller's job, via
-        /// <see cref="Vesolovsky.Core.Services.Save.ISaveCoordinator.SaveNow"/>.
+        /// <see cref="Vesolovsky.Core.Services.Save.ISaveCoordinator.SaveNow"/>; telling everyone
+        /// the save has been wiped is the base class's, which raises
+        /// <see cref="Vesolovsky.Core.Services.Save.ISaveService{T}.Cleared"/> once this returns.
         /// </summary>
-        public override void ClearSave()
+        protected override void ClearSaveData()
         {
             CurrentSave.Currencies[CurrencyType.SkillPoints] = 0;
             CurrentSave.Album?.Clear();

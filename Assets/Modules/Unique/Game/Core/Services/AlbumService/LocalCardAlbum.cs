@@ -17,9 +17,13 @@ namespace Vesolovsky.Game.Services.Album
     /// thing worth having here: there is no second code path that could let the index and the
     /// file drift apart.
     /// </summary>
-    public class LocalCardAlbum : ICardAlbum
+    public class LocalCardAlbum : ICardAlbum, IDisposable
     {
         public event Action<string> PageChanged;
+
+        public event Action<CardRef, bool> CardPlaced;
+
+        public event Action<CardRef, bool> CardTaken;
 
         private readonly ISaveService<GameSave> _saveService;
         private readonly ISaveCoordinator _saveCoordinator;
@@ -39,6 +43,30 @@ namespace Vesolovsky.Game.Services.Album
         {
             _saveService = saveService;
             _saveCoordinator = saveCoordinator;
+
+            _saveService.Cleared += DropIndex;
+        }
+
+        public void Dispose()
+        {
+            _saveService.Cleared -= DropIndex;
+        }
+
+        /// <summary>
+        /// Forgets the index so the next read rebuilds it from the save as it now stands.
+        ///
+        /// This lives on the project context, so unlike everything else that reads the album it is
+        /// not thrown away and rebuilt when a scene loads - it is the same object from launch to
+        /// quit. Starting a new game empties the save's placement list in place, which the index
+        /// has no way of noticing: without this, a player who finished a game and started another
+        /// one in the same sitting would walk into a room whose album still held every card of the
+        /// game they had just retired. Worse than looking wrong - the next card filed rewrites the
+        /// save's list from this index, and the finished game would be back in the file for good.
+        /// </summary>
+        private void DropIndex()
+        {
+            _pages = null;
+            _held = null;
         }
 
         // Built on first use rather than in the constructor: the save is filled in by an async
@@ -150,6 +178,10 @@ namespace Vesolovsky.Game.Services.Album
             slots[slotIndex] = card;
             Hold(card, 1);
             Flush(pageSetId);
+
+            // After the flush, so a listener that reads the album back - the stats tracker does -
+            // sees the card already in it rather than a page half-way through changing.
+            CardPlaced?.Invoke(card, card.BelongsAt(pageSetId, slotIndex));
         }
 
         public CardRef Take(string pageSetId, int slotIndex)
@@ -160,6 +192,10 @@ namespace Vesolovsky.Game.Services.Album
                 return CardRef.None;
             }
 
+            // Read while the slot it came out of is still known, and before the page below can be
+            // dropped from under it.
+            bool wasCorrect = card.BelongsAt(pageSetId, slotIndex);
+
             // An emptied page is dropped so it stops being written out, and so a set the player
             // has never touched and one they have emptied look the same on reload.
             if (slots.Count == 0)
@@ -167,6 +203,8 @@ namespace Vesolovsky.Game.Services.Album
 
             Hold(card, -1);
             Flush(pageSetId);
+
+            CardTaken?.Invoke(card, wasCorrect);
             return card;
         }
 

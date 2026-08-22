@@ -56,6 +56,8 @@ namespace Vesolovsky.Game.Services.Stats
 
         public int PeakDuplicatesStored => Stats?.PeakDuplicatesStored ?? 0;
 
+        public int PeakCorrectPlacementStreak => Stats?.PeakCorrectPlacementStreak ?? 0;
+
         public int TotalCards => Stats?.TotalCards ?? 0;
 
         public int CorrectlyPlacedCards => Stats?.CorrectlyPlacedCards ?? 0;

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: MuscleMemory
   displayName: Muscle memory
-  description: Thrown duplicates fly to the box for {0} seconds
+  description: Use it, then throw duplicates within {0}s - they fly to the box
+    automatically
   icon: {fileID: 21300000, guid: ea1eb3e5ae5d97546a0a93035b3c70a8, type: 3}
   unlockedBy: {fileID: 0}
   skillId: 4
