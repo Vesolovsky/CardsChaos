@@ -278,6 +278,9 @@ namespace Vesolovsky.Game.Views
 
                 AsyncOperation operation = mainMenuScene.LoadSceneAsync();
                 Core.Utils.LoadTiming.Track($"Pause -> {mainMenuScene.SceneName}", operation);
+
+                // The wipe is closed by now, so the load can have the whole frame.
+                Core.Utils.LoadingBoost.During(operation);
                 await UniTask.WaitUntil(() => operation.isDone);
 
                 if (_sceneTransition != null)

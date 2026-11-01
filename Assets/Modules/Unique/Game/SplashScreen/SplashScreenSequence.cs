@@ -375,6 +375,10 @@ namespace Vesolovsky.Game.SplashScreen
             // logo is only being held up until the scene is ready.
             LoadTiming.Track("Splash wait after the animation", _load);
 
+            // Nothing moves from here until the scene swaps - the logo is only being held - so the
+            // load may have the whole frame.
+            LoadingBoost.During(_load);
+
             if (await UniTask.WaitUntil(() => _load.progress >= LoadReadyProgress, cancellationToken: token)
                     .SuppressCancellationThrow())
             {

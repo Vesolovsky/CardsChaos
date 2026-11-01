@@ -262,6 +262,9 @@ namespace Vesolovsky.Game.Views
             {
                 operation = scene.LoadSceneAsync();
                 Core.Utils.LoadTiming.Track($"Main menu -> {scene.SceneName}", operation);
+
+                // The wipe is closed by now, so the load can have the whole frame.
+                Core.Utils.LoadingBoost.During(operation);
             }
             catch (Exception exception)
             {
