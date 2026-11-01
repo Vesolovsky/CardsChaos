@@ -261,6 +261,7 @@ namespace Vesolovsky.Game.Views
             try
             {
                 operation = scene.LoadSceneAsync();
+                Core.Utils.LoadTiming.Track($"Main menu -> {scene.SceneName}", operation);
             }
             catch (Exception exception)
             {
