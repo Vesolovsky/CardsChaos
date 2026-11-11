@@ -58,6 +58,21 @@ namespace Vesolovsky.Core.Services.Save
         void SaveBlocking();
 
         /// <summary>
+        /// Throws away everything since the last write: the in-memory save goes back to the copy
+        /// on disk and nothing is left marked dirty. For the player answering "don't save" on the
+        /// way to the main menu with auto-save off. Call it once the room is on its way out - live
+        /// gameplay keeps writing into the save while it runs.
+        /// </summary>
+        UniTask DiscardUnsavedChanges();
+
+        /// <summary>
+        /// Set when the player has already decided what happens to the save on this quit (saved
+        /// it, or chose not to). The application-quit handler then leaves the file alone instead
+        /// of writing the live room over that decision.
+        /// </summary>
+        bool SkipSaveOnQuit { get; set; }
+
+        /// <summary>
         /// Registers a source of live runtime state (the room, the skills) to be captured into the
         /// save just before every write. Scene-scoped contributors register on load and must call
         /// <see cref="RemoveContributor"/> when their scene tears down.

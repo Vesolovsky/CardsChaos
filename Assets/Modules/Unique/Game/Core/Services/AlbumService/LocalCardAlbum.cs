@@ -45,11 +45,13 @@ namespace Vesolovsky.Game.Services.Album
             _saveCoordinator = saveCoordinator;
 
             _saveService.Cleared += DropIndex;
+            _saveService.Reloaded += DropIndex;
         }
 
         public void Dispose()
         {
             _saveService.Cleared -= DropIndex;
+            _saveService.Reloaded -= DropIndex;
         }
 
         /// <summary>
