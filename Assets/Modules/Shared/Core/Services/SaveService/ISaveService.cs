@@ -17,6 +17,13 @@ namespace Vesolovsky.Core.Services.Save
         /// </summary>
         event Action Cleared;
 
+        /// <summary>
+        /// Raised after <see cref="ReloadFromDisk"/> has replaced the in-memory save with the copy
+        /// on disk, on the main thread. Same reason to listen as <see cref="Cleared"/>: anything
+        /// holding its own index of the save has to throw it away and rebuild from the new one.
+        /// </summary>
+        event Action Reloaded;
+
         public UniTask Save();
 
         /// <summary>
@@ -26,6 +33,15 @@ namespace Vesolovsky.Core.Services.Save
         public void SaveBlocking();
 
         public void ClearSave();
+
+        /// <summary>
+        /// Throws away every in-memory change since the last write and goes back to what is on
+        /// disk (or to a fresh save, if nothing has been written yet). For the player saying
+        /// "don't save" on the way out with auto-save off - without this the unsaved progress
+        /// would still be in memory, and the next Continue or write would bring it back.
+        /// <see cref="CurrentSave"/> is a new object afterwards; read it again rather than keeping it.
+        /// </summary>
+        public UniTask ReloadFromDisk();
         public T CurrentSave { get; }
     }
 }

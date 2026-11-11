@@ -31,6 +31,8 @@ namespace Vesolovsky.Core.Services.Save
 
         public bool HasUnsavedChanges { get; private set; }
 
+        public bool SkipSaveOnQuit { get; set; }
+
         public bool IsAutoSaveEnabled
         {
             get => _isAutoSaveEnabled;
@@ -169,6 +171,19 @@ namespace Vesolovsky.Core.Services.Save
                 HasUnsavedChanges = true;
                 Debug.LogError($"Failed to write the save file on quit. Exception: {e}");
             }
+        }
+
+        public async UniTask DiscardUnsavedChanges()
+        {
+            // Let a write that is already running land first, so it cannot finish after the
+            // reload and put the discarded progress back on disk.
+            if (_isSaving)
+                await UniTask.WaitUntil(() => !_isSaving);
+
+            await _saveService.ReloadFromDisk();
+
+            HasUnsavedChanges = false;
+            _secondsSinceLastAutoSave = 0f;
         }
 
         private void ApplySettings(GameSettingsData settings)

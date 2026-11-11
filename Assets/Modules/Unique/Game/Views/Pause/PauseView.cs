@@ -53,13 +53,14 @@ namespace Vesolovsky.Game.Views
                  "each time the menu opens; the clock does not run while it is up.")]
         [SerializeField] private VText playtimeText;
 
-        [Tooltip("Saves the room, hands it back, and returns to the main menu scene.")]
+        [Tooltip("Saves the room, hands it back, and returns to the main menu scene. With auto-save " +
+                 "off it asks first whether to save.")]
         [SerializeField] private VButton mainMenuButton;
 
         [Tooltip("The scene the Main Menu button leads to. Must be in Build Settings.")]
         [SerializeField] private SceneReference mainMenuScene;
 
-        [Tooltip("Saves fully, then quits the game.")]
+        [Tooltip("Saves fully, then quits the game. With auto-save off it asks first whether to save.")]
         [SerializeField] private VButton quitButton;
 
         private IWorldInteractionLock _worldLock;
@@ -75,6 +76,11 @@ namespace Vesolovsky.Game.Views
         private bool _isOpen;
         private bool _isOpeningSettings;
         private bool _isSaving;
+        private bool _isAskingToSave;
+
+        // Set once the player has answered the "save before quitting?" question, so the quit it
+        // starts is let through rather than stopped to ask again.
+        private bool _quitConfirmed;
 
         // Set the moment the player commits to leaving for the menu, and only cleared if that
         // turns out to be impossible. Escape stands down while it is set: the room is on its way
@@ -117,6 +123,10 @@ namespace Vesolovsky.Game.Views
             saveButton?.Bind(() => SaveProgress().Forget());
             mainMenuButton?.Bind(() => OpenMainMenu().Forget());
             quitButton?.Bind(QuitGame);
+
+            // Covers the window's close button and Alt+F4 as well as the Quit button: with
+            // auto-save off the player is asked before anything is written or thrown away.
+            Application.wantsToQuit += OnWantsToQuit;
 
             if (_gameSettings != null)
             {
@@ -237,10 +247,113 @@ namespace Vesolovsky.Game.Views
 
         private void QuitGame()
         {
-            // Full synchronous save before the process leaves. ApplicationSaveHandler also saves on
-            // OnApplicationQuit, so a window-close from outside the menu is covered as well.
-            _saveCoordinator?.SaveBlocking();
+            if (_isLeaving)
+                return;
+
+            if (IsAutoSaveEnabled() || !CanAskToSave())
+            {
+                // Full synchronous save before the process leaves. ApplicationSaveHandler also
+                // saves on OnApplicationQuit, so a window-close from outside the menu is covered.
+                _saveCoordinator?.SaveBlocking();
+                Application.Quit();
+                return;
+            }
+
+            AskToSave(
+                "Quit game",
+                onSave: () => QuitAfterAnswer(save: true),
+                onDontSave: () => QuitAfterAnswer(save: false)).Forget();
+        }
+
+        private void QuitAfterAnswer(bool save)
+        {
+            if (save)
+                _saveCoordinator?.SaveBlocking();
+
+            // The question has been answered for this quit - the quit handler must not write the
+            // live room over a "don't save", and the wantsToQuit hook must not ask again.
+            if (_saveCoordinator != null)
+                _saveCoordinator.SkipSaveOnQuit = true;
+
+            _quitConfirmed = true;
             Application.Quit();
+        }
+
+        /// <summary>
+        /// Stops a quit that did not come through the menu (the window's close button, Alt+F4)
+        /// while auto-save is off, so the player gets the same save question as the Quit button.
+        /// </summary>
+        private bool OnWantsToQuit()
+        {
+            if (_quitConfirmed || _isLeaving || IsAutoSaveEnabled())
+                return true;
+
+            // No popup to ask with - let the quit through and the quit handler save as before.
+            if (!CanAskToSave())
+                return true;
+
+            if (!_isOpen)
+                Open();
+
+            QuitGame();
+            return false;
+        }
+
+        private bool CanAskToSave() => _dynamicViewsCanvas != null && SceneViewsService != null;
+
+        private bool IsAutoSaveEnabled()
+        {
+            if (_saveCoordinator == null)
+                return true;
+
+            return _gameSettings != null
+                ? _gameSettings.Current.AutoSave
+                : _saveCoordinator.IsAutoSaveEnabled;
+        }
+
+        /// <summary>
+        /// "Save before leaving?" with Save / Don't save / Cancel. Cancel just closes the popup
+        /// and leaves the pause menu where it was.
+        /// </summary>
+        private async UniTask AskToSave(string title, Action onSave, Action onDontSave)
+        {
+            if (_isAskingToSave || !CanAskToSave() || this == null)
+                return;
+
+            // Already asking (a second Alt+F4, say) - one question on screen is enough.
+            if (IsPopupShown())
+                return;
+
+            var definition = new ConfirmationPopupViewDefinition
+            {
+                ViewModelInitData = new ConfirmationPopupViewModelInitData(
+                    title,
+                    "Auto-save is off. Do you want to save your progress before leaving?",
+                    ConfirmationPopupButtons.ConfirmAndDecline | ConfirmationPopupButtons.Alternate,
+                    confirmAction: onSave,
+                    declineAction: null)
+                {
+                    ConfirmLabel = "Save",
+                    AlternateLabel = "Don't save",
+                    DeclineLabel = "Cancel",
+                    AlternateAction = onDontSave,
+                }
+            };
+
+            _isAskingToSave = true;
+            try
+            {
+                // On the shared DynamicViewsCanvas like the "Progress saved" popup;
+                // HasSettingsOverlay() already treats it as owning Escape while it is up.
+                await SceneViewsService.AddView(
+                    definition,
+                    _dynamicViewsCanvas.transform,
+                    throughQueue: false);
+            }
+            finally
+            {
+                _isAskingToSave = false;
+            }
         }
 
         private async UniTask OpenMainMenu()
@@ -256,11 +369,28 @@ namespace Vesolovsky.Game.Views
                 return;
             }
 
+            if (IsAutoSaveEnabled() || !CanAskToSave())
+            {
+                await LeaveForMainMenu(save: true);
+                return;
+            }
+
+            await AskToSave(
+                "Back to main menu",
+                onSave: () => LeaveForMainMenu(save: true).Forget(),
+                onDontSave: () => LeaveForMainMenu(save: false).Forget());
+        }
+
+        private async UniTask LeaveForMainMenu(bool save)
+        {
+            if (_isLeaving)
+                return;
+
             _isLeaving = true;
 
             // The room's save contributors are torn down with the gameplay scene, so the world has
             // to be captured while they are still alive - before the load below.
-            if (_saveCoordinator != null)
+            if (save && _saveCoordinator != null)
                 await _saveCoordinator.SaveNow(force: true);
 
             // Hand the room back before leaving it, rather than trusting teardown order to do it.
@@ -275,6 +405,21 @@ namespace Vesolovsky.Game.Views
             {
                 if (_sceneTransition != null)
                     await _sceneTransition.FadeIn();
+
+                if (!save && _saveCoordinator != null)
+                {
+                    // Hold the room still so nothing ticks progress back into the save between the
+                    // discard and the scene going away (both are the room's own, not the project's).
+                    if (_pauseState != null)
+                        _pauseState.IsPaused = true;
+
+                    if (_skillGate != null)
+                        _skillGate.Blocked = true;
+
+                    // "Don't save": back to what is on disk, so the menu's Continue - and any later
+                    // write - picks up the last save rather than this session's unsaved progress.
+                    await _saveCoordinator.DiscardUnsavedChanges();
+                }
 
                 AsyncOperation operation = mainMenuScene.LoadSceneAsync();
                 await UniTask.WaitUntil(() => operation.isDone);
@@ -373,6 +518,20 @@ namespace Vesolovsky.Game.Views
             return false;
         }
 
+        private bool IsPopupShown()
+        {
+            if (SceneViewsService == null)
+                return false;
+
+            foreach (IView view in SceneViewsService.LoadedViews)
+            {
+                if (view.IsShown && view is ConfirmationPopupView)
+                    return true;
+            }
+
+            return false;
+        }
+
         private void OnSettingsApplied(GameSettingsData settings)
         {
             RefreshSaveUi(settings.AutoSave);
@@ -402,6 +561,8 @@ namespace Vesolovsky.Game.Views
 
         protected override void OnDestroy()
         {
+            Application.wantsToQuit -= OnWantsToQuit;
+
             if (_gameSettings != null)
                 _gameSettings.Applied -= OnSettingsApplied;
 

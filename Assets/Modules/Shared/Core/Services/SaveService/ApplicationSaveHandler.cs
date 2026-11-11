@@ -23,7 +23,12 @@ namespace Vesolovsky.Core.Services.Save
 
         private void OnApplicationQuit()
         {
-            _saveCoordinator?.SaveBlocking();
+            // The player already answered "save before quitting?" (auto-save off) - writing the
+            // live room here would overrule a "don't save", and repeat a "save".
+            if (_saveCoordinator == null || _saveCoordinator.SkipSaveOnQuit)
+                return;
+
+            _saveCoordinator.SaveBlocking();
         }
     }
 }

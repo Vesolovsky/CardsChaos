@@ -13,6 +13,8 @@ namespace Vesolovsky.Core.Services.Save
 
         public event Action Cleared;
 
+        public event Action Reloaded;
+
         public static readonly string SAVED_FILE_PATH = Path.Combine(Application.persistentDataPath, "gameSave.json");
 
         private T _currentSave;
@@ -42,6 +44,23 @@ namespace Vesolovsky.Core.Services.Save
         /// cloud copy too. Every format change from here on is a step inside this method.
         /// </summary>
         protected abstract void Migrate(T save);
+
+        public async UniTask ReloadFromDisk()
+        {
+            T loaded = await LoadData();
+
+            if (loaded == null)
+                loaded = CreateInitialSave();
+            else
+                Migrate(loaded);
+
+            // Swapped rather than copied into the old object: every reader goes through
+            // CurrentSave, and a whole new object means no field of the discarded progress can
+            // survive by being absent from an older file.
+            await UniTask.SwitchToMainThread();
+            _currentSave = loaded;
+            Reloaded?.Invoke();
+        }
 
         protected abstract T CreateInitialSave();
 

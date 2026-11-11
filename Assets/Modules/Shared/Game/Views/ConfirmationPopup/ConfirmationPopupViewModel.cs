@@ -12,6 +12,13 @@ namespace Vesolovsky.Game.Views
         Confirm = 1 << 0,
         Decline = 1 << 1,
         ConfirmAndDecline = Confirm | Decline,
+
+        /// <summary>
+        /// A third answer between Confirm and Decline - "Don't save" next to "Save" and "Cancel".
+        /// The prefab has no button for it; the view clones the Confirm button at runtime, so it
+        /// needs <see cref="ConfirmationPopupViewModelInitData.AlternateLabel"/> to say something.
+        /// </summary>
+        Alternate = 1 << 2,
     }
 
     public class ConfirmationPopupViewModelInitData : IViewModelInitData
@@ -24,6 +31,16 @@ namespace Vesolovsky.Game.Views
 
         public Action ConfirmAction;
         public Action DeclineAction;
+        public Action AlternateAction;
+
+        /// <summary>Overrides the Confirm button's prefab label when set.</summary>
+        public string ConfirmLabel;
+
+        /// <summary>Overrides the Decline button's prefab label when set.</summary>
+        public string DeclineLabel;
+
+        /// <summary>The label of the <see cref="ConfirmationPopupButtons.Alternate"/> button.</summary>
+        public string AlternateLabel;
 
         public ConfirmationPopupViewModelInitData(
             LocalizedString title,
@@ -63,9 +80,13 @@ namespace Vesolovsky.Game.Views
         public string Title { get; private set; }
         public string Description { get; private set; }
         public ConfirmationPopupButtons Buttons { get; private set; }
+        public string ConfirmLabel { get; private set; }
+        public string DeclineLabel { get; private set; }
+        public string AlternateLabel { get; private set; }
 
         private Action _confirmAction;
         private Action _declineAction;
+        private Action _alternateAction;
 
 
         public override async UniTask Initialize(IViewModelInitData viewModelInitData)
@@ -86,6 +107,11 @@ namespace Vesolovsky.Game.Views
 
             _confirmAction = initData.ConfirmAction;
             _declineAction = initData.DeclineAction;
+            _alternateAction = initData.AlternateAction;
+
+            ConfirmLabel = initData.ConfirmLabel;
+            DeclineLabel = initData.DeclineLabel;
+            AlternateLabel = initData.AlternateLabel;
 
             await base.Initialize(viewModelInitData);
         }
@@ -98,6 +124,11 @@ namespace Vesolovsky.Game.Views
         public void Decline()
         {
             _declineAction?.Invoke();
+        }
+
+        public void Alternate()
+        {
+            _alternateAction?.Invoke();
         }
     }
 }
